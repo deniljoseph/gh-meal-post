@@ -1,0 +1,883 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GeometryHome - Workforce & Meal v5.1</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAEPklEQVR4nO1Vy0t6WxRee5+jPaRILE+RlQiVQUHQe1BEkyKUsmlNg6C/IQoCIyKoRtEkiBo0U6KZUNTQolRqkGFFmIOih3mw9BzXHaxfJ7Pundx74XL5fYPNdp+1v/XY31oC/Mb/HuzHU8455xwRfxkxlslkMplMjoGqqpqNZikIAiKqqvonDhnjnP/4SRCEv5sB55zCbG5udjqdLS0txcXFDw8Pfr/f6/VeXFyQe1VV+/r6urq61tfX7+7uGGOISGtJScnk5OTZ2ZnH49HYPtkBoLS0dHNzExERUVGUeDyu7aenpwFAr9cDwMrKCiJ2dXVpmdF1m82GiF6vFwBEUQQArrEjoiRJe3t7o6OjHo+np6fHZDKZzeaqqqqJiYnHx8eZmZmlpaVUKgUAiURCUZR0Op1TEFVVFUV5eXnJrRT5393dRcSpqanvpbTZbIFAABHHxsYAYGFhARHb2tpyMrBarYi4tbWlZSCShaqq3d3dg4ODPp9vdnZWEARSDhVXEIRIJNLT02OxWBRFAQAqLv8AIpKD7wIRAYAxBgAjIyOIuLy8zBhjjBERACAi0b28vGi5kzplWdbkS2sikfjBAVnb7XbG2Pn5OTGS12wwxkRRFEXx7e2Nvm5tbSWTyWwVUVmymyP3NyGTyUxMTLjdbkVR6A45eHp6AgCn00mRms1mCuU7wxcHJNhwONzf319XV3d9fQ0A0Wj08PBQVVXtDdPptMPh0Ol0sViMau10Oo+OjrIdVFdX39zc5GZPFAMDA4jo8XgAQKfTfY/FarXKshwMBgFgfn4eEVtbW+HjYYm0pqYmR0UcAFRV5Zz7fL7j4+OhoaHx8XESuCAIoijS/bKyMq/XW1hYODc3p8VEcuCca+v3l/sFYmlqanp6ekLExcVFm81Gn/Lz8wcGBujxV1dX6dDtdqfTacoguw9qamrS6fTGxoaWQW6h2traTk9PaTxcXV2FQiFyiYhutxsA8vLyIGtUUJfA11FBdf5sNAINWL/f39HRMTIy4nK5GhoaDAbD2dnZwcHB9vZ2IBAAgPf3d8bY/v6+IAjRaJQ0rc3219fXtbU1v98PH53xCb1e39vb29zc/HMRAejxy8vLac8Y0+v1BoPhR0VoYPAhU4fDkUqlCgoKJEkyGo23t7eJREKn05lMJs758/OzJEmFhYVFRUWXl5fhcHh4eDgUChkMhpubm/z8fKPRiIjxeLy2tjYYDO7s7BDt5+iQZVmSJLvdXltbm8lkmpqakslkZ2dnIBA4OTlpbGwsKiqSZfn+/j6ZTLpcrkAgIMtyRUVFKpVqb28PBoOhUKilpYVzXlJS8iUDDY2NjbFYTJblysrKu7u7+vr6cDis9WplZeXDwwPnPC8vz2az+f1+RVFKS0slSYpEIlqvWSyWaDQqy/Jfd/g/hty/TPKZPb9oox0CgHZCm5xItVv/euy/8V/BH+RnZMBCAH7eAAAAAElFTkSuQmCC">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root,[data-theme="blue"]{--p:#1565C0;--pd:#003c8f;--ac:#42A5F5;--sf:#ffffff;--bg:#EEF2F7;--tx:#1A237E;--tx2:#546E7A;--bd:#BBDEFB;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#003c8f;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="teal"]{--p:#00796B;--pd:#004D40;--ac:#26A69A;--sf:#fff;--bg:#E0F2F1;--tx:#00251A;--tx2:#546E7A;--bd:#B2DFDB;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#004D40;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="purple"]{--p:#6A1B9A;--pd:#38006B;--ac:#CE93D8;--sf:#fff;--bg:#F3E5F5;--tx:#1A0029;--tx2:#616161;--bd:#E1BEE7;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#38006B;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="green"]{--p:#2E7D32;--pd:#1B5E20;--ac:#66BB6A;--sf:#fff;--bg:#E8F5E9;--tx:#1B2E1C;--tx2:#546E7A;--bd:#C8E6C9;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#1B5E20;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="amber"]{--p:#E65100;--pd:#BF360C;--ac:#FFA726;--sf:#fff;--bg:#FFF3E0;--tx:#3E1000;--tx2:#616161;--bd:#FFCCBC;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#BF360C;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="navy"]{--p:#3F51B5;--pd:#1A237E;--ac:#7986CB;--sf:#1E2A45;--bg:#0F1923;--tx:#E8EEF8;--tx2:#8FA3C0;--bd:#2A3F5F;--sh:0 2px 10px rgba(0,0,0,.5);--sbg:#0D1545;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.08);}
+[data-theme="slate"]{--p:#546E7A;--pd:#263238;--ac:#80CBC4;--sf:#1E2832;--bg:#111820;--tx:#E2E8F0;--tx2:#90A4AE;--bd:#2D3F4F;--sh:0 2px 10px rgba(0,0,0,.5);--sbg:#1A2535;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.08);}
+[data-theme="midnight"]{--p:#2979FF;--pd:#0D47A1;--ac:#82B1FF;--sf:#080F1E;--bg:#04080F;--tx:#E3EEFF;--tx2:#6A90C0;--bd:#132040;--sh:0 2px 12px rgba(0,0,0,.7);--sbg:#050C1A;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.07);}
+[data-theme="rose"]{--p:#D81B60;--pd:#880E4F;--ac:#F48FB1;--sf:#fff;--bg:#FDF0F5;--tx:#3D0B22;--tx2:#8D4060;--bd:#F8BBD0;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#880E4F;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="ocean"]{--p:#0097A7;--pd:#006064;--ac:#4DD0E1;--sf:#fff;--bg:#E0F7FA;--tx:#001A1C;--tx2:#3D7080;--bd:#B2EBF2;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#006064;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
+[data-theme="carbon"]{--p:#00BCD4;--pd:#00838F;--ac:#80DEEA;--sf:#161616;--bg:#0A0A0A;--tx:#E4E4E4;--tx2:#707070;--bd:#242424;--sh:0 2px 12px rgba(0,0,0,.7);--sbg:#0E0E0E;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.08);}
+[data-theme="volcanic"]{--p:#FF5722;--pd:#BF360C;--ac:#FF8A65;--sf:#160A06;--bg:#0C0603;--tx:#FFE4D6;--tx2:#A06050;--bd:#3A1810;--sh:0 2px 12px rgba(0,0,0,.7);--sbg:#100704;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.07);}
+*{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;}
+.sb{position:fixed;left:0;top:0;width:248px;height:100vh;background:var(--sbg);overflow-y:auto;z-index:1000;box-shadow:3px 0 12px rgba(0,0,0,.3);transition:transform .25s ease;transform:translateX(-100%);}
+/* Desktop: sidebar open by default via JS initSB() */
+#sb-backdrop{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.55);transition:opacity .25s;}
+.sb-theme-section{padding:10px 14px 16px;border-top:1px solid rgba(255,255,255,.08);margin-top:6px;}
+.sb-theme-section h6{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);margin:0 0 10px;}
+.th-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.th-sw{width:36px;height:36px;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:transform .15s,border-color .15s;position:relative;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;}
+.th-sw:hover{transform:scale(1.12);}
+.th-sw.on{border-color:#fff;transform:scale(1.08);}
+.th-label{font-size:8px;color:rgba(255,255,255,.6);white-space:nowrap;text-align:center;margin-top:2px;}
+.sb-brand{padding:14px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:10px;}
+.gh-logo{width:38px;height:38px;border-radius:6px;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.gh-logo img{width:38px;height:38px;object-fit:cover;border-radius:6px;}
+.sb-txt strong{color:var(--stxa);font-size:13px;display:block;}.sb-txt em{color:var(--stx);font-size:11px;font-style:normal;}
+.nav-sl{padding:5px 14px 2px;font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.35);}
+.nav-link{color:var(--stx)!important;padding:8px 14px;display:flex;align-items:center;gap:10px;border-left:3px solid transparent;font-size:13px;transition:all .15s!important;}
+.nav-link:hover,.nav-link.active{color:var(--stxa)!important;background:rgba(255,255,255,.12);border-left-color:var(--ac);}
+.nav-link i{width:16px;text-align:center;font-size:12px;}
+.main{margin-left:248px;transition:margin-left .25s ease;}.main.wide{margin-left:0;}
+.topbar{background:var(--sf);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);position:sticky;top:0;z-index:100;border-bottom:1px solid var(--bd);}
+.pb{padding:18px 20px;}.page{display:none;}.page.active{display:block;}
+.card{background:var(--sf);border-radius:10px;box-shadow:var(--sh);border:1px solid var(--bd);}.card.pad{padding:18px;}
+.stat-card{padding:18px 20px;border-radius:10px;color:#fff;cursor:default;}
+.stat-card h2{font-size:32px;font-weight:700;margin:4px 0 0;}.stat-card p{margin:0;font-size:11px;opacity:.9;}
+table.mt thead th{background:var(--pd);color:#fff;font-weight:500;font-size:12px;padding:7px 8px;white-space:nowrap;}
+table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);font-size:13px;color:var(--tx);background:var(--sf);}
+[data-theme="navy"] .table>:not(caption)>*>*,[data-theme="slate"] .table>:not(caption)>*>*{background-color:var(--sf)!important;color:var(--tx)!important;border-color:var(--bd)!important;}
+[data-theme="navy"] .table tbody tr:hover>*,[data-theme="slate"] .table tbody tr:hover>*{background-color:rgba(255,255,255,.06)!important;}
+.form-control,.form-select{background:var(--inp,var(--sf));color:var(--tx);border-color:var(--bd);font-size:13px;}
+.form-control:focus,.form-select:focus{background:var(--inp,var(--sf));color:var(--tx);border-color:var(--ac);box-shadow:0 0 0 2px rgba(66,165,245,.2);}
+.form-control::placeholder{color:var(--tx2);}.form-label{font-size:11px;font-weight:600;color:var(--tx2);text-transform:uppercase;letter-spacing:.4px;}
+.form-check-label{color:var(--tx)!important;}.input-group-text{background:var(--inp,var(--sf));border-color:var(--bd);color:var(--tx);}
+[data-theme="navy"] .form-control,[data-theme="navy"] .form-select,[data-theme="slate"] .form-control,[data-theme="slate"] .form-select{background-color:var(--inp)!important;color:var(--tx)!important;border-color:var(--bd)!important;}
+[data-theme="navy"] .input-group-text,[data-theme="slate"] .input-group-text{background-color:var(--inp)!important;color:var(--tx)!important;border-color:var(--bd)!important;}
+[data-theme="navy"] select option,[data-theme="slate"] select option{background:#1E2A45;color:#E8EEF8;}
+.modal-content{background:var(--sf)!important;color:var(--tx)!important;border-color:var(--bd)!important;}
+.modal-header,.modal-footer{border-color:var(--bd)!important;}.modal-footer,.modal-body{background:var(--sf)!important;}
+.mh{background:var(--pd)!important;color:#fff!important;}.mh .btn-close{filter:invert(1);}
+[data-theme="navy"] .alert-info,[data-theme="slate"] .alert-info{background:rgba(56,142,210,.18)!important;color:#90CAF9!important;border-color:rgba(56,142,210,.3)!important;}
+[data-theme="navy"] .alert-warning,[data-theme="slate"] .alert-warning{background:rgba(230,115,0,.18)!important;color:#FFCC80!important;border-color:rgba(230,115,0,.3)!important;}
+[data-theme="navy"] .alert-danger,[data-theme="slate"] .alert-danger{background:rgba(198,40,40,.18)!important;color:#EF9A9A!important;border-color:rgba(198,40,40,.3)!important;}
+[data-theme="navy"] .alert-success,[data-theme="slate"] .alert-success{background:rgba(27,94,32,.18)!important;color:#A5D6A7!important;border-color:rgba(27,94,32,.3)!important;}
+[data-theme="midnight"] .table>:not(caption)>*>*,[data-theme="carbon"] .table>:not(caption)>*>*,[data-theme="volcanic"] .table>:not(caption)>*>*{background-color:var(--sf)!important;color:var(--tx)!important;border-color:var(--bd)!important;}
+[data-theme="midnight"] .form-control,[data-theme="midnight"] .form-select,[data-theme="carbon"] .form-control,[data-theme="carbon"] .form-select,[data-theme="volcanic"] .form-control,[data-theme="volcanic"] .form-select{background-color:var(--inp)!important;color:var(--tx)!important;border-color:var(--bd)!important;}
+[data-theme="midnight"] .modal-content,[data-theme="carbon"] .modal-content,[data-theme="volcanic"] .modal-content{background:var(--sf)!important;color:var(--tx)!important;}
+[data-theme="midnight"] .alert-info,[data-theme="carbon"] .alert-info,[data-theme="volcanic"] .alert-info{background:rgba(56,142,210,.18)!important;color:#90CAF9!important;border-color:rgba(56,142,210,.3)!important;}
+[data-theme="midnight"] .alert-warning,[data-theme="carbon"] .alert-warning,[data-theme="volcanic"] .alert-warning{background:rgba(230,115,0,.18)!important;color:#FFCC80!important;border-color:rgba(230,115,0,.3)!important;}
+[data-theme="midnight"] .bs-a,[data-theme="carbon"] .bs-a,[data-theme="volcanic"] .bs-a{background:#1B5E20;color:#A5D6A7;}
+[data-theme="midnight"] .bs-s,[data-theme="carbon"] .bs-s,[data-theme="volcanic"] .bs-s{background:#7B1C1C;color:#FFCDD2;}
+[data-theme="midnight"] select option,[data-theme="carbon"] select option,[data-theme="volcanic"] select option{background:var(--sf);color:var(--tx);}
+.bs{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.bs-a{background:#E8F5E9;color:#2E7D32;}.bs-s{background:#FFEBEE;color:#C62828;}
+.bs-ab{background:#EEEEEE;color:#555;}.bs-f{background:#FFF3E0;color:#E65100;}.bs-v{background:#E3F2FD;color:#1565C0;}
+[data-theme="navy"] .bs-a,[data-theme="slate"] .bs-a{background:#1B5E20;color:#A5D6A7;}
+[data-theme="navy"] .bs-s,[data-theme="slate"] .bs-s{background:#7B1C1C;color:#FFCDD2;}
+[data-theme="navy"] .bs-ab,[data-theme="slate"] .bs-ab{background:#2A3A4A;color:#90A4AE;}
+[data-theme="navy"] .bs-v,[data-theme="slate"] .bs-v{background:#0D3060;color:#BBDEFB;}
+[data-theme="navy"] .bs-f,[data-theme="slate"] .bs-f{background:#5D2E00;color:#FFCC80;}
+.abt{display:inline-flex;width:26px;height:26px;border-radius:4px;border:1px solid;align-items:center;justify-content:center;cursor:pointer;font-size:11px;}.abt:hover{opacity:.75;}
+.chip{display:inline-block;padding:1px 9px;border-radius:20px;font-size:11px;}.chp{background:var(--ac);color:#fff;opacity:.9;}
+.fr{background:var(--sf);padding:10px 14px;border-radius:8px;border:1px solid var(--bd);margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.tp{display:flex;gap:5px;align-items:center;}.tpd{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s;}.tpd:hover,.tpd.on{transform:scale(1.2);border-color:rgba(255,255,255,.9);}
+.chdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}.chdr small{font-weight:600;color:var(--tx);font-size:12px;}
+#setup-page,#login-page,#lookup-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;}
+#setup-page,#login-page,#lookup-page{background:#000000;}
+/* AMOLED auth card */
+.auth-card{background:#111111;border:1px solid #222;border-radius:16px;padding:36px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.9);position:relative;}
+.auth-card h5,.auth-card label{color:#E8E8E8!important;}
+.auth-card .text-muted{color:#888!important;}
+.auth-card .form-control{background:#1C1C1C!important;color:#F0F0F0!important;border-color:#333!important;}
+.auth-card .form-control::placeholder{color:#666!important;}
+.auth-card .form-control:focus{background:#222!important;border-color:#1565C0!important;color:#fff!important;}
+.auth-card a{color:#42A5F5!important;}
+.auth-wm{position:absolute;bottom:12px;right:16px;font-size:10px;color:#333;font-style:italic;}
+/* AMOLED lookup card */
+.lk-card{background:#111111;border:1px solid #222;border-radius:16px;padding:34px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.9);color:#E8E8E8;}
+.lk-card h4{color:#42A5F5!important;}
+.lk-card p,.lk-card small{color:#888!important;}
+.lk-card .form-control{background:#1C1C1C!important;color:#F0F0F0!important;border-color:#333!important;}
+.lk-card .form-control::placeholder{color:#555!important;}
+.lk-card .form-control:focus{background:#222!important;border-color:#1565C0!important;color:#fff!important;}
+.lk-card .input-group-text{background:#1C1C1C!important;border-color:#333!important;color:#666!important;}
+.lk-card a{color:#42A5F5!important;}
+.lk-card .btn-outline-secondary{color:#888!important;border-color:#444!important;}
+.lk-card .btn-outline-secondary:hover{background:#222!important;color:#fff!important;}
+#lk-names{background:#1A1A1A!important;border-color:#333!important;}
+.lk-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #252525!important;display:flex;align-items:center;gap:10px;}
+.lk-item:hover{background:#1F2A3A!important;}
+.lk-item div div:first-child{color:#E8E8E8!important;font-weight:600;}
+.lk-item div div:last-child{color:#888!important;}
+.lk-av{width:34px;height:34px;border-radius:50%;background:#1565C0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+/* Lookup detail card */
+#lk-detail{background:#1A1A1A!important;border-color:#2A2A2A!important;color:#E8E8E8!important;}
+/* REPORT STYLES */
+#rpt-preview,#hist-preview{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:20px;min-width:700px;}
+.rpt-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid #1565C0;}
+.rpt-logo{width:48px;height:48px;background:#000;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.rpt-logo span{color:#fff;font-size:17px;font-weight:900;line-height:1;}.rpt-logo small{color:#fff;font-size:5px;}
+.rpt-sec{margin-bottom:12px;}
+.rpt-ttl{font-size:11px;font-weight:700;background:#1565C0;color:#fff;padding:4px 8px;border-radius:3px 3px 0 0;margin:0;}
+.rt{width:100%;border-collapse:collapse;font-size:11px;}
+.rt th,.rt td{border:1px solid #bbb;padding:3px 6px;text-align:center;}
+.rt thead .ah{background:#2a4f8f;color:#fff;font-size:10px;padding:3px 5px;}
+.rt thead .gh{background:#1565C0;color:#fff;font-weight:700;font-size:10px;}
+.rt thead .gt-hdr{background:#388E3C;color:#fff;font-weight:700;font-size:10px;}
+.rt thead .acc-hdr{background:#1976D2;color:#fff;font-size:10px;font-weight:600;}
+.rt thead .sun-hdr{background:#E65100;color:#fff;font-size:10px;font-weight:700;}
+.rt tbody td:first-child{text-align:left;font-weight:500;background:#F5F5F5;color:#111;min-width:110px;}
+.rt tbody tr:last-child{background:#E8F5E9;font-weight:700;color:#111;}
+.rt tbody tr:last-child td:first-child{background:#C8E6C9;}
+.rt tbody td.gt-val{background:#E8F5E9;font-weight:600;}
+.rpt-tot{background:#F5F5F5;border-radius:4px;padding:10px;margin-top:10px;color:#111;}
+.rpt-tot-ttl{font-size:11px;font-weight:700;color:#1565C0;margin-bottom:6px;border-bottom:2px solid #1565C0;padding-bottom:3px;}
+.rpt-wm{text-align:right;font-size:9px;color:#aaa;margin-top:8px;font-style:italic;}
+.rpt-ttl{cursor:pointer;user-select:none;display:flex;justify-content:space-between;align-items:center;}
+.rpt-ttl:hover{opacity:.92;}
+.sec-toggle{font-size:10px;opacity:.8;margin-left:6px;flex-shrink:0;}
+.sec-body{transition:none;}
+.sun-banner{background:#FFF3E0;border:2px solid #E65100;border-radius:4px;padding:6px 10px;margin-bottom:10px;color:#E65100;font-size:11px;font-weight:700;}
+.pg-wm{text-align:center;font-size:11px;color:var(--tx2);padding:10px 0;margin-top:10px;border-top:1px solid var(--bd);}
+.rules-sel{font-size:12px;padding:2px 6px;border:1px solid var(--bd);border-radius:4px;background:var(--inp,var(--sf));color:var(--tx);}
+.bill-total{background:linear-gradient(135deg,var(--pd),var(--p));color:#fff;border-radius:10px;padding:16px;}
+@media(max-width:768px){.main{margin-left:0!important}}
+@media print{.rpt-ctrl,.topbar,.sb{display:none!important}.main{margin-left:0!important}}
+</style></head><body data-theme="blue">
+
+<div id="setup-page" style="display:none"><div class="auth-card" style="width:440px;">
+  <div class="text-center mb-4"><div class="gh-logo mx-auto mb-2" style="width:60px;height:60px;"><img src="data:image/jpeg;base64,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" alt="GH Logo" style="width:60px;height:60px;border-radius:8px;"></div><h5 style="color:#42A5F5;font-weight:700;">First-Time Setup</h5></div>
+  <div id="se-err" class="d-none py-2 small" style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:8px 12px;"></div>
+  <div class="mb-3"><label class="form-label">Company Name</label><input id="s-co" class="form-control" value="GeometryHome" ></div>
+  <div class="mb-3"><label class="form-label">Full Name</label><input id="s-nm" class="form-control" ></div>
+  <div class="mb-3"><label class="form-label">Username</label><input id="s-un" class="form-control" ></div>
+  <div class="mb-3"><label class="form-label">Password</label><input id="s-pw" type="password" class="form-control" ></div>
+  <div class="mb-4"><label class="form-label">Confirm</label><input id="s-pw2" type="password" class="form-control" ></div>
+  <button class="btn w-100" style="background:#1565C0;color:#fff;font-weight:600;" onclick="doSetup()"><i class="fas fa-rocket me-2"></i>Create Account & Launch</button>
+  <div class="auth-wm">Created by Denil Joseph</div>
+</div></div>
+<div id="login-page" style="display:none"><div class="auth-card">
+  <div class="text-center mb-4"><div class="gh-logo mx-auto mb-2" style="width:60px;height:60px;"><img src="data:image/jpeg;base64,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" alt="GH Logo" style="width:60px;height:60px;border-radius:8px;"></div><h5 id="lc-nm" style="color:#42A5F5;font-weight:700;">Workforce & Meal System</h5></div>
+  <div id="le-err" class="d-none py-2 small" style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:8px 12px;"></div>
+  <div class="mb-3"><label class="form-label">Username</label><input id="l-u" class="form-control" autocomplete="username" ></div>
+  <div class="mb-4"><label class="form-label">Password</label><input id="l-p" type="password" class="form-control" autocomplete="current-password" ></div>
+  <button class="btn w-100" style="background:#1565C0;color:#fff;font-weight:600;" onclick="doLogin()"><i class="fas fa-sign-in-alt me-2"></i>Sign In</button>
+  <div class="text-center mt-3"><a href="/lookup" style="color:#42A5F5;font-size:13px;"><i class="fas fa-utensils me-1"></i>Employee Meal Lookup</a></div>
+  <div class="auth-wm">Created by Denil Joseph</div>
+</div></div>
+<div id="lookup-page" style="display:none"><div class="lk-card" style="position:relative;">
+  <div class="text-center mb-4"><div class="rpt-logo mx-auto mb-2"><span>GH</span><small>GeometryHome</small></div><h4 style="color:#42A5F5;font-weight:700;">Meal Lookup Portal</h4><p class="text-muted small">Type your name to see today's meal allocation</p></div>
+  <div class="input-group mb-1"><span class="input-group-text" ><i class="fas fa-search" style="color:#888;"></i></span><input type="text" id="lk-in" class="form-control form-control-lg" placeholder="Type your name..." oninput="lkSearch(this.value)" ></div>
+  <div id="lk-names" style="display:none;border-radius:8px;max-height:280px;overflow-y:auto;margin-top:4px;"></div>
+  <div id="lk-detail" style="display:none;margin-top:12px;border-radius:10px;padding:18px;"></div>
+  <div class="text-center mt-3"><small style="color:#555;"><i class="fas fa-shield-alt me-1"></i>Only meal information displayed.</small></div>
+  <div class="text-center mt-2"><a href="/" class="btn btn-sm" style="border:1px solid #333;color:#888;background:transparent;">Admin Login</a></div>
+  <div class="auth-wm">Created by Denil Joseph</div>
+</div></div>
+<div id="app" style="display:none">
+<div id="sb-backdrop" onclick="toggleSB()"></div>
+<nav class="sb" id="sidebar">
+  <div class="sb-brand"><div class="gh-logo"><img src="data:image/jpeg;base64,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" alt="GH Logo"></div><div class="sb-txt"><strong id="sb-co">GeometryHome</strong><em>Workforce & Meal</em></div></div>
+  <ul class="nav flex-column mt-1 pb-3">
+    <li><a class="nav-link active" href="#" onclick="nav('dashboard')"><i class="fas fa-chart-pie"></i>Dashboard</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('supplier-report')"><i class="fas fa-file-image"></i>Supplier Report</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('report-history')"><i class="fas fa-history"></i>Report History</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('food-calc')"><i class="fas fa-calculator"></i>Food Calculator</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('billing')"><i class="fas fa-file-invoice-dollar"></i>Billing</a></li>
+    <div class="nav-sl">Workforce</div>
+    <li><a class="nav-link" href="#" onclick="nav('employees')"><i class="fas fa-users"></i>Employees</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('attendance')"><i class="fas fa-calendar-check"></i>Attendance</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('vacation')"><i class="fas fa-plane"></i>Vacation / Leave</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('suspensions')"><i class="fas fa-ban"></i>Suspensions</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('fasting')"><i class="fas fa-moon"></i>Fasting (Ramadan)</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('meal-exceptions')"><i class="fas fa-minus-circle"></i>Meal Exceptions</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('temp-overrides')"><i class="fas fa-exchange-alt"></i>Temp Overrides</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('holidays')"><i class="fas fa-umbrella-beach"></i>Holidays</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('bulk-edit')"><i class="fas fa-edit"></i>Bulk Edit</a></li>
+    <div class="nav-sl">Config</div>
+    <li><a class="nav-link" href="#" onclick="nav('locations')"><i class="fas fa-building"></i>Locations</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('food-prefs')"><i class="fas fa-drumstick-bite"></i>Food Preferences</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('users')"><i class="fas fa-user-shield"></i>Users</a></li>
+    <div class="nav-sl">Other</div>
+    <li><a class="nav-link" href="#" onclick="nav('reports')"><i class="fas fa-file-excel"></i>Reports</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('settings')"><i class="fas fa-cog"></i>Settings</a></li>
+    <li><a class="nav-link" href="/lookup" target="_blank"><i class="fas fa-search"></i>Meal Lookup</a></li>
+
+  </ul>
+  <div class="sb-theme-section">
+    <h6>Themes</h6>
+    <div class="th-grid"><div><div class="th-sw" data-t="blue" style="background:#1565C0;" onclick="setTh('blue')" title="Blue"></div><div class="th-label">Blue</div></div><div><div class="th-sw" data-t="teal" style="background:#00796B;" onclick="setTh('teal')" title="Teal"></div><div class="th-label">Teal</div></div><div><div class="th-sw" data-t="purple" style="background:#6A1B9A;" onclick="setTh('purple')" title="Purple"></div><div class="th-label">Purple</div></div><div><div class="th-sw" data-t="green" style="background:#2E7D32;" onclick="setTh('green')" title="Green"></div><div class="th-label">Green</div></div><div><div class="th-sw" data-t="ocean" style="background:#006064;" onclick="setTh('ocean')" title="Ocean"></div><div class="th-label">Ocean</div></div><div><div class="th-sw" data-t="rose" style="background:#880E4F;" onclick="setTh('rose')" title="Rose"></div><div class="th-label">Rose</div></div><div><div class="th-sw" data-t="amber" style="background:#E65100;" onclick="setTh('amber')" title="Amber"></div><div class="th-label">Amber</div></div><div><div class="th-sw" data-t="navy" style="background:#1A237E;" onclick="setTh('navy')" title="Navy"></div><div class="th-label">Navy</div></div><div><div class="th-sw" data-t="slate" style="background:#546E7A;" onclick="setTh('slate')" title="Slate"></div><div class="th-label">Slate</div></div><div><div class="th-sw" data-t="midnight" style="background:#0D47A1;" onclick="setTh('midnight')" title="Midnight"></div><div class="th-label">Midnight</div></div><div><div class="th-sw" data-t="carbon" style="background:#0E0E0E;" onclick="setTh('carbon')" title="Carbon"></div><div class="th-label">Carbon</div></div><div><div class="th-sw" data-t="volcanic" style="background:#BF360C;" onclick="setTh('volcanic')" title="Volcanic"></div><div class="th-label">Volcanic</div></div></div>
+  </div>
+</nav>
+<div class="main" id="mc">
+  <div class="topbar">
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-sm btn-outline-secondary" onclick="toggleSB()"><i class="fas fa-bars"></i></button>
+      <h6 class="mb-0 fw-bold" id="pg-ttl" style="color:var(--tx);">Dashboard</h6>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="chip chp" id="top-dt" style="font-size:11px;"></span>
+      <button class="btn btn-sm" id="dk-btn" onclick="toggleDark()" title="Toggle dark mode" style="width:32px;height:32px;padding:0;border:1px solid var(--bd);background:var(--inp,var(--sf));color:var(--tx);font-size:14px;">🌙</button>
+      <span class="d-none d-lg-block small" id="top-user" style="color:var(--tx2);font-size:12px;"></span>
+      <button class="btn btn-sm btn-outline-danger" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+  </div>
+  <div class="pb">
+
+  <div class="page active" id="page-dashboard">
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#1565C0,#1E88E5)"><i class="fas fa-users"></i><h2 id="d-tot">0</h2><p>Active Employees</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#2E7D32,#43A047)"><i class="fas fa-utensils"></i><h2 id="d-ml">0</h2><p>Meal Count</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#E65100,#EF6C00)"><i class="fas fa-user-times"></i><h2 id="d-ab">0</h2><p>Absent Today</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#C62828,#E53935)"><i class="fas fa-ban"></i><h2 id="d-su">0</h2><p>Suspended</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#6A1B9A,#8E24AA)"><i class="fas fa-moon"></i><h2 id="d-fa">0</h2><p>Fasting</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#00695C,#00897B)"><i class="fas fa-plane"></i><h2 id="d-va">0</h2><p>On Leave</p></div></div>
+    </div>
+    <div class="card pad mb-3"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0"><i class="fas fa-utensils me-2" style="color:var(--ac);"></i>Today's Food Count</h6><small id="dash-fc-note" style="color:var(--tx2);font-size:11px;"></small></div><div id="dash-fc"><small style="color:var(--tx2);">Loading...</small></div></div>
+    <div class="row g-3">
+      <div class="col-md-6"><div class="card pad"><div class="chdr"><small>By Accommodation</small><select class="form-select form-select-sm" style="width:auto;" id="sc-loc" onchange="chgC('ch-loc',this.value)"><option value="bar">Bar</option><option value="horizontalBar">Horizontal</option><option value="pie">Pie</option><option value="doughnut">Doughnut</option></select></div><canvas id="ch-loc" height="200"></canvas></div></div>
+      <div class="col-md-6"><div class="card pad"><div class="chdr"><small>Food Preference</small><select class="form-select form-select-sm" style="width:auto;" id="sc-fp" onchange="chgC('ch-fp',this.value)"><option value="pie">Pie</option><option value="doughnut">Doughnut</option><option value="bar">Bar</option></select></div><canvas id="ch-fp" height="200"></canvas></div></div>
+      <div class="col-md-6"><div class="card pad"><div class="chdr"><small>Shift Distribution</small><select class="form-select form-select-sm" style="width:auto;" id="sc-sh" onchange="chgC('ch-sh',this.value)"><option value="doughnut">Doughnut</option><option value="pie">Pie</option><option value="bar">Bar</option></select></div><canvas id="ch-sh" height="160"></canvas></div></div>
+      <div class="col-md-6"><div class="card pad"><div class="chdr"><small>Absences - Last 7 Days</small><select class="form-select form-select-sm" style="width:auto;" id="sc-tr" onchange="chgC('ch-tr',this.value)"><option value="line">Line</option><option value="bar">Bar</option></select></div><canvas id="ch-tr" height="160"></canvas></div></div>
+    </div>
+    <div class="pg-wm">Created by Denil Joseph</div>
+  </div>
+  <div class="page" id="page-supplier-report">
+    <div class="card pad mb-3"><div class="row g-2 align-items-end">
+      <div class="col-md-3"><label class="form-label">Report Date</label><input type="date" id="rpt-dt" class="form-control"></div>
+      <div class="col-auto d-flex align-items-end"><div class="form-check ms-2 mb-1"><input class="form-check-input" type="checkbox" id="rpt-sun"><label class="form-check-label small">Show Next Sunday Schedule</label></div></div>
+      <div class="col-auto d-flex gap-2 align-items-end">
+        <button class="btn" style="background:var(--pd);color:#fff;" onclick="genRpt()"><i class="fas fa-sync me-1"></i>Generate & Save</button>
+        <button class="btn btn-success" id="rpt-dl" onclick="dlImg()" disabled><i class="fas fa-image me-1"></i>Download PNG</button>
+      </div></div>
+      <div class="mt-2"><small style="color:var(--tx2);"><i class="fas fa-sun me-1" style="color:#E65100;"></i><strong>Sunday/Holiday rule:</strong> all meals to accommodation only.</small></div>
+    </div>
+    <!-- Section visibility checkboxes (not part of screenshot) -->
+    <div class="card pad mb-2" id="rpt-ctrl" style="display:none;">
+      <div class="d-flex gap-3 flex-wrap align-items-center">
+        <small class="fw-bold me-1" style="color:var(--tx2);white-space:nowrap;"><i class="fas fa-eye me-1"></i>Show Sections:</small>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-gt" checked onchange="togSec('rpt-s-gt',this.checked)"><label class="form-check-label small ms-1">Total Count</label></div>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-l2a" checked onchange="togSec('rpt-s-l2a',this.checked)"><label class="form-check-label small ms-1">Lunch to Accommodation</label></div>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-d2f" checked onchange="togSec('rpt-s-d2f',this.checked)"><label class="form-check-label small ms-1">Dinner to Factory</label></div>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-l2s" checked onchange="togSec('rpt-s-l2s',this.checked)"><label class="form-check-label small ms-1">Lunch to Site</label></div>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-fasting" checked onchange="togSec('rpt-s-fasting',this.checked)"><label class="form-check-label small ms-1">Fasting / Iftar Kits</label></div>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-secondary" onclick="togAllSecs(false)">Clear All</button>
+          <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="togAllSecs(true)">Show All</button>
+        </div>
+      </div>
+    </div>
+    <div class="overflow-auto"><div id="rpt-preview" style="display:none;"></div></div>
+  </div>
+  <div class="page" id="page-report-history">
+    <div class="card pad mb-3"><div class="row g-2 align-items-end">
+      <div class="col-md-3"><label class="form-label">From Date</label><input type="date" id="hist-s" class="form-control"></div>
+      <div class="col-md-3"><label class="form-label">To Date</label><input type="date" id="hist-e" class="form-control"></div>
+      <div class="col-auto d-flex gap-2 align-items-end">
+        <button class="btn" style="background:var(--pd);color:#fff;" onclick="filterHist()"><i class="fas fa-search me-1"></i>Filter</button>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadHist()"><i class="fas fa-list me-1"></i>All</button>
+        <button id="hist-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('report-history')"><i class="fas fa-trash me-1"></i>Delete</button>
+      </div></div></div>
+    <div class="row g-3">
+      <div class="col-md-4"><div class="card pad"><h6 class="mb-2">Saved Reports</h6><div style="max-height:520px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="hist-all" onchange="togAll('hist-c',this,'hist-bd')"></th><th>Date</th><th>By</th><th></th></tr></thead><tbody id="hist-tb"></tbody></table></div></div></div>
+      <div class="col-md-8"><div class="overflow-auto"><div id="hist-preview"></div></div></div>
+    </div>
+  </div>
+  <div class="page" id="page-food-calc">
+    <div class="card pad mb-3"><div class="row g-2 align-items-end">
+      <div class="col-md-3"><label class="form-label">Date</label><input type="date" id="fc-dt" class="form-control"></div>
+      <div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadFC()"><i class="fas fa-calculator me-1"></i>Calculate</button></div>
+      <div class="col-auto"><button class="btn btn-sm btn-outline-success" onclick="doFcX()"><i class="fas fa-file-excel me-1"></i>Export Excel</button></div>
+    </div></div>
+    <div id="fc-res"></div>
+  </div>
+  <div class="page" id="page-billing">
+    <div class="alert alert-info py-2 small mb-3"><i class="fas fa-info-circle me-1"></i>Billing is calculated based on the Supplier Report (actual food delivered) for the selected date range, including Sunday/Holiday rules.</div>
+    <div class="row g-3">
+      <div class="col-md-6"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0"><i class="fas fa-tags me-2" style="color:var(--p);"></i>Meal Prices (AED)</h6><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="savePx()"><i class="fas fa-save me-1"></i>Save Prices</button></div>
+        <div class="table-responsive"><table class="table table-sm mt mb-0"><thead><tr><th>Food Pref</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Iftar Kit</th></tr></thead><tbody id="px-tb"></tbody></table></div></div></div>
+      <div class="col-md-6"><div class="card pad"><h6 class="mb-3"><i class="fas fa-calculator me-2" style="color:var(--p);"></i>Calculate Bill</h6>
+        <div class="row g-2 mb-3"><div class="col-6"><label class="form-label">From Date</label><input type="date" id="bill-s" class="form-control"></div><div class="col-6"><label class="form-label">To Date</label><input type="date" id="bill-e" class="form-control"></div></div>
+        <button class="btn w-100 mb-3" style="background:var(--pd);color:#fff;" onclick="calcBill()"><i class="fas fa-calculator me-1"></i>Calculate Bill</button>
+        <div id="bill-res"></div></div></div>
+    </div>
+  </div>
+  <div class="page" id="page-employees">
+    <div class="fr">
+      <div class="position-relative" style="min-width:185px;"><i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx2);font-size:11px;pointer-events:none;"></i><input type="text" id="emp-srch" class="form-control form-control-sm" style="padding-left:30px;" placeholder="Search..." oninput="loadEmps()"></div>
+      <select id="f-sh" class="form-select form-select-sm" style="width:auto;" onchange="loadEmps()"><option value="">All Shifts</option><option value="shift1">1st Shift</option><option value="shift2">2nd Shift</option><option value="shift3">3rd Shift</option><option value="normal">Normal</option><option value="site">Site</option></select>
+      <select id="f-fp" class="form-select form-select-sm" style="width:auto;" onchange="loadEmps()"><option value="">All Food Prefs</option><option>Arabic</option><option>North Indian</option><option>North Indian Veg</option><option>South Indian</option><option>South Indian Veg</option></select>
+      <div class="ms-auto d-flex gap-2 flex-wrap">
+        <button id="emp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('employees')"><i class="fas fa-trash me-1"></i>Delete Selected</button>
+        <button class="btn btn-sm btn-outline-success" onclick="showImp()"><i class="fas fa-file-import me-1"></i>Import Excel</button>
+        <button class="btn btn-sm btn-outline-primary" onclick="dlX('/api/export/employees','employees.xlsx')"><i class="fas fa-file-export me-1"></i>Export</button>
+        <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showEmpM()"><i class="fas fa-plus me-1"></i>Add Employee</button>
+      </div>
+    </div>
+    <div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="emp-all" onchange="togAll('emp-c',this,'emp-bd')"></th><th>Emp ID</th><th>Name</th><th>Shift</th><th>Accommodation</th><th>Food Pref</th><th>Sun</th><th>Actions</th></tr></thead><tbody id="emp-tb"></tbody></table></div></div>
+  </div>
+  <div class="page" id="page-attendance">
+    <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div></div></div>
+    <div class="row g-3">
+      <div class="col-md-7"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Present <span id="att-cnt" class="badge bg-secondary">0</span></h6><div class="d-flex gap-2"><input class="form-control form-control-sm" style="width:140px;" placeholder="Filter..." oninput="filtA(this.value)"><button class="btn btn-sm btn-danger" onclick="markAbs()"><i class="fas fa-times me-1"></i>Mark Absent</button></div></div><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="att-all" onchange="togAllA(this)"></th><th>Name</th><th>Shift</th><th>Block</th></tr></thead><tbody id="att-list"></tbody></table></div></div></div>
+      <div class="col-md-5"><div class="card pad"><h6>Absent <span class="badge bg-danger" id="abs-cnt">0</span></h6><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th>Name</th><th>Reason</th><th></th></tr></thead><tbody id="abs-list"></tbody></table></div></div></div>
+    </div>
+  </div>
+  <div class="page" id="page-vacation"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Vacation / Leave</h6><div class="d-flex gap-2"><button id="vac-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('vacation')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showVacM()"><i class="fas fa-plus me-1"></i>Add Leave</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="vac-all" onchange="togAll('vac-c',this,'vac-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="vac-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-suspensions"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Suspensions</h6><div class="d-flex gap-2"><button id="susp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('suspensions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-danger" onclick="showSuspM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="susp-all" onchange="togAll('susp-c',this,'susp-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="susp-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-fasting"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Fasting Records</h6><small style="color:var(--tx2);">No lunch - Iftar Kit + Dinner at accommodation</small></div><div class="d-flex gap-2"><button id="fast-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('fasting')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-warning" onclick="showFastM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="fast-all" onchange="togAll('fast-c',this,'fast-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fast-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-meal-exceptions"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Meal Exceptions</h6><small style="color:var(--tx2);">Skip specific meals for a date range</small></div><div class="d-flex gap-2"><button id="mex-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('meal-exceptions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showMexM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="mex-all" onchange="togAll('mex-c',this,'mex-bd')"></th><th>Name</th><th>Skip Meal</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="mex-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-temp-overrides">
+    <div class="row g-3 mb-2">
+      <div class="col-md-5"><div class="card pad"><h6 class="mb-3"><i class="fas fa-exchange-alt me-2" style="color:var(--p);"></i>Add Temporary Override</h6>
+        <div class="mb-3"><label class="form-label">Employee</label><select id="ovr-emp" class="form-select" onchange="loadOvrC()"><option value="">Select...</option></select></div>
+        <div id="ovr-curr" style="display:none;" class="mb-3"><div class="alert alert-info py-2 small mb-0"><strong>Current:</strong><div id="ovr-ci"></div></div></div>
+        <div class="mb-3"><label class="form-label">Override Type</label><select id="ovr-type" class="form-select" onchange="togOvr()"><option value="shift">Change Shift Type</option><option value="accommodation">Change Accommodation Block</option></select></div>
+        <div id="ovr-sf" class="mb-3"><label class="form-label">New Shift Type</label><select id="ovr-sv" class="form-select"><option value="shift1">1st Shift (7AM-3PM)</option><option value="shift2">2nd Shift (3PM-11PM)</option><option value="shift3">3rd Shift (11PM-7AM)</option><option value="normal">Normal (9AM-6PM)</option><option value="site">Site Worker</option></select></div>
+        <div id="ovr-af" class="mb-3" style="display:none;"><label class="form-label">New Accommodation Block</label><select id="ovr-av" class="form-select"><option value="">Select...</option></select></div>
+        <div class="row g-2 mb-3"><div class="col-6"><label class="form-label">From Date *</label><input type="date" id="ovr-s" class="form-control"></div><div class="col-6"><label class="form-label">To Date *</label><input type="date" id="ovr-e" class="form-control"></div></div>
+        <div class="mb-3"><label class="form-label">Reason</label><input id="ovr-r" class="form-control" placeholder="e.g. Temporary transfer..."></div>
+        <button class="btn w-100" style="background:var(--pd);color:#fff;" onclick="saveOvr()"><i class="fas fa-save me-1"></i>Save Override</button>
+      </div></div>
+      <div class="col-md-7"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Active &amp; Past Overrides</h6><button id="ovr-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('temp-overrides')"><i class="fas fa-trash me-1"></i>Delete</button></div>
+        <div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="ovr-all" onchange="togAll('ovr-c',this,'ovr-bd')"></th><th>Employee</th><th>Override</th><th>From</th><th>To</th><th>Status</th><th></th></tr></thead><tbody id="ovr-tb"></tbody></table></div></div>
+        <small style="color:var(--tx2);font-size:11px;"><i class="fas fa-info-circle me-1"></i>Automatically reverts after end date.</small>
+      </div>
+    </div>
+  </div>
+  <div class="page" id="page-holidays">
+    <div class="row g-3">
+      <div class="col-md-5"><div class="card pad"><h6 class="mb-3"><i class="fas fa-umbrella-beach me-2" style="color:var(--p);"></i>Mark a Holiday</h6>
+        <div class="mb-3"><label class="form-label">Date</label><input type="date" id="hol-dt" class="form-control"></div>
+        <div class="mb-3"><label class="form-label">Holiday Name</label><input id="hol-nm" class="form-control" placeholder="e.g. National Day"></div>
+        <button class="btn w-100" style="background:var(--pd);color:#fff;" onclick="saveHoliday()"><i class="fas fa-save me-1"></i>Mark as Holiday</button>
+        <div class="alert alert-warning py-2 small mt-3 mb-0"><i class="fas fa-info-circle me-1"></i>On marked holidays, billing & supplier report follow the Sunday rule: all meals go to accommodation only.</div>
+      </div></div>
+      <div class="col-md-7"><div class="card pad"><h6 class="mb-2">Marked Holidays</h6>
+        <div class="table-responsive"><table class="table mt mb-0"><thead><tr><th>Date</th><th>Name</th><th>Actions</th></tr></thead><tbody id="hol-tb"></tbody></table></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="page" id="page-locations"><div class="d-flex justify-content-between mb-2"><h6>Locations</h6><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showLocM()"><i class="fas fa-plus me-1"></i>Add</button></div><div class="row g-3" id="loc-grid"></div></div>
+  <div class="page" id="page-food-prefs"><div class="d-flex justify-content-between mb-2"><h6>Food Preferences</h6><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showFpM()"><i class="fas fa-plus me-1"></i>Add</button></div><div class="row g-3" id="fp-grid"></div></div>
+  <div class="page" id="page-users"><div class="d-flex justify-content-between mb-2"><h6>Users</h6><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showUsrM()"><i class="fas fa-plus me-1"></i>Add User</button></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody id="user-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-reports"><div class="row g-3"><div class="col-md-6"><div class="card pad"><h6><i class="fas fa-users me-2" style="color:var(--p);"></i>Employee List</h6><button class="btn btn-sm btn-outline-primary" onclick="dlX('/api/export/employees','employees.xlsx')"><i class="fas fa-download me-1"></i>Download Excel</button></div></div><div class="col-md-6"><div class="card pad"><h6><i class="fas fa-utensils me-2" style="color:var(--p);"></i>Daily Food Report</h6><div class="input-group input-group-sm"><input type="date" id="r-dt" class="form-control"><button class="btn btn-outline-success" onclick="dlFR()"><i class="fas fa-download"></i></button></div></div></div></div></div>
+  <div class="page" id="page-bulk-edit">
+    <div class="row g-3">
+      <!-- LEFT: employee selector -->
+      <div class="col-lg-7">
+        <div class="card pad">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="mb-0"><i class="fas fa-users me-2" style="color:var(--p);"></i>Select Employees <span id="be-sel-cnt" class="badge ms-1" style="background:var(--ac);color:#fff;">0</span></h6>
+            <div class="d-flex gap-2">
+              <input type="text" id="be-srch" class="form-control form-control-sm" placeholder="Search name..." oninput="beFilter()" style="width:160px;">
+              <select id="be-fsh" class="form-select form-select-sm" style="width:auto;" onchange="beFilter()"><option value="">All Shifts</option><option value="shift1">1st Shift</option><option value="shift2">2nd Shift</option><option value="shift3">3rd Shift</option><option value="normal">Normal</option><option value="site">Site</option></select>
+              <select id="be-ffp" class="form-select form-select-sm" style="width:auto;" onchange="beFilter()"><option value="">All Foods</option><option>Arabic</option><option>North Indian</option><option>North Indian Veg</option><option>South Indian</option><option>South Indian Veg</option></select>
+              <select id="be-facc" class="form-select form-select-sm" style="width:auto;" onchange="beFilter()"><option value="">All Blocks</option></select>
+            </div>
+          </div>
+          <div style="overflow-y:auto;max-height:480px;">
+            <table class="table table-sm mt mb-0">
+              <thead><tr>
+                <th><input type="checkbox" id="be-all" onchange="beToggleAll(this)"></th>
+                <th>Name</th><th>Current Shift</th><th>Food Pref</th><th>Block</th>
+              </tr></thead>
+              <tbody id="be-tb"></tbody>
+            </table>
+          </div>
+          <div class="mt-2 d-flex justify-content-between align-items-center">
+            <small style="color:var(--tx2);"><span id="be-showing">0</span> shown</small>
+            <button class="btn btn-sm btn-outline-secondary" onclick="beSelectAll()">Select All Shown</button>
+          </div>
+        </div>
+      </div>
+      <!-- RIGHT: change panel -->
+      <div class="col-lg-5">
+        <div class="card pad">
+          <h6 class="mb-3"><i class="fas fa-pen me-2" style="color:var(--p);"></i>Apply Permanent Changes</h6>
+          <div class="alert alert-info py-2 small"><i class="fas fa-info-circle me-1"></i>Only checked fields will be updated. Unchecked fields are left as-is for each employee.</div>
+
+          <div class="mb-3 p-3 rounded" style="background:rgba(21,101,192,.07);border:1px solid var(--bd);">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="be-chk-sh">
+              <label class="form-check-label fw-600">Change Shift Type</label>
+            </div>
+            <select id="be-new-sh" class="form-select form-select-sm" disabled>
+              <option value="shift1">1st Shift (7AM - 3PM)</option>
+              <option value="shift2">2nd Shift (3PM - 11PM)</option>
+              <option value="shift3">3rd Shift (11PM - 7AM)</option>
+              <option value="normal">Normal (9AM - 6PM)</option>
+              <option value="site">Site Worker</option>
+            </select>
+          </div>
+
+          <div class="mb-3 p-3 rounded" style="background:rgba(21,101,192,.07);border:1px solid var(--bd);">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="be-chk-fp">
+              <label class="form-check-label fw-600">Change Food Preference</label>
+            </div>
+            <select id="be-new-fp" class="form-select form-select-sm" disabled>
+              <option value="">Select...</option>
+            </select>
+          </div>
+
+          <div class="mb-4 p-3 rounded" style="background:rgba(21,101,192,.07);border:1px solid var(--bd);">
+            <div class="form-check mb-2">
+              <input class="form-check-input" type="checkbox" id="be-chk-acc">
+              <label class="form-check-label fw-600">Change Accommodation Block</label>
+            </div>
+            <select id="be-new-acc" class="form-select form-select-sm" disabled>
+              <option value="">Select...</option>
+            </select>
+          </div>
+
+          <button class="btn w-100 fw-bold" style="background:var(--pd);color:#fff;font-size:14px;" onclick="applyBulkEdit()">
+            <i class="fas fa-check-circle me-2"></i>Apply to <span id="be-btn-cnt">0</span> Selected Employee(s)
+          </button>
+          <div id="be-result" class="mt-3" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-settings">
+    <div class="row g-3">
+      <div class="col-md-4"><div class="card pad"><h6 class="mb-3"><i class="fas fa-palette me-2" style="color:var(--p);"></i>App Theme</h6>
+        <div class="d-flex gap-2 flex-wrap mb-2">
+          <div class="tpd" data-t="blue" style="background:#1565C0;width:30px;height:30px;" onclick="setTh('blue')"></div>
+          <div class="tpd" data-t="teal" style="background:#00796B;width:30px;height:30px;" onclick="setTh('teal')"></div>
+          <div class="tpd" data-t="purple" style="background:#6A1B9A;width:30px;height:30px;" onclick="setTh('purple')"></div>
+          <div class="tpd" data-t="green" style="background:#2E7D32;width:30px;height:30px;" onclick="setTh('green')"></div>
+          <div class="tpd" data-t="amber" style="background:#E65100;width:30px;height:30px;" onclick="setTh('amber')"></div>
+          <div class="tpd" data-t="navy" style="background:#1A237E;width:30px;height:30px;" onclick="setTh('navy')"></div>
+          <div class="tpd" data-t="slate" style="background:#546E7A;width:30px;height:30px;" onclick="setTh('slate')"></div>
+        </div><small style="color:var(--tx2);">Navy & Slate = dark themes.</small></div></div>
+      <div class="col-md-4"><div class="card pad"><h6><i class="fas fa-search me-2" style="color:var(--p);"></i>Meal Lookup</h6><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="lk-tog" onchange="saveLk()"><label class="form-check-label">Enable public lookup</label></div></div></div>
+      <div class="col-md-4"><div class="card pad"><h6>Maintenance</h6><button class="btn btn-sm btn-outline-primary w-100" onclick="runMaint()"><i class="fas fa-sync me-1"></i>Expire Suspensions</button></div></div>
+      <div class="col-12"><div class="card pad">
+        <div class="d-flex justify-content-between align-items-center mb-3"><h6 class="mb-0"><i class="fas fa-sliders-h me-2" style="color:var(--p);"></i>Meal Delivery Rules</h6><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="addRule()"><i class="fas fa-plus me-1"></i>Add Rule</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveRules()"><i class="fas fa-save me-1"></i>Save All Rules</button></div></div>
+        <div class="table-responsive"><table class="table table-sm mt mb-2" style="font-size:13px;"><thead><tr><th>Shift / Type</th><th>Gets Breakfast?</th><th>Lunch Goes To</th><th>Dinner Goes To</th><th></th></tr></thead><tbody id="rules-tb"></tbody></table></div>
+        <hr class="my-2"><h6 style="font-size:13px;" class="mb-2">Special Rules</h6><div class="row g-2" id="sp-rules"></div>
+        <hr class="my-2"><h6 style="font-size:13px;" class="mb-1">Grand Total Includes:</h6>
+        <div class="alert alert-warning py-2 small mt-1 mb-2"><i class="fas fa-sun me-1"></i><strong>Sunday/Holiday:</strong> All meals always go to accommodation. Rules below apply to weekdays only.</div>
+        <div class="row g-2" id="cnt-rules"></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="pg-wm" style="border-top:1px solid var(--bd);">GeometryHome Workforce & Meal System &nbsp;|&nbsp; Created by Denil Joseph</div>
+  </div></div></div>
+
+<div class="modal fade" id="empMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title" id="em-ttl">Add Employee</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><input type="hidden" id="em-id"><div class="row g-3">
+    <div class="col-12"><label class="form-label">Full Name *</label><input id="em-nm" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Accommodation *</label><select id="em-acc" class="form-select"><option value="">Select...</option></select></div>
+    <div class="col-md-6"><label class="form-label">Shift *</label><select id="em-sh" class="form-select"><option value="shift1">1st Shift (7AM-3PM)</option><option value="shift2">2nd Shift (3PM-11PM)</option><option value="shift3">3rd Shift (11PM-7AM)</option><option value="normal">Normal (9AM-6PM)</option><option value="site">Site Worker</option></select></div>
+    <div class="col-md-6"><label class="form-label">Food Preference *</label><select id="em-fp" class="form-select"><option value="">Select...</option></select></div>
+    <div class="col-md-6"><label class="form-label">Department</label><input id="em-dept" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Emp ID (auto if blank)</label><input id="em-eid" class="form-control"></div>
+    <div class="col-md-6"><label class="form-label">Remarks</label><input id="em-rem" class="form-control"></div>
+    <div class="col-12"><div class="form-check"><input class="form-check-input" type="checkbox" id="em-sun"><label class="form-check-label">No food on Sundays</label></div></div>
+  </div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveEmp()"><i class="fas fa-save me-1"></i>Save</button></div>
+</div></div></div>
+<div class="modal fade" id="impMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title">Import from Excel</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><div class="alert alert-info small py-2">Headers: Full Name, Emp ID, Department, Location/Accommodation, Shift, Food Preference</div><div class="mb-3"><input type="file" id="imp-f" class="form-control" accept=".xlsx,.xls"></div><div id="imp-res" class="d-none"></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button><button class="btn btn-success btn-sm" onclick="doImport()"><i class="fas fa-upload me-1"></i>Import</button></div>
+</div></div></div>
+<div class="modal fade" id="suspMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header" style="background:#c62828;color:#fff;"><h5 class="modal-title">Add Suspension</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><div class="mb-3"><label class="form-label">Employee</label><select id="susp-emp" class="form-select"></select></div><div class="row g-2"><div class="col-6"><label class="form-label">Start</label><input type="date" id="susp-s" class="form-control"></div><div class="col-6"><label class="form-label">End (optional)</label><input type="date" id="susp-e" class="form-control"></div></div><div class="mt-3"><label class="form-label">Reason</label><textarea id="susp-r" class="form-control" rows="2"></textarea></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger btn-sm" onclick="saveSusp()">Suspend</button></div>
+</div></div></div>
+<div class="modal fade" id="fastMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header" style="background:#E65100;color:#fff;"><h5 class="modal-title">Fasting Record</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><div class="alert alert-warning small py-2">No lunch - Iftar Kit + Dinner at accommodation</div><div class="mb-3"><label class="form-label">Employee</label><select id="fast-emp" class="form-select"></select></div><div class="row g-2"><div class="col-6"><label class="form-label">Start</label><input type="date" id="fast-s" class="form-control"></div><div class="col-6"><label class="form-label">End</label><input type="date" id="fast-e" class="form-control"></div></div><div class="mt-3"><label class="form-label">Reason</label><input id="fast-r" class="form-control" value="Ramadan"></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-warning btn-sm" onclick="saveFast()">Save</button></div>
+</div></div></div>
+<div class="modal fade" id="vacMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title" id="vac-ttl">Add Leave</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><input type="hidden" id="vac-id"><div class="mb-3"><label class="form-label">Employee</label><select id="vac-emp" class="form-select"></select></div><div class="row g-2"><div class="col-6"><label class="form-label">From *</label><input type="date" id="vac-s" class="form-control"></div><div class="col-6"><label class="form-label">To *</label><input type="date" id="vac-e" class="form-control"></div></div><div class="mt-3"><label class="form-label">Reason</label><input id="vac-r" class="form-control"></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveVac()">Save</button></div>
+</div></div></div>
+<div class="modal fade" id="mexMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title" id="mex-ttl">Meal Exception</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><input type="hidden" id="mex-id"><div class="mb-3"><label class="form-label">Employee</label><select id="mex-emp" class="form-select"></select></div><div class="mb-3"><label class="form-label">Skip Meal</label><select id="mex-mt" class="form-select"><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option></select></div><div class="row g-2"><div class="col-6"><label class="form-label">From *</label><input type="date" id="mex-s" class="form-control"></div><div class="col-6"><label class="form-label">To *</label><input type="date" id="mex-e" class="form-control"></div></div><div class="mt-3"><label class="form-label">Reason</label><input id="mex-r" class="form-control"></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveMex()">Save</button></div>
+</div></div></div>
+<div class="modal fade" id="locMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title" id="loc-ttl">Location</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><input type="hidden" id="loc-id"><div class="mb-3"><label class="form-label">Name *</label><input id="loc-nm" class="form-control" placeholder="e.g. LV2 - B#1"></div><div class="mb-3"><label class="form-label">Description</label><input id="loc-dc" class="form-control"></div><div class="mb-3"><label class="form-label">Type</label><select id="loc-tp" class="form-select"><option value="accommodation">Accommodation</option><option value="factory">Factory</option><option value="office">Office</option></select></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveLoc()">Save</button></div>
+</div></div></div>
+<div class="modal fade" id="fpMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title" id="fp-ttl">Food Preference</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><input type="hidden" id="fp-id"><div class="mb-3"><label class="form-label">Name *</label><input id="fp-nm" class="form-control"></div><div class="mb-3"><label class="form-label">Category</label><input id="fp-ct" class="form-control" placeholder="Indian / Arabic"></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveFp()">Save</button></div>
+</div></div></div>
+<div class="modal fade" id="usrMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header mh"><h5 class="modal-title" id="usr-ttl">User</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><input type="hidden" id="usr-id"><div class="mb-3"><label class="form-label">Full Name</label><input id="u-nm" class="form-control"></div><div class="mb-3"><label class="form-label">Username</label><input id="u-un" class="form-control"></div><div class="mb-3"><label class="form-label">Password</label><input id="u-pw" type="password" class="form-control"></div><div class="mb-3"><label class="form-label">Role</label><select id="u-role" class="form-select"><option value="admin">Admin</option><option value="hr">HR</option><option value="supervisor">Supervisor</option><option value="viewer">Viewer</option></select></div></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveUsr()">Save</button></div>
+</div></div></div>
+<div class="modal fade" id="absMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title">Absence Reason</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body"><p class="text-muted small">All meals delivered to accommodation.</p><input type="text" id="abs-rsn" class="form-control" placeholder="Optional reason..."></div>
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger btn-sm" onclick="confAbs()">Confirm Absent</button></div>
+</div></div></div>
+<script>
+let TK='',RL='',UN='',locs=[],fps=[],CH={},CD={},absIds=[],attAll=[];
+const tod=()=>new Date().toISOString().split('T')[0];
+const fmt=d=>d?new Date(d+'T12:00').toLocaleDateString('en-GB'):'--';
+const STL={shift1:'1st Shift',shift2:'2nd Shift',shift3:'3rd Shift',normal:'Normal',site:'Site'};
+const isLK=window.location.pathname==='/lookup';
+const CP=JSON.parse(localStorage.getItem('cprefs')||'{}');
+function sCP(id,t){CP[id]=t;localStorage.setItem('cprefs',JSON.stringify(CP));}
+function gCP(id,d){return CP[id]||d;}
+const isMob=()=>window.innerWidth<=768;
+let sbO=false;
+function initSB(){
+  const sb=document.getElementById('sidebar');
+  const mc=document.getElementById('mc');
+  const bd=document.getElementById('sb-backdrop');
+  sbO=!isMob();
+  sb.style.transform=sbO?'translateX(0)':'translateX(-100%)';
+  if(isMob()&&bd)bd.style.display='none';
+  if(!isMob()){mc.classList.toggle('wide',!sbO);}
+  else{mc.classList.remove('wide');mc.style.marginLeft='';}
+}
+function toggleSB(){
+  sbO=!sbO;
+  const sb=document.getElementById('sidebar');
+  const mc=document.getElementById('mc');
+  const bd=document.getElementById('sb-backdrop');
+  sb.style.transform=sbO?'translateX(0)':'translateX(-100%)';
+  if(isMob()&&bd)bd.style.display=sbO?'block':'none';
+  if(!isMob()){mc.classList.toggle('wide',!sbO);}
+}
+window.addEventListener('resize',()=>{
+  const mc=document.getElementById('mc');
+  const bd=document.getElementById('sb-backdrop');
+  if(isMob()){mc.style.marginLeft='';mc.classList.remove('wide');if(!sbO&&bd)bd.style.display='none';}
+  else{if(bd)bd.style.display='none';mc.classList.toggle('wide',!sbO);}
+});
+async function API(p,m='GET',b=null){const o={method:m,headers:{'Authorization':`Bearer ${TK}`}};if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}const r=await fetch('/api'+p,o);if(r.status===401){doLogout();return null;}if(!r.ok){const e=await r.json().catch(()=>({detail:'Error'}));throw new Error(e.detail||'Error');}return r.json();}
+async function dlX(url,fn){try{const r=await fetch(url,{headers:{'Authorization':`Bearer ${TK}`}});if(!r.ok){alert('Export failed');return;}const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();}catch(e){alert(e.message);}}
+const v=id=>document.getElementById(id)?.value||'';
+const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val??'';};
+const st=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=val??'0';};
+const bsM=id=>bootstrap.Modal.getOrCreateInstance(document.getElementById(id));
+const gc=n=>Array.from({length:n},(_,i)=>`hsl(${i*360/n},62%,52%)`);
+function bss(s){const m={active:'bs-a',suspended:'bs-s',absent:'bs-ab',fasting:'bs-f',vacation:'bs-v'};return`<span class="bs ${m[s]||'bs-ab'}">${s}</span>`;}
+function togAll(cls,chk,btn){document.querySelectorAll('.'+cls).forEach(c=>c.checked=chk.checked);updBD(cls,btn);}
+function updBD(cls,btn){const n=document.querySelectorAll('.'+cls+':checked').length;const el=document.getElementById(btn);if(el)el.style.display=n>0?'inline-block':'none';}
+function getSel(cls){return[...document.querySelectorAll('.'+cls+':checked')].map(c=>parseInt(c.value));}
+function setE(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('d-none');}}
+const DARK_THEMES=['navy','slate','midnight','carbon','volcanic'];
+let lastLight='blue';
+function setTh(t){
+  document.body.dataset.theme=t;localStorage.setItem('th',t);
+  document.querySelectorAll('.th-sw,.tpd').forEach(d=>d.classList.toggle('on',d.dataset.t===t));
+  const dk=DARK_THEMES.includes(t);
+  const btn=document.getElementById('dk-btn');if(btn)btn.textContent=dk?'☀️':'🌙';
+  if(!dk)lastLight=t;
+  if(Object.keys(CH).length)setTimeout(redrawCH,80);
+}
+function toggleDark(){
+  const cur=document.body.dataset.theme||'blue';
+  setTh(DARK_THEMES.includes(cur)?lastLight:'midnight');
+}
+(async function boot(){
+  if(isLK){initLK();return;}
+  const s=await fetch('/api/setup/status').then(r=>r.json()).catch(()=>null);if(!s){showPg('login-page');return;}
+  if(s.company_name)document.getElementById('lc-nm').textContent=s.company_name+' -- Meal System';
+  if(!s.setup_done){showPg('setup-page');return;}
+  TK=localStorage.getItem('wt')||'';RL=localStorage.getItem('wr')||'';UN=localStorage.getItem('wu')||'';
+  if(TK)startApp(s.company_name);else showPg('login-page');
+})();
+function showPg(id){['setup-page','login-page','app','lookup-page'].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display='none';});const el=document.getElementById(id);if(el)el.style.display=id==='app'?'block':'flex';}
+async function doSetup(){const fn=v('s-nm'),un=v('s-un'),pw=v('s-pw'),pw2=v('s-pw2'),co=v('s-co');if(!fn||!un||!pw){setE('se-err','All required');return;}if(pw!==pw2){setE('se-err','Passwords mismatch');return;}try{await fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({full_name:fn,username:un,password:pw,company_name:co})});alert('Created! Sign in.');showPg('login-page');}catch(e){setE('se-err',e.message);}}
+async function doLogin(){const fd=new FormData();fd.append('username',v('l-u'));fd.append('password',v('l-p'));try{const r=await fetch('/api/auth/login',{method:'POST',body:fd});if(!r.ok)throw new Error('Invalid credentials');const d=await r.json();TK=d.access_token;RL=d.role;UN=d.full_name;localStorage.setItem('wt',TK);localStorage.setItem('wr',RL);localStorage.setItem('wu',UN);const s=await fetch('/api/setup/status').then(r=>r.json()).catch(()=>({company_name:'GeometryHome'}));startApp(s.company_name||'GeometryHome');}catch(e){setE('le-err',e.message);}}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-page')?.style.display==='flex')doLogin();});
+function doLogout(){localStorage.removeItem('wt');localStorage.removeItem('wr');localStorage.removeItem('wu');TK='';RL='';UN='';showPg('login-page');}
+async function startApp(cn){showPg('app');document.getElementById('sb-co').textContent=cn||'GeometryHome';document.getElementById('top-user').textContent=`${UN} (${RL})`;document.getElementById('top-dt').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});const t=tod();['rpt-dt','fc-dt','att-dt','r-dt','bill-s','bill-e','ovr-s','ovr-e','hol-dt'].forEach(id=>sv(id,t));const lm=new Date();lm.setDate(lm.getDate()-30);sv('hist-s',lm.toISOString().split('T')[0]);sv('hist-e',t);const _th=localStorage.getItem('th')||'blue';
+  if(!DARK_THEMES.includes(_th))lastLight=_th;
+  setTh(_th);initSB();['ch-loc','ch-fp','ch-sh','ch-tr'].forEach(id=>{const saved=CP[id];if(saved){const k=id.split('-')[1];const sel=document.getElementById('sc-'+k);if(sel)sel.value=saved;}});await Promise.all([loadLocs(),loadFPs()]);try{const r=await API('/meal-rules');window.__countIftar=r?(r.count_iftar!==false):true;}catch(e){window.__countIftar=true;}loadDash();}
+const PT={dashboard:'Dashboard','supplier-report':'Supplier Report','report-history':'Report History','food-calc':'Food Calculator',billing:'Billing',employees:'Employees',attendance:'Attendance',vacation:'Vacation / Leave',suspensions:'Suspensions',fasting:'Fasting (Ramadan)','meal-exceptions':'Meal Exceptions','temp-overrides':'Temporary Overrides',holidays:'Holidays','bulk-edit':'Bulk Edit',locations:'Locations','food-prefs':'Food Preferences',users:'Users',reports:'Reports',settings:'Settings'};
+function nav(n){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+n)?.classList.add('active');document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.getAttribute('onclick')?.includes("'"+n+"'")));document.getElementById('pg-ttl').textContent=PT[n]||n;if(isMob()&&sbO)toggleSB();({dashboard:loadDash,'supplier-report':()=>{},'report-history':loadHist,'food-calc':loadFC,billing:loadBill,employees:()=>loadEmps(),attendance:loadAtt,vacation:loadVacs,suspensions:loadSusps,fasting:loadFasts,'meal-exceptions':loadMexs,'temp-overrides':loadOvrs,holidays:loadHol,'bulk-edit':loadBE,locations:loadLocs,'food-prefs':loadFPs,users:loadUsrs,settings:loadSet})[n]?.();}
+function mkC(id,dt,labels,data,title,ex={}){if(CH[id])CH[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;const dk=['navy','slate'].includes(document.body.dataset.theme);const tc=dk?'#CBD5E0':'#333';const type=gCP(id,dt);const at=type==='horizontalBar'?'bar':type;const iH=type==='horizontalBar';CH[id]=new Chart(ctx,{type:at,data:{labels,datasets:[{label:title,data,backgroundColor:gc(Math.max(data.length,1)),borderColor:gc(Math.max(data.length,1)),borderWidth:1,...(ex.ds||{})}]},options:{responsive:true,indexAxis:iH?'y':'x',plugins:{legend:{position:'bottom',labels:{color:tc,boxWidth:12,font:{size:11}}}},scales:['pie','doughnut'].includes(at)?{}:{x:{ticks:{color:tc}},y:{ticks:{color:tc}}}}});CD[id]={dt,labels,data,title,ex};}
+function chgC(id,t){sCP(id,t);const d=CD[id];if(d)mkC(id,d.dt,d.labels,d.data,d.title,d.ex);}
+function redrawCH(){Object.keys(CH).forEach(id=>{const d=CD[id];if(d)mkC(id,d.dt,d.labels,d.data,d.title,d.ex);});}
+async function loadDash(){
+  const[d,tr,fc]=await Promise.all([API('/dashboard'),API('/dashboard/trends'),API('/food-count?target_date='+tod())]);
+  if(!d){console.error('Dashboard load failed');return;}
+  st('d-tot',d.total_employees);st('d-ml',d.active_meal_count);st('d-ab',d.absent_today);st('d-su',d.suspended);st('d-fa',d.fasting);st('d-va',d.on_vacation);
+  mkC('ch-loc','bar',d.by_location.map(x=>x.name),d.by_location.map(x=>x.cnt),'By Accommodation');
+  mkC('ch-fp','pie',d.by_food.map(x=>x.name),d.by_food.map(x=>x.cnt),'Food Preference');
+  mkC('ch-sh','doughnut',d.by_shift.map(x=>STL[x.shift_type]||x.shift_type),d.by_shift.map(x=>x.cnt),'Shift');
+  if(tr)mkC('ch-tr','line',tr.map(t=>t.date.slice(5)),tr.map(t=>t.absent),'Absences',{ds:{fill:true,tension:.4}});
+  if(fc){const fs=new Set([...Object.keys(fc.breakfast||{}),...Object.keys(fc.lunch||{}),...Object.keys(fc.dinner||{})]);fs.delete('TOTAL');let rows='';for(const fp of[...fs].sort()){rows+=`<tr><td>${fp}</td><td>${fc.breakfast[fp]||0}</td><td>${fc.lunch[fp]||0}</td><td>${fc.dinner[fp]||0}</td><td>${fc.iftar_kit[fp]||0}</td></tr>`;}document.getElementById('dash-fc').innerHTML=`<div class="table-responsive"><table class="table table-sm mt mb-0"><thead><tr><th>Food</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Iftar Kit</th></tr></thead><tbody>${rows}<tr style="font-weight:700;"><td>TOTAL</td><td>${fc.breakfast.TOTAL||0}</td><td>${fc.lunch.TOTAL||0}</td><td>${fc.dinner.TOTAL||0}</td><td>${fc.iftar_kit.TOTAL||0}</td></tr></tbody></table></div>`;document.getElementById('dash-fc-note').textContent=`Excl: ${fc.excluded_suspended} susp | ${fc.excluded_absent} absent | ${fc.excluded_fasting} fasting | ${fc.excluded_vacation} leave`;}
+}
+async function loadFC(){const d=v('fc-dt')||tod();const data=await API('/food-count?target_date='+d);if(!data)return;const fs=new Set([...Object.keys(data.breakfast||{}),...Object.keys(data.lunch||{}),...Object.keys(data.dinner||{})]);fs.delete('TOTAL');let rows='';for(const fp of[...fs].sort()){rows+=`<tr><td>${fp}</td><td>${data.breakfast[fp]||0}</td><td>${data.lunch[fp]||0}</td><td>${data.dinner[fp]||0}</td><td>${data.iftar_kit[fp]||0}</td></tr>`;}document.getElementById('fc-res').innerHTML=`<div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Food Count -- ${fmt(d)}</h6><small style="color:var(--tx2);">Excl: ${data.excluded_suspended} susp | ${data.excluded_absent} absent | ${data.excluded_fasting} fasting | ${data.excluded_vacation} leave</small></div><div class="table-responsive"><table class="table mt"><thead><tr><th>Food</th><th>Breakfast</th><th>Lunch</th><th>Dinner</th><th>Iftar Kit</th></tr></thead><tbody>${rows}<tr style="font-weight:700;"><td>TOTAL</td><td>${data.breakfast.TOTAL||0}</td><td>${data.lunch.TOTAL||0}</td><td>${data.dinner.TOTAL||0}</td><td>${data.iftar_kit.TOTAL||0}</td></tr></tbody></table></div></div>`;}
+function doFcX(){const d=v('fc-dt')||tod();dlX('/api/export/food-report?target_date='+d,'food_report_'+d+'.xlsx');}
+function dlFR(){const d=v('r-dt')||tod();dlX('/api/export/food-report?target_date='+d,'food_report_'+d+'.xlsx');}
+// === SUPPLIER REPORT: new compact accommodation-wise Grand Total ===
+function bAccGT(accSummary,accs,fps2,grandTotal,isSun,countIftar){
+  if(!accSummary||!accs||!accs.length){
+    return '<div class="alert alert-warning py-2 small mb-0"><i class="fas fa-info-circle me-1"></i>This report was saved before the location-wise breakdown feature was added. Please regenerate it (Supplier Report page, same date) to see the accommodation-wise split.</div>';
+  }
+  const usedAccs=accs.filter(a=>fps2.some(f=>{const s=accSummary[a]?.[f];return s&&(s.bk||s.ln||s.dn);}));
+  if(!usedAccs.length)return '<div class="text-muted small py-2">No data</div>';
+  const hdrTitle=isSun?'sun-hdr':'gt-hdr';
+  let h1=`<tr><th rowspan="2" style="background:#388E3C;color:#fff;text-align:left;min-width:110px;">Food Preference</th>`;
+  usedAccs.forEach(a=>h1+=`<th colspan="3" class="acc-hdr">${a}</th>`);
+  h1+=`<th colspan="3" class="${hdrTitle}">Grand Total</th></tr>`;
+  let h2='<tr>';usedAccs.forEach(()=>h2+='<th class="ah">Breakfast</th><th class="ah">Lunch</th><th class="ah">Dinner</th>');
+  h2+=`<th class="${hdrTitle}">Breakfast</th><th class="${hdrTitle}">Lunch</th><th class="${hdrTitle}">Dinner</th></tr>`;
+  let body='';
+  const colBk={},colLn={},colDn={};usedAccs.forEach(a=>{colBk[a]=0;colLn[a]=0;colDn[a]=0;});
+  let gBk=0,gLn=0,gDn=0;
+  fps2.forEach(fp=>{
+    let rowBk=0,rowLn=0,rowDn=0,cells='';
+    usedAccs.forEach(a=>{const s=accSummary[a]?.[fp]||{bk:0,ln:0,dn:0};cells+=`<td>${s.bk||''}</td><td>${s.ln||''}</td><td>${s.dn||''}</td>`;rowBk+=s.bk||0;rowLn+=s.ln||0;rowDn+=s.dn||0;colBk[a]+=s.bk||0;colLn[a]+=s.ln||0;colDn[a]+=s.dn||0;});
+    if(!rowBk&&!rowLn&&!rowDn)return;
+    body+=`<tr><td>${fp}</td>${cells}<td class="gt-val">${rowBk||''}</td><td class="gt-val">${rowLn||''}</td><td class="gt-val">${rowDn||''}</td></tr>`;
+    gBk+=rowBk;gLn+=rowLn;gDn+=rowDn;
+  });
+  let footCells='';usedAccs.forEach(a=>{footCells+=`<td>${colBk[a]}</td><td>${colLn[a]}</td><td>${colDn[a]}</td>`;});
+  body+=`<tr><td>Grand Total</td>${footCells}<td>${gBk}</td><td>${gLn}</td><td>${gDn}</td></tr>`;
+  return`<div id="rpt-s-gt" class="rpt-sec"><div class="rpt-ttl" style="background:#388E3C;">${isSun?'SUNDAYS & HOLIDAYS':'TOTAL COUNT'}</div><table class="rt"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table></div>`;
+}
+function bFastingSec(faSummary,accs,fps2){
+  const aw=accs.filter(a=>fps2.some(f=>{const s=faSummary[a]?.[f];return s&&(s.bk||s.iftar||s.dn);}));
+  if(!aw.length)return'';
+  const ml=['bk','iftar','dn'];const ml2={bk:'Breakfast',iftar:'Iftar Kit',dn:'Dinner'};
+  let h1=`<tr><th rowspan="2" style="text-align:left;background:#555;color:#fff;min-width:110px;">Food</th>`;
+  aw.forEach(a=>h1+=`<th colspan="3" class="acc-hdr">${a}</th>`);
+  h1+=`<th colspan="3" style="background:#E65100;color:#fff;font-weight:700;font-size:10px;">Grand Total</th></tr>`;
+  let h2='<tr>';
+  aw.forEach(()=>ml.forEach(m=>h2+=`<th class="ah">${ml2[m]}</th>`));
+  ml.forEach(m=>h2+=`<th style="background:#E65100;color:#fff;font-size:10px;">${ml2[m]}</th>`);
+  h2+='</tr>';
+  let body='';
+  const cBk={},cIf={},cDn={};aw.forEach(a=>{cBk[a]=0;cIf[a]=0;cDn[a]=0;});
+  let gBk=0,gIf=0,gDn=0;
+  fps2.forEach(fp=>{
+    let rBk=0,rIf=0,rDn=0,cells='';
+    aw.forEach(a=>{const s=faSummary[a]?.[fp]||{bk:0,iftar:0,dn:0};
+      cells+=`<td>${s.bk||''}</td><td>${s.iftar||''}</td><td>${s.dn||''}</td>`;
+      rBk+=s.bk||0;rIf+=s.iftar||0;rDn+=s.dn||0;
+      cBk[a]+=s.bk||0;cIf[a]+=s.iftar||0;cDn[a]+=s.dn||0;});
+    if(!rBk&&!rIf&&!rDn)return;
+    body+=`<tr><td>${fp}</td>${cells}<td style="background:#FFF3E0;font-weight:600;">${rBk||''}</td><td style="background:#FFF3E0;font-weight:600;">${rIf||''}</td><td style="background:#FFF3E0;font-weight:600;">${rDn||''}</td></tr>`;
+    gBk+=rBk;gIf+=rIf;gDn+=rDn;
+  });
+  let fCells='';aw.forEach(a=>{fCells+=`<td>${cBk[a]}</td><td>${cIf[a]}</td><td>${cDn[a]}</td>`;});
+  body+=`<tr><td>Grand Total</td>${fCells}<td>${gBk}</td><td>${gIf}</td><td>${gDn}</td></tr>`;
+  return`<div id="rpt-s-fasting" class="rpt-sec"><div class="rpt-ttl" style="background:#E65100;">Fasting Employees — Breakfast / Iftar Kit / Dinner</div><table class="rt"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table></div>`;
+}
+
+function togSec(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'':'none';}
+function togAllSecs(show){['gt','l2a','d2f','l2s','fasting'].forEach(k=>{const c=document.getElementById('chk-'+k);if(c){c.checked=show;togSec('rpt-s-'+k,show);}});}
+function bSec(title,tbl,accs,fps2,bg,secId){
+  const aw=accs.filter(a=>fps2.some(f=>(tbl[a]?.[f]||0)>0));if(!aw.length)return'';
+  const rs=a=>fps2.reduce((s,f)=>s+(tbl[a]?.[f]||0),0);
+  const fs=f=>aw.reduce((s,a)=>s+(tbl[a]?.[f]||0),0);
+  const g=aw.reduce((s,a)=>s+rs(a),0);
+  let h=`<tr><th style="text-align:left;background:#555;color:#fff;min-width:110px;">Food</th>`;
+  aw.forEach(a=>h+=`<th class="ah">${a}</th>`);h+=`<th class="gh">Total</th></tr>`;
+  let b='';fps2.forEach(f=>{const t=fs(f);if(!t)return;b+=`<tr><td>${f}</td>${aw.map(a=>`<td>${tbl[a]?.[f]||0}</td>`).join('')}<td>${t}</td></tr>`;});
+  b+=`<tr><td>Total</td>${aw.map(a=>`<td>${rs(a)}</td>`).join('')}<td>${g}</td></tr>`;
+  return`<div id="${secId}" class="rpt-sec"><div class="rpt-ttl" style="background:${bg||'#1565C0'};">${title}</div><table class="rt"><thead>${h}</thead><tbody>${b}</tbody></table></div>`;
+}
+function rendRpt(data,tid){
+  // Reset all section checkboxes to checked on each fresh render
+  ['gt','l2a','d2f','l2s','fasting'].forEach(k=>{const c=document.getElementById('chk-'+k);if(c)c.checked=true;});
+  const{date:d,company_name:cn,is_sunday,is_holiday:isHol,accommodations:accs,food_prefs:fps2,lunch_to_accommodation:l2a,dinner_to_factory:d2f,lunch_to_site:l2s,iftar_to_accommodation:i2a,grand_total:gt,acc_summary:accSum,is_sunday_mode}=data;
+  const isSun=is_sunday||is_sunday_mode;
+  const ds=new Date(d+'T12:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+  const sunLbl=isHol?'HOLIDAY SCHEDULE':'SUNDAY SCHEDULE';
+  const sunBanner=isSun?`<div class="sun-banner">${sunLbl} -- All Meals Delivered to Accommodation Only.${isHol?' (Marked Holiday)':''}</div>`:'';
+  // Determine count_iftar -- pull from rules global if available, else assume true
+  const countIftar=window.__countIftar!==false;
+  const mainGT=bAccGT(accSum,accs,fps2,gt,isSun,countIftar);
+  let sunSec='';
+  if(data.sunday_schedule){
+    const ss=data.sunday_schedule;const sds=new Date(data.sunday_date+'T12:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'});
+    sunSec=`<div style="margin-top:16px;border-top:3px solid #E65100;padding-top:12px;"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px;">Sunday Schedule Preview -- ${sds}</div>${bAccGT(ss.acc_summary,ss.accommodations,ss.food_prefs,ss.grand_total,true,countIftar)}${ss.fasting_summary?bFastingSec(ss.fasting_summary,ss.accommodations,ss.food_prefs):''}</div>`;
+  }
+  const el=document.getElementById(tid);if(!el)return;el.style.display='block';
+  // Show the section toggle panel (supplier report page only)
+  const ctrl=document.getElementById('rpt-ctrl');if(ctrl)ctrl.style.display='';
+  el.innerHTML=`<div class="rpt-hdr"><div style="display:flex;align-items:center;gap:10px;"><div class="rpt-logo" style="overflow:hidden;border-radius:6px;"><img src="data:image/jpeg;base64,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" alt="GH" style="width:48px;height:48px;object-fit:cover;"></div><div><div style="font-size:16px;font-weight:700;color:#1565C0;">${cn||'GeometryHome'}</div><div style="font-size:10px;color:#555;">Workforce & Meal Management</div></div></div><div style="text-align:right;"><div style="font-size:12px;font-weight:700;color:#1565C0;">Daily Meal Report</div><div style="font-size:11px;color:#555;">${ds}</div><div style="font-size:9px;color:#999;">Generated: ${new Date().toLocaleTimeString()}</div></div></div>
+  ${sunBanner}${mainGT}
+  ${isSun?'':bSec('Lunch to Accommodation',l2a,accs,fps2,'#1565C0','rpt-s-l2a')}
+  ${isSun?'':bSec('Dinner to Factory',d2f,accs,fps2,'#B71C1C','rpt-s-d2f')}
+  ${isSun?'':bSec('Lunch to Site -- Delivered with Breakfast',l2s,accs,fps2,'#1B5E20','rpt-s-l2s')}
+  ${data.fasting_summary?bFastingSec(data.fasting_summary,accs,fps2):''}
+  ${sunSec}
+  <div class="rpt-wm">Created by Denil Joseph | ${cn||'GeometryHome'} Internal System</div>`;
+}
+async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;}
+async function dlImg(){const el=document.getElementById('rpt-preview');if(!el||el.style.display==='none'){alert('Generate report first');return;}const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';try{const c=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});const a=document.createElement('a');a.download='meal_report_'+v('rpt-dt')+'.png';a.href=c.toDataURL('image/png');a.click();}catch(e){alert('Failed: '+e.message);}finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';}}
+async function loadHist(){const data=await API('/report-history')||[];rendHL(data);}
+async function filterHist(){const s=v('hist-s'),e=v('hist-e');if(!s||!e){alert('Select both dates');return;}const data=await API('/report-history?start_date='+s+'&end_date='+e)||[];rendHL(data);}
+function rendHL(data){document.getElementById('hist-tb').innerHTML=data.map(h=>`<tr><td><input type="checkbox" class="hist-c" value="${h.id}" onchange="updBD('hist-c','hist-bd')"></td><td><a href="#" onclick="viewHist('${h.report_date}')" style="color:var(--ac);font-size:12px;">${h.report_date}</a></td><td><small style="color:var(--tx2);">${h.generated_by||'--'}</small></td><td><span class="abt text-danger border-danger" onclick="delH(${h.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="4" class="text-center py-3" style="color:var(--tx2);">No saved reports. Generate a supplier report first.</td></tr>';}
+async function viewHist(d){try{const r=await API('/report-history/'+d);rendRpt(r.report_data,'hist-preview');}catch(e){document.getElementById('hist-preview').innerHTML='<div class="alert alert-warning">No report for '+d+'.</div>';}}
+async function delH(id){if(!confirm('Delete?'))return;await API('/report-history/'+id,'DELETE');loadHist();}
+async function loadBill(){const prices=await API('/meal-prices')||[];const fpL=["Arabic","North Indian","North Indian Veg","South Indian","South Indian Veg"];const meals=['breakfast','lunch','dinner','iftar_kit'];const pM={};prices.forEach(p=>pM[p.food_pref+'|'+p.meal_type]=p.price);document.getElementById('px-tb').innerHTML=fpL.map(fp=>`<tr><td><strong>${fp}</strong></td>${meals.map(m=>`<td><input type="number" class="form-control form-control-sm" style="width:70px;" id="pr-${fp.replace(/\s/g,'_')}-${m}" value="${pM[fp+'|'+m]||0}" step="0.01" min="0"></td>`).join('')}</tr>`).join('');}
+async function savePx(){const fpL=["Arabic","North Indian","North Indian Veg","South Indian","South Indian Veg"];const meals=['breakfast','lunch','dinner','iftar_kit'];const prices=[];fpL.forEach(fp=>meals.forEach(m=>{const el=document.getElementById('pr-'+fp.replace(/\s/g,'_')+'-'+m);if(el)prices.push({food_pref:fp,meal_type:m,price:parseFloat(el.value)||0});}));try{await API('/meal-prices','POST',{prices});alert('Prices saved!');}catch(e){alert(e.message);}}
+async function calcBill(){const s=v('bill-s'),e=v('bill-e');if(!s||!e){alert('Select date range');return;}try{const data=await API('/billing/calculate?start_date='+s+'&end_date='+e);const isR=s!==e;const lbl=isR?fmt(s)+' to '+fmt(e):fmt(s);const rows=data.line_items.map(i=>`<tr><td>${i.food}</td><td><span class="chip chp">${i.meal}</span></td><td>${i.qty}</td><td>AED ${(i.unit_price||0).toFixed(2)}</td><td>AED ${(i.total||0).toFixed(2)}</td></tr>`).join('');document.getElementById('bill-res').innerHTML=`<p style="color:var(--tx2);font-size:12px;">Period: <strong style="color:var(--tx);">${lbl}</strong> <small>(based on Supplier Report)</small></p><div class="table-responsive mb-3"><table class="table mt table-sm"><thead><tr><th>Food</th><th>Meal</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="text-center" style="color:var(--tx2);">No items. Set prices first.</td></tr>'}</tbody></table></div><div class="bill-total"><div class="d-flex justify-content-between mb-1"><span>Subtotal</span><strong>AED ${data.subtotal.toFixed(2)}</strong></div><div class="d-flex justify-content-between mb-1"><span>VAT (5%)</span><strong>AED ${data.vat_5pct.toFixed(2)}</strong></div><hr style="border-color:rgba(255,255,255,.3);margin:8px 0;"><div class="d-flex justify-content-between"><span style="font-size:15px;font-weight:700;">Net Total</span><strong style="font-size:18px;">AED ${data.net_total.toFixed(2)}</strong></div></div>`;}catch(e){alert(e.message);}}
+async function loadEmps(){let url='/employees?_=1';const s=v('emp-srch'),sh=v('f-sh'),fp=v('f-fp');if(s)url+='&search='+encodeURIComponent(s);if(sh)url+='&shift_type='+sh;if(fp)url+='&food_pref='+encodeURIComponent(fp);const emps=await API(url)||[];document.getElementById('emp-tb').innerHTML=emps.map(e=>`<tr><td><input type="checkbox" class="emp-c" value="${e.id}" onchange="updBD('emp-c','emp-bd')"></td><td><code style="font-size:11px;">${e.emp_id}</code></td><td><strong>${e.full_name}</strong>${e.department?'<br><small style="color:var(--tx2);">'+e.department+'</small>':''}</td><td><span class="chip chp" style="font-size:11px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td><td>${e.food_pref_name||'--'}</td><td>${e.no_food_sunday?'<span class="bs bs-f" style="font-size:10px;">No Sun</span>':'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editEmp(${e.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delEmp(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="8" class="text-center py-4" style="color:var(--tx2);">No employees found</td></tr>';}
+async function showEmpM(emp=null){if(!locs.length)await loadLocs();if(!fps.length)await loadFPs();document.getElementById('em-ttl').textContent=emp?'Edit Employee':'Add Employee';sv('em-id',emp?.id||'');sv('em-nm',emp?.full_name||'');sv('em-dept',emp?.department||'');sv('em-eid',emp?.emp_id||'');sv('em-rem',emp?.remarks||'');sv('em-sh',emp?.shift_type||'normal');document.getElementById('em-sun').checked=!!emp?.no_food_sunday;const aS=document.getElementById('em-acc');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');const fS=document.getElementById('em-fp');fS.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(emp?.accommodation_id)aS.value=String(emp.accommodation_id);if(emp?.food_pref_id)fS.value=String(emp.food_pref_id);bsM('empMdl').show();}
+async function editEmp(id){const e=await API('/employees/'+id);if(e)await showEmpM(e);}
+async function saveEmp(){const id=v('em-id');const d={emp_id:v('em-eid')||null,full_name:v('em-nm'),department:v('em-dept')||null,accommodation_id:parseInt(v('em-acc'))||null,shift_type:v('em-sh'),food_pref_id:parseInt(v('em-fp'))||null,no_food_sunday:document.getElementById('em-sun').checked?1:0,remarks:v('em-rem')};if(!d.full_name){alert('Name required');return;}try{if(id)await API('/employees/'+id,'PUT',d);else await API('/employees','POST',d);bsM('empMdl').hide();loadEmps();}catch(e){alert(e.message);}}
+async function delEmp(id,name){if(!confirm('Delete '+name+'?'))return;try{await API('/employees/'+id,'DELETE');loadEmps();}catch(e){alert('Delete failed: '+e.message);}}
+async function bulkD(entity){const cfg={employees:{cls:'emp-c',url:'/employees/bulk-delete',btn:'emp-bd',rld:loadEmps},suspensions:{cls:'susp-c',url:'/suspensions/bulk-delete',btn:'susp-bd',rld:loadSusps},fasting:{cls:'fast-c',url:'/fasting/bulk-delete',btn:'fast-bd',rld:loadFasts},vacation:{cls:'vac-c',url:'/vacation/bulk-delete',btn:'vac-bd',rld:loadVacs},'meal-exceptions':{cls:'mex-c',url:'/meal-exceptions/bulk-delete',btn:'mex-bd',rld:loadMexs},'temp-overrides':{cls:'ovr-c',url:'/temp-overrides/bulk-delete',btn:'ovr-bd',rld:loadOvrs},'report-history':{cls:'hist-c',url:'/report-history/bulk-delete',btn:'hist-bd',rld:loadHist}}[entity];if(!cfg)return;const ids=getSel(cfg.cls);if(!ids.length){alert('Select items');return;}if(!confirm('Delete '+ids.length+'?'))return;try{await API(cfg.url,'POST',{ids});document.getElementById(cfg.btn).style.display='none';cfg.rld();}catch(e){alert(e.message);}}
+function showImp(){sv('imp-f','');document.getElementById('imp-res').classList.add('d-none');bsM('impMdl').show();}
+async function doImport(){const file=document.getElementById('imp-f').files[0];if(!file){alert('Select file');return;}const fd=new FormData();fd.append('file',file);const r=await fetch('/api/import/employees',{method:'POST',headers:{'Authorization':'Bearer '+TK},body:fd});const d=await r.json();const el=document.getElementById('imp-res');el.classList.remove('d-none');el.className='alert '+(d.errors?.length?'alert-warning':'alert-success');el.innerHTML='Imported: '+d.imported+' | Skipped: '+d.skipped+(d.errors?.length?'<br>'+d.errors.join('; '):'');loadEmps();}
+async function loadAtt(){const d=v('att-dt')||tod();const[emps,att]=await Promise.all([API('/employees'),API('/attendance?att_date='+d)]);const abS=new Set((att?.records||[]).filter(r=>r.status==='absent').map(r=>r.employee_id));attAll=(emps||[]).filter(e=>e.status==='active'&&!abS.has(e.id));rendAL(attAll);rendAbL(att?.records||[]);}
+function filtA(q){rendAL(attAll.filter(e=>e.full_name.toLowerCase().includes(q.toLowerCase())));}
+function rendAL(emps){document.getElementById('att-cnt').textContent=emps.length;document.getElementById('att-list').innerHTML=emps.map(e=>`<tr><td><input type="checkbox" class="att-c" value="${e.id}"></td><td>${e.full_name}</td><td><span class="chip chp" style="font-size:10px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td></tr>`).join('')||'<tr><td colspan="4" class="text-center py-2" style="color:var(--tx2);">All absent</td></tr>';}
+function rendAbL(records){const ab=records.filter(r=>r.status==='absent');document.getElementById('abs-cnt').textContent=ab.length;document.getElementById('abs-list').innerHTML=ab.map(r=>`<tr><td>${r.full_name}</td><td><small>${r.reason||'--'}</small></td><td><span class="abt text-success border-success" onclick="unAbs(${r.id})"><i class="fas fa-undo"></i></span></td></tr>`).join('')||'<tr><td colspan="3" class="text-center py-2" style="color:var(--tx2);">No absences</td></tr>';}
+function togAllA(chk){document.querySelectorAll('.att-c').forEach(c=>c.checked=chk.checked);}
+function markAbs(){absIds=[...document.querySelectorAll('.att-c:checked')].map(c=>parseInt(c.value));if(!absIds.length){alert('Select employees');return;}sv('abs-rsn','');bsM('absMdl').show();}
+async function confAbs(){const d=v('att-dt')||tod();await API('/attendance','POST',{employee_ids:absIds,att_date:d,status:'absent',reason:v('abs-rsn')});bsM('absMdl').hide();loadAtt();}
+async function unAbs(id){await API('/attendance/'+id,'DELETE');loadAtt();}
+async function loadVacs(){const data=await API('/vacation')||[];document.getElementById('vac-tb').innerHTML=data.map(v2=>`<tr><td><input type="checkbox" class="vac-c" value="${v2.id}" onchange="updBD('vac-c','vac-bd')"></td><td>${v2.full_name}<br><code style="font-size:10px;">${v2.emp_id}</code></td><td>${fmt(v2.start_date)}</td><td>${fmt(v2.end_date)}</td><td>${v2.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editVac(${v2.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delVac(${v2.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
+async function showVacM(rec=null){document.getElementById('vac-ttl').textContent=rec?'Edit':'Add Leave';sv('vac-id',rec?.id||'');sv('vac-s',rec?.start_date||tod());sv('vac-e',rec?.end_date||'');sv('vac-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('vac-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('vac-emp').value=rec.employee_id;bsM('vacMdl').show();}
+async function saveVac(){const id=v('vac-id');const d={employee_id:parseInt(document.getElementById('vac-emp').value),start_date:v('vac-s'),end_date:v('vac-e'),reason:v('vac-r')};try{if(id)await API('/vacation/'+id,'PUT',d);else await API('/vacation','POST',d);bsM('vacMdl').hide();loadVacs();}catch(e){alert(e.message);}}
+let vcC=[];async function editVac(id){if(!vcC.length)vcC=await API('/vacation')||[];const r=vcC.find(x=>x.id===id);if(r)showVacM(r);vcC=[];}
+async function delVac(id){if(!confirm('Delete?'))return;await API('/vacation/'+id,'DELETE');loadVacs();}
+async function loadSusps(){const data=await API('/suspensions')||[];document.getElementById('susp-tb').innerHTML=data.map(s=>`<tr><td><input type="checkbox" class="susp-c" value="${s.id}" onchange="updBD('susp-c','susp-bd')"></td><td>${s.full_name}<br><code style="font-size:10px;">${s.emp_id}</code></td><td>${fmt(s.start_date)}</td><td>${fmt(s.end_date)}</td><td>${s.reason||'--'}</td><td>${bss(s.is_active?'suspended':'active')}</td><td class="d-flex gap-1">${s.is_active?'<span class="abt text-success border-success" onclick="liftS('+s.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delS(${s.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No suspensions</td></tr>';}
+async function showSuspM(){const emps=await API('/employees')||[];document.getElementById('susp-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('susp-s',tod());sv('susp-e','');sv('susp-r','');bsM('suspMdl').show();}
+async function saveSusp(){const d={employee_id:parseInt(document.getElementById('susp-emp').value),start_date:v('susp-s'),end_date:v('susp-e')||null,reason:v('susp-r')};try{await API('/suspensions','POST',d);bsM('suspMdl').hide();loadSusps();}catch(e){alert(e.message);}}
+async function liftS(id){if(!confirm('Lift?'))return;await API('/suspensions/'+id+'/lift','PUT');loadSusps();}
+async function delS(id){if(!confirm('Delete?'))return;await API('/suspensions/'+id,'DELETE');loadSusps();}
+async function loadFasts(){const data=await API('/fasting')||[];document.getElementById('fast-tb').innerHTML=data.map(f=>`<tr><td><input type="checkbox" class="fast-c" value="${f.id}" onchange="updBD('fast-c','fast-bd')"></td><td>${f.full_name}<br><code style="font-size:10px;">${f.emp_id}</code></td><td>${fmt(f.start_date)}</td><td>${fmt(f.end_date)}</td><td>${f.reason||'--'}</td><td>${bss(f.is_active?'fasting':'active')}</td><td class="d-flex gap-1">${f.is_active?'<span class="abt text-success border-success" onclick="endF('+f.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delF(${f.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
+async function showFastM(){const emps=await API('/employees')||[];document.getElementById('fast-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('fast-s',tod());sv('fast-e','');sv('fast-r','Ramadan');bsM('fastMdl').show();}
+async function saveFast(){const d={employee_id:parseInt(document.getElementById('fast-emp').value),start_date:v('fast-s'),end_date:v('fast-e')||null,reason:v('fast-r')};try{await API('/fasting','POST',d);bsM('fastMdl').hide();loadFasts();}catch(e){alert(e.message);}}
+async function endF(id){if(!confirm('End?'))return;await API('/fasting/'+id+'/end','PUT');loadFasts();}
+async function delF(id){if(!confirm('Delete?'))return;await API('/fasting/'+id,'DELETE');loadFasts();}
+async function loadMexs(){const data=await API('/meal-exceptions')||[];document.getElementById('mex-tb').innerHTML=data.map(m=>`<tr><td><input type="checkbox" class="mex-c" value="${m.id}" onchange="updBD('mex-c','mex-bd')"></td><td>${m.full_name}<br><code style="font-size:10px;">${m.emp_id}</code></td><td><span class="chip chp">${m.meal_type}</span></td><td>${fmt(m.start_date)}</td><td>${fmt(m.end_date)}</td><td>${m.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editMex(${m.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delMex(${m.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No exceptions</td></tr>';}
+let mxC=[];
+async function showMexM(rec=null){document.getElementById('mex-ttl').textContent=rec?'Edit':'Add Exception';sv('mex-id',rec?.id||'');sv('mex-mt',rec?.meal_type||'breakfast');sv('mex-s',rec?.start_date||tod());sv('mex-e',rec?.end_date||'');sv('mex-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('mex-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('mex-emp').value=rec.employee_id;bsM('mexMdl').show();}
+async function saveMex(){const id=v('mex-id');const d={employee_id:parseInt(document.getElementById('mex-emp').value),meal_type:v('mex-mt'),start_date:v('mex-s'),end_date:v('mex-e'),reason:v('mex-r')};try{if(id)await API('/meal-exceptions/'+id,'PUT',d);else await API('/meal-exceptions','POST',d);bsM('mexMdl').hide();loadMexs();}catch(e){alert(e.message);}}
+async function editMex(id){if(!mxC.length)mxC=await API('/meal-exceptions')||[];const r=mxC.find(x=>x.id===id);if(r)showMexM(r);mxC=[];}
+async function delMex(id){if(!confirm('Delete?'))return;await API('/meal-exceptions/'+id,'DELETE');loadMexs();}
+async function loadOvrs(){const data=await API('/temp-overrides')||[];const today=tod();document.getElementById('ovr-tb').innerHTML=data.map(o=>{const isA=o.start_date<=today&&o.end_date>=today;const desc=o.override_shift_type?'Shift to '+(STL[o.override_shift_type]||o.override_shift_type):'Block to '+(o.new_acc_name||'--');return`<tr><td><input type="checkbox" class="ovr-c" value="${o.id}" onchange="updBD('ovr-c','ovr-bd')"></td><td>${o.full_name}<br><code style="font-size:10px;">${o.emp_id}</code></td><td><div style="font-size:12px;">${desc}</div></td><td>${fmt(o.start_date)}</td><td>${fmt(o.end_date)}</td><td>${isA?'<span class="bs bs-a">Active</span>':'<span class="bs bs-ab">Expired</span>'}</td><td><span class="abt text-danger border-danger" onclick="delOvr(${o.id})"><i class="fas fa-trash"></i></span></td></tr>`;}).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No overrides</td></tr>';const emps=await API('/employees')||[];const sel=document.getElementById('ovr-emp');const cur=sel.value;sel.innerHTML='<option value="">Select...</option>'+emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}" data-sh="${e.shift_type}" data-acc="${e.accommodation_id||''}" data-accnm="${e.accommodation_name||''}">${e.full_name} (${STL[e.shift_type]||e.shift_type})</option>`).join('');if(cur)sel.value=cur;const aS=document.getElementById('ovr-av');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}
+function loadOvrC(){const sel=document.getElementById('ovr-emp');const opt=sel.options[sel.selectedIndex];if(!opt||!opt.value){document.getElementById('ovr-curr').style.display='none';return;}const sh=opt.dataset.sh||'normal';const an=opt.dataset.accnm||'--';const md={shift1:'BK:'+an+' LN:Factory DN:'+an,shift2:'BK:'+an+' LN:'+an+' DN:Factory',shift3:'All:'+an,normal:'BK:'+an+' LN:Factory DN:'+an,site:'BK:'+an+' LN:packed-with-BK DN:'+an}[sh]||'--';document.getElementById('ovr-ci').innerHTML='Shift: '+(STL[sh]||sh)+' | Block: '+an+'<br><small>'+md+'</small>';document.getElementById('ovr-curr').style.display='block';}
+function togOvr(){const t=v('ovr-type');document.getElementById('ovr-sf').style.display=t==='shift'?'block':'none';document.getElementById('ovr-af').style.display=t==='accommodation'?'block':'none';}
+async function saveOvr(){const sel=document.getElementById('ovr-emp');const opt=sel.options[sel.selectedIndex];if(!opt||!opt.value){alert('Select employee');return;}const t=v('ovr-type');const d={employee_id:parseInt(opt.value),start_date:v('ovr-s'),end_date:v('ovr-e'),reason:v('ovr-r'),override_shift_type:t==='shift'?v('ovr-sv'):null,override_accommodation_id:t==='accommodation'?(parseInt(v('ovr-av'))||null):null,orig_shift_type:opt.dataset.sh||null,orig_accommodation_id:parseInt(opt.dataset.acc)||null,orig_acc_name:opt.dataset.accnm||null};if(!d.start_date||!d.end_date){alert('Dates required');return;}try{await API('/temp-overrides','POST',d);loadOvrs();sv('ovr-r','');alert('Override saved -- reverts after '+fmt(d.end_date));}catch(e){alert(e.message);}}
+async function delOvr(id){if(!confirm('Delete?'))return;await API('/temp-overrides/'+id,'DELETE');loadOvrs();}
+// HOLIDAYS
+async function loadHol(){const data=await API('/holidays')||[];document.getElementById('hol-tb').innerHTML=data.map(h=>`<tr><td>${fmt(h.date)}</td><td>${h.name}</td><td><span class="abt text-danger border-danger" onclick="delHoliday(${h.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="3" class="text-center py-3" style="color:var(--tx2);">No holidays marked</td></tr>';}
+async function saveHoliday(){const d=v('hol-dt'),n=v('hol-nm');if(!d||!n){alert('Date and name required');return;}try{await API('/holidays','POST',{date:d,name:n});sv('hol-nm','');loadHol();}catch(e){alert(e.message);}}
+async function delHoliday(id){if(!confirm('Remove holiday?'))return;await API('/holidays/'+id,'DELETE');loadHol();}
+async function loadLocs(){locs=await API('/locations')||[];const s=document.getElementById('em-acc');if(s){const c=s.value;s.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');if(c)s.value=c;}const aS=document.getElementById('ovr-av');if(aS){aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}const grid=document.getElementById('loc-grid');if(!grid)return locs;grid.innerHTML=locs.map(l=>`<div class="col-md-4 col-sm-6"><div class="card pad"><div class="d-flex justify-content-between align-items-start"><div><h6 class="mb-1"><i class="fas fa-building me-2" style="color:var(--p);"></i>${l.name}</h6><small style="color:var(--tx2);">${l.description||'--'}</small><br><span class="chip chp mt-1">${l.loc_type}</span></div><div class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editLoc(${l.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delLoc(${l.id})"><i class="fas fa-archive"></i></span></div></div></div></div>`).join('');return locs;}
+function showLocM(rec=null){document.getElementById('loc-ttl').textContent=rec?'Edit':'Add Location';sv('loc-id',rec?.id||'');sv('loc-nm',rec?.name||'');sv('loc-dc',rec?.description||'');sv('loc-tp',rec?.loc_type||'accommodation');bsM('locMdl').show();}
+async function editLoc(id){const l=locs.find(x=>x.id===id);if(l)showLocM(l);}
+async function saveLoc(){const id=v('loc-id');const d={name:v('loc-nm'),description:v('loc-dc'),loc_type:v('loc-tp')};try{if(id)await API('/locations/'+id,'PUT',d);else await API('/locations','POST',d);bsM('locMdl').hide();loadLocs();}catch(e){alert(e.message);}}
+async function delLoc(id){if(!confirm('Archive?'))return;await API('/locations/'+id,'DELETE');loadLocs();}
+async function loadFPs(){fps=await API('/food-preferences')||[];const s=document.getElementById('em-fp');if(s){const c=s.value;s.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(c)s.value=c;}const grid=document.getElementById('fp-grid');if(!grid)return fps;grid.innerHTML=fps.map(f=>`<div class="col-md-4 col-sm-6"><div class="card pad"><div class="d-flex justify-content-between align-items-start"><div><h6 class="mb-1"><i class="fas fa-drumstick-bite me-2" style="color:var(--ac);"></i>${f.name}</h6><span class="chip chp">${f.category||'--'}</span></div><div class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editFp(${f.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delFp(${f.id})"><i class="fas fa-trash"></i></span></div></div></div></div>`).join('');return fps;}
+function showFpM(rec=null){document.getElementById('fp-ttl').textContent=rec?'Edit':'Add Food Preference';sv('fp-id',rec?.id||'');sv('fp-nm',rec?.name||'');sv('fp-ct',rec?.category||'');bsM('fpMdl').show();}
+async function editFp(id){const f=fps.find(x=>x.id===id);if(f)showFpM(f);}
+async function saveFp(){const id=v('fp-id');const d={name:v('fp-nm'),category:v('fp-ct')};try{if(id)await API('/food-preferences/'+id,'PUT',d);else await API('/food-preferences','POST',d);bsM('fpMdl').hide();loadFPs();}catch(e){alert(e.message);}}
+async function delFp(id){if(!confirm('Delete?'))return;await API('/food-preferences/'+id,'DELETE');loadFPs();}
+async function loadUsrs(){const data=await API('/users')||[];document.getElementById('user-tb').innerHTML=data.map(u=>`<tr><td><code>${u.username}</code></td><td>${u.full_name}</td><td><span class="chip chp">${u.role}</span></td><td>${bss(u.is_active?'active':'suspended')}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editUsr(${u.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="deacU(${u.id})"><i class="fas fa-user-slash"></i></span></td></tr>`).join('');}
+let ucC=[];function showUsrM(rec=null){document.getElementById('usr-ttl').textContent=rec?'Edit':'Add User';sv('usr-id',rec?.id||'');sv('u-nm',rec?.full_name||'');sv('u-un',rec?.username||'');sv('u-pw','');sv('u-role',rec?.role||'viewer');bsM('usrMdl').show();}
+async function editUsr(id){if(!ucC.length)ucC=await API('/users')||[];const u=ucC.find(x=>x.id===id);if(u)showUsrM(u);ucC=[];}
+async function saveUsr(){const id=v('usr-id');const d={full_name:v('u-nm'),username:v('u-un'),password:v('u-pw'),role:v('u-role')};try{if(id)await API('/users/'+id,'PUT',d);else await API('/users','POST',d);bsM('usrMdl').hide();loadUsrs();}catch(e){alert(e.message);}}
+async function deacU(id){if(!confirm('Deactivate?'))return;await API('/users/'+id,'DELETE');loadUsrs();}
+let cR={};let cRK=[];
+const PS=['shift1','shift2','shift3','normal','site'];
+async function loadSet(){const s=await API('/lookup/settings').catch(()=>null);if(s)document.getElementById('lk-tog').checked=s.lookup_enabled==='1';cR=await API('/meal-rules').catch(()=>({}))||{};window.__countIftar=cR.count_iftar!==false;cRK=[];rendRules(cR);setTh(localStorage.getItem('th')||'blue');}
+function rendRules(rules){const all=[...PS,...Object.keys(rules).filter(k=>!PS.includes(k)&&typeof rules[k]==='object'&&rules[k]!==null),...cRK];const un=[...new Set(all)];const lL={shift1:'1st Shift (7-3)',shift2:'2nd Shift (3-11)',shift3:'3rd Shift (11-7)',normal:'Normal (9-6)',site:'Site Worker'};document.getElementById('rules-tb').innerHTML=un.map(k=>{const sr=rules[k]||{bk:true,ln:'accommodation',dn:'accommodation'};const iC=!PS.includes(k);return`<tr><td><strong>${lL[k]||k}</strong>${iC?`<span class="abt text-danger border-danger ms-2" style="width:20px;height:20px;font-size:10px;" onclick="rmRule('${k}')"><i class="fas fa-times"></i></span>`:''}</td><td><input type="checkbox" id="r-bk-${k}" ${sr.bk!==false?'checked':''}> Yes</td><td><select id="r-ln-${k}" class="rules-sel"><option value="accommodation" ${sr.ln==='accommodation'?'selected':''}>accommodation</option><option value="factory" ${sr.ln==='factory'?'selected':''}>factory</option><option value="site" ${sr.ln==='site'?'selected':''}>site</option></select></td><td><select id="r-dn-${k}" class="rules-sel"><option value="accommodation" ${sr.dn==='accommodation'?'selected':''}>accommodation</option><option value="factory" ${sr.dn==='factory'?'selected':''}>factory</option></select></td><td></td></tr>`;}).join('');const sp=[['arabic_bk','Arabic gets Breakfast','cb'],['arabic_dn','Arabic gets Dinner','cb'],['fasting_bk','Fasting gets Breakfast','cb'],['fasting_dn','Fasting gets Dinner','cb'],['absent_ln','Absent Lunch',['accommodation','factory']],['absent_dn','Absent Dinner',['accommodation','factory']]];document.getElementById('sp-rules').innerHTML=sp.map(([k,lbl,type])=>{if(type==='cb')return`<div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="sr-${k}" ${rules[k]?'checked':''}><label class="form-check-label">${lbl}</label></div></div>`;return`<div class="col-md-3"><label class="form-label">${lbl}</label><select id="sr-${k}" class="form-select form-select-sm">${type.map(o=>`<option value="${o}" ${rules[k]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;}).join('');const cr=[['count_bk','Count Breakfast'],['count_ln_acc','Count Lunch (Accom)'],['count_ln_factory','Count Lunch (Factory)'],['count_ln_site','Count Lunch (Site)'],['count_dn_acc','Count Dinner (Accom)'],['count_dn_factory','Count Dinner (Factory)'],['count_iftar','Count Iftar Kit']];document.getElementById('cnt-rules').innerHTML=cr.map(([k,lbl])=>`<div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="cr-${k}" ${rules[k]!==false?'checked':''}><label class="form-check-label">${lbl}</label></div></div>`).join('');}
+function addRule(){const name=prompt('Enter shift name (e.g. Weekend Shift):');if(!name||!name.trim())return;const key=name.trim().toLowerCase().replace(/\s+/g,'_');if(document.getElementById('r-bk-'+key)){alert('Already exists');return;}cR[key]={bk:true,ln:'accommodation',dn:'accommodation'};cRK.push(key);rendRules(cR);}
+function rmRule(k){if(!confirm('Remove?'))return;delete cR[k];cRK=cRK.filter(x=>x!==k);rendRules(cR);}
+async function saveRules(){const all=[...PS,...cRK,...Object.keys(cR).filter(k=>!PS.includes(k)&&typeof cR[k]==='object')];const un=[...new Set(all)];const upd={};un.forEach(k=>{const bk=document.getElementById('r-bk-'+k);const ln=document.getElementById('r-ln-'+k);const dn=document.getElementById('r-dn-'+k);if(ln)upd[k]={bk:bk?.checked!==false,ln:ln.value||'accommodation',dn:dn?.value||'accommodation'};});['arabic_bk','arabic_dn','fasting_bk','fasting_dn'].forEach(k=>{upd[k]=document.getElementById('sr-'+k)?.checked||false;});['absent_ln','absent_dn'].forEach(k=>{upd[k]=document.getElementById('sr-'+k)?.value||'accommodation';});['count_bk','count_ln_acc','count_ln_factory','count_ln_site','count_dn_acc','count_dn_factory','count_iftar'].forEach(k=>{upd[k]=document.getElementById('cr-'+k)?.checked!==false;});try{await API('/meal-rules','POST',upd);alert('Rules saved!');cR={...cR,...upd};window.__countIftar=cR.count_iftar!==false;}catch(e){alert(e.message);}}
+async function saveLk(){await API('/lookup/settings','POST',{lookup_enabled:document.getElementById('lk-tog').checked?'1':'0'});}
+async function runMaint(){const r=await API('/maintenance/expire','POST');alert('Expired '+r.expired_suspensions+' suspension(s).\n'+'Fixed '+r.orphaned_fixed+' employee(s) stuck with a stale suspended status.');loadSusps?.();loadEmps?.();}
+function initLK(){['app','login-page','setup-page'].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display='none';});document.getElementById('lookup-page').style.display='flex';document.getElementById('lk-in').focus();}
+let lkT;
+function lkSearch(q){clearTimeout(lkT);const nn=document.getElementById('lk-names');const dt=document.getElementById('lk-detail');dt.style.display='none';if(q.length<2){nn.style.display='none';return;}lkT=setTimeout(async()=>{try{const data=await fetch('/api/lookup/names?q_str='+encodeURIComponent(q)).then(r=>r.json());if(!data.length){nn.innerHTML='<div style="padding:14px;text-align:center;color:#555;font-size:13px;">No employee found</div>';nn.style.display='block';return;}nn.style.display='block';nn.innerHTML=data.map(e=>`<div class="lk-item" onclick="showLkD(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><div class="lk-av">${e.full_name.charAt(0)}</div><div><div style="font-weight:600;color:#E8E8E8;">${e.full_name}</div><div style="font-size:11px;color:#888;">${e.department||''}</div></div></div>`).join('');}catch(e){nn.innerHTML='<div style="padding:14px;color:#EF9A9A;font-size:13px;">Lookup unavailable</div>';nn.style.display='block';}},300);}
+async function showLkD(id,name){document.getElementById('lk-names').style.display='none';document.getElementById('lk-in').value=name;const dt=document.getElementById('lk-detail');dt.style.display='block';dt.innerHTML='<div class="text-center py-2"><i class="fas fa-spinner fa-spin" style="color:#1565C0;"></i></div>';try{const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());const sC={active:'#2E7D32',fasting:'#E65100',suspended:'#C62828',absent:'#757575',vacation:'#1565C0'};const sL={active:'Active',fasting:'Fasting (Ramadan)',suspended:'Suspended',absent:'Absent Today',vacation:'On Leave'};dt.innerHTML=`<div class="d-flex justify-content-between align-items-start mb-3"><div><h5 class="mb-0" style="color:#E8E8E8;">${e.full_name}</h5><small style="color:#888;">${e.department||''}</small></div><span style="background:${sC[e.current_status]||'#555'};color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;">${sL[e.current_status]||e.current_status}</span></div><div class="row g-2 mb-3"><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Accommodation</strong><br><span style="color:#42A5F5;">${e.acc_name||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Shift</strong><br><span style="color:#42A5F5;">${e.shift_label||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Food</strong><br><span style="color:#42A5F5;">${e.food_pref||'--'}</span></div></div><div style="background:#222;border-radius:8px;padding:14px;border:1px solid #333;"><div style="font-weight:600;color:#42A5F5;margin-bottom:8px;font-size:13px;">Meal Allocation Today</div>${e.get_bk?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Breakfast</span><strong style="color:#42A5F5;">${e.bk_loc}</strong></div>`:'<div style="padding:7px 0;border-bottom:1px solid #333;color:#555;">No Breakfast</div>'}${e.get_ln&&!e.iftar_kit?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Lunch</span><strong style="color:#42A5F5;">${e.ln_loc}</strong></div>`:''}${e.iftar_kit?`<div style="padding:7px 0;border-bottom:1px solid #333;color:#FFA726;font-weight:600;font-size:13px;">Iftar Kit + Dinner at ${e.bk_loc}</div>`:''}${e.get_dn?`<div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="color:#aaa;">Dinner</span><strong style="color:#42A5F5;">${e.dn_loc}</strong></div>`:'<div style="padding:7px 0;color:#555;">No Dinner</div>'}</div>`;}catch(e){dt.innerHTML='<div style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:10px;font-size:13px;">Not found or lookup disabled</div>';}}
+// === BULK EDIT ===
+let beEmps=[], beFiltered=[];
+async function loadBE(){
+  beEmps=await API('/employees')||[];
+  const accSet=[...new Set(beEmps.map(e=>e.accommodation_name).filter(Boolean))].sort();
+  document.getElementById('be-facc').innerHTML='<option value="">All Blocks</option>'+accSet.map(a=>`<option>${a}</option>`).join('');
+  const fpD=document.getElementById('be-new-fp');
+  fpD.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  const accD=document.getElementById('be-new-acc');
+  accD.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+  [['be-chk-sh','be-new-sh'],['be-chk-fp','be-new-fp'],['be-chk-acc','be-new-acc']].forEach(([chk,sel])=>{
+    const c=document.getElementById(chk),s=document.getElementById(sel);
+    if(c)c.onchange=()=>{s.disabled=!c.checked;beUpdCount();};
+  });
+  beFilter();
+}
+function beFilter(){
+  const srch=v('be-srch').toLowerCase();const sh=v('be-fsh');const fp=v('be-ffp');const acc=v('be-facc');
+  beFiltered=beEmps.filter(e=>{
+    if(srch&&!e.full_name.toLowerCase().includes(srch))return false;
+    if(sh&&e.shift_type!==sh)return false;
+    if(fp&&e.food_pref_name!==fp)return false;
+    if(acc&&e.accommodation_name!==acc)return false;
+    return true;
+  });
+  const STL2={shift1:'1st Shift',shift2:'2nd Shift',shift3:'3rd Shift',normal:'Normal',site:'Site'};
+  document.getElementById('be-tb').innerHTML=beFiltered.map(e=>`<tr>
+    <td><input type="checkbox" class="be-c" value="${e.id}" onchange="beUpdCount()"></td>
+    <td><strong>${e.full_name}</strong><br><code style="font-size:10px;">${e.emp_id}</code></td>
+    <td><span class="chip chp" style="font-size:10px;">${STL2[e.shift_type]||e.shift_type}</span></td>
+    <td style="font-size:12px;">${e.food_pref_name||'--'}</td>
+    <td style="font-size:12px;">${e.accommodation_name||'--'}</td>
+  </tr>`).join('')||'<tr><td colspan="5" class="text-center py-3" style="color:var(--tx2);">No employees match filter</td></tr>';
+  document.getElementById('be-showing').textContent=beFiltered.length;
+  document.getElementById('be-all').checked=false;
+  beUpdCount();
+}
+function beToggleAll(chk){document.querySelectorAll('.be-c').forEach(c=>c.checked=chk.checked);beUpdCount();}
+function beSelectAll(){document.querySelectorAll('.be-c').forEach(c=>c.checked=true);document.getElementById('be-all').checked=true;beUpdCount();}
+function beUpdCount(){
+  const n=document.querySelectorAll('.be-c:checked').length;
+  const sc=document.getElementById('be-sel-cnt');if(sc)sc.textContent=n;
+  const bc=document.getElementById('be-btn-cnt');if(bc)bc.textContent=n;
+}
+async function applyBulkEdit(){
+  const ids=[...document.querySelectorAll('.be-c:checked')].map(c=>parseInt(c.value));
+  if(!ids.length){alert('Select at least one employee first.');return;}
+  const chkSh=document.getElementById('be-chk-sh')?.checked;
+  const chkFp=document.getElementById('be-chk-fp')?.checked;
+  const chkAcc=document.getElementById('be-chk-acc')?.checked;
+  if(!chkSh&&!chkFp&&!chkAcc){alert('Check at least one field to change.');return;}
+  const payload={ids};
+  if(chkSh){const sv2=v('be-new-sh');if(!sv2){alert('Select a shift type.');return;}payload.shift_type=sv2;}
+  if(chkFp){const fv=parseInt(v('be-new-fp'));if(!fv){alert('Select a food preference.');return;}payload.food_pref_id=fv;}
+  if(chkAcc){const av=parseInt(v('be-new-acc'));if(!av){alert('Select an accommodation block.');return;}payload.accommodation_id=av;}
+  if(!confirm(`Apply permanent changes to ${ids.length} employee(s)? This cannot be undone.`))return;
+  try{
+    const res=await API('/employees/bulk-update','POST',payload);
+    const el=document.getElementById('be-result');el.style.display='block';
+    el.className='alert alert-success py-2 small';
+    const what=[];
+    if(chkSh){const s=document.getElementById('be-new-sh');what.push('Shift to '+s.options[s.selectedIndex].text);}
+    if(chkFp){const s=document.getElementById('be-new-fp');what.push('Food to '+s.options[s.selectedIndex].text);}
+    if(chkAcc){const s=document.getElementById('be-new-acc');what.push('Block to '+s.options[s.selectedIndex].text);}
+    el.innerHTML='<i class="fas fa-check-circle me-1"></i><strong>'+res.updated+' employee(s) updated:</strong> '+what.join(' | ');
+    document.querySelectorAll('.be-c').forEach(c=>c.checked=false);
+    document.getElementById('be-all').checked=false;beUpdCount();
+    await loadBE();
+  }catch(e){
+    const el=document.getElementById('be-result');el.style.display='block';
+    el.className='alert alert-danger py-2 small';el.textContent='Error: '+e.message;
+  }
+}
+
+setTh(localStorage.getItem('th')||'blue');
+</script></body></html>
