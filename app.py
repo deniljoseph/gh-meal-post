@@ -96,6 +96,9 @@ def q(c,s,p=()):
 def q1(c,s,p=()):
     r=q(c,s,p); return r[0] if r else None
 
+# Tables without serial 'id' column — RETURNING id would fail on these
+_NO_ID_TABLES = ('settings','meal_prices')
+
 def run(c,s,p=()):
     raw = c._raw if isinstance(c,_PGConn) else c
     if USE_PG:
@@ -103,9 +106,15 @@ def run(c,s,p=()):
             cur = raw.cursor()
             sql = _sql(s)
             if sql.strip().upper().startswith('INSERT'):
-                cur.execute(sql+' RETURNING id', p if p else None)
-                row = cur.fetchone(); raw.commit(); cur.close()
-                return row[0] if row else None
+                # Only use RETURNING id for tables that have a serial id
+                has_id = not any(t in sql.lower() for t in _NO_ID_TABLES)
+                if has_id:
+                    cur.execute(sql+' RETURNING id', p if p else None)
+                    row = cur.fetchone(); raw.commit(); cur.close()
+                    return row[0] if row else None
+                else:
+                    cur.execute(sql, p if p else None)
+                    raw.commit(); cur.close(); return None
             cur.execute(sql, p if p else None)
             raw.commit(); cur.close(); return None
         except Exception:
