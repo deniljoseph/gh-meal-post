@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GeometryHome - Workforce & Meal v5.1</title>
+<title>GH - Meal Management System</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAEPklEQVR4nO1Vy0t6WxRee5+jPaRILE+RlQiVQUHQe1BEkyKUsmlNg6C/IQoCIyKoRtEkiBo0U6KZUNTQolRqkGFFmIOih3mw9BzXHaxfJ7Pundx74XL5fYPNdp+1v/XY31oC/Mb/HuzHU8455xwRfxkxlslkMplMjoGqqpqNZikIAiKqqvonDhnjnP/4SRCEv5sB55zCbG5udjqdLS0txcXFDw8Pfr/f6/VeXFyQe1VV+/r6urq61tfX7+7uGGOISGtJScnk5OTZ2ZnH49HYPtkBoLS0dHNzExERUVGUeDyu7aenpwFAr9cDwMrKCiJ2dXVpmdF1m82GiF6vFwBEUQQArrEjoiRJe3t7o6OjHo+np6fHZDKZzeaqqqqJiYnHx8eZmZmlpaVUKgUAiURCUZR0Op1TEFVVFUV5eXnJrRT5393dRcSpqanvpbTZbIFAABHHxsYAYGFhARHb2tpyMrBarYi4tbWlZSCShaqq3d3dg4ODPp9vdnZWEARSDhVXEIRIJNLT02OxWBRFAQAqLv8AIpKD7wIRAYAxBgAjIyOIuLy8zBhjjBERACAi0b28vGi5kzplWdbkS2sikfjBAVnb7XbG2Pn5OTGS12wwxkRRFEXx7e2Nvm5tbSWTyWwVUVmymyP3NyGTyUxMTLjdbkVR6A45eHp6AgCn00mRms1mCuU7wxcHJNhwONzf319XV3d9fQ0A0Wj08PBQVVXtDdPptMPh0Ol0sViMau10Oo+OjrIdVFdX39zc5GZPFAMDA4jo8XgAQKfTfY/FarXKshwMBgFgfn4eEVtbW+HjYYm0pqYmR0UcAFRV5Zz7fL7j4+OhoaHx8XESuCAIoijS/bKyMq/XW1hYODc3p8VEcuCca+v3l/sFYmlqanp6ekLExcVFm81Gn/Lz8wcGBujxV1dX6dDtdqfTacoguw9qamrS6fTGxoaWQW6h2traTk9PaTxcXV2FQiFyiYhutxsA8vLyIGtUUJfA11FBdf5sNAINWL/f39HRMTIy4nK5GhoaDAbD2dnZwcHB9vZ2IBAAgPf3d8bY/v6+IAjRaJQ0rc3219fXtbU1v98PH53xCb1e39vb29zc/HMRAejxy8vLac8Y0+v1BoPhR0VoYPAhU4fDkUqlCgoKJEkyGo23t7eJREKn05lMJs758/OzJEmFhYVFRUWXl5fhcHh4eDgUChkMhpubm/z8fKPRiIjxeLy2tjYYDO7s7BDt5+iQZVmSJLvdXltbm8lkmpqakslkZ2dnIBA4OTlpbGwsKiqSZfn+/j6ZTLpcrkAgIMtyRUVFKpVqb28PBoOhUKilpYVzXlJS8iUDDY2NjbFYTJblysrKu7u7+vr6cDis9WplZeXDwwPnPC8vz2az+f1+RVFKS0slSYpEIlqvWSyWaDQqy/Jfd/g/hty/TPKZPb9oox0CgHZCm5xItVv/euy/8V/BH+RnZMBCAH7eAAAAAElFTkSuQmCC">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
@@ -179,7 +179,7 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
 <div id="app" style="display:none">
 <div id="sb-backdrop" onclick="toggleSB()"></div>
 <nav class="sb" id="sidebar">
-  <div class="sb-brand"><div class="gh-logo"><img src="data:image/jpeg;base64,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" alt="GH Logo"></div><div class="sb-txt"><strong id="sb-co">GeometryHome</strong><em>Workforce & Meal</em></div></div>
+  <div class="sb-brand"><div class="gh-logo"><img src="data:image/jpeg;base64,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" alt="GH Logo"></div><div class="sb-txt"><strong id="sb-co">GH Meal Mgmt</strong><em>Workforce & Meal</em></div></div>
   <ul class="nav flex-column mt-1 pb-3">
     <li><a class="nav-link active" href="#" onclick="nav('dashboard')"><i class="fas fa-chart-pie"></i>Dashboard</a></li>
     <li><a class="nav-link" href="#" onclick="nav('supplier-report')"><i class="fas fa-file-image"></i>Supplier Report</a></li>
@@ -262,7 +262,7 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
         <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-l2a" checked onchange="togSec('rpt-s-l2a',this.checked)"><label class="form-check-label small ms-1">Lunch to Accommodation</label></div>
         <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-d2f" checked onchange="togSec('rpt-s-d2f',this.checked)"><label class="form-check-label small ms-1">Dinner to Factory</label></div>
         <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-l2s" checked onchange="togSec('rpt-s-l2s',this.checked)"><label class="form-check-label small ms-1">Lunch to Site</label></div>
-        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-fasting" checked onchange="togSec('rpt-s-fasting',this.checked)"><label class="form-check-label small ms-1">Fasting / Iftar Kits</label></div>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-fasting" checked onchange="togSec('rpt-s-fasting',this.checked)"><label class="form-check-label small ms-1">Fasting — Suhoor &amp; Iftar</label></div>
         <div class="ms-auto d-flex gap-2 flex-wrap">
           <button class="btn btn-sm btn-outline-secondary" onclick="togAllSecs(false)">Clear All</button>
           <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="togAllSecs(true)">Show All</button>
@@ -316,7 +316,15 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
         <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showEmpM()"><i class="fas fa-plus me-1"></i>Add Employee</button>
       </div>
     </div>
-    <div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="emp-all" onchange="togAll('emp-c',this,'emp-bd')"></th><th>Emp ID</th><th>Name</th><th>Shift</th><th>Accommodation</th><th>Food Pref</th><th>Sun</th><th>Actions</th></tr></thead><tbody id="emp-tb"></tbody></table></div></div>
+    <div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr>
+  <th><input type="checkbox" id="emp-all" onchange="togAll('emp-c',this,'emp-bd')"></th>
+  <th onclick="sortEmp('emp_id')" style="cursor:pointer;user-select:none;">Emp ID <span id="srt-emp_id"></span></th>
+  <th onclick="sortEmp('full_name')" style="cursor:pointer;user-select:none;">Name <span id="srt-full_name"></span></th>
+  <th onclick="sortEmp('shift_type')" style="cursor:pointer;user-select:none;">Shift <span id="srt-shift_type"></span></th>
+  <th onclick="sortEmp('accommodation_name')" style="cursor:pointer;user-select:none;">Accommodation <span id="srt-accommodation_name"></span></th>
+  <th onclick="sortEmp('food_pref_name')" style="cursor:pointer;user-select:none;">Food Pref <span id="srt-food_pref_name"></span></th>
+  <th>Sun</th><th>Actions</th>
+</tr></thead><tbody id="emp-tb"></tbody></table></div></div>
   </div>
   <div class="page" id="page-attendance">
     <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div></div></div>
@@ -593,7 +601,7 @@ function toggleDark(){
 (async function boot(){
   if(isLK){initLK();return;}
   const s=await fetch('/api/setup/status').then(r=>r.json()).catch(()=>null);if(!s){showPg('login-page');return;}
-  if(s.company_name)document.getElementById('lc-nm').textContent=s.company_name+' -- Meal System';
+  if(s.company_name)document.getElementById('lc-nm').textContent='GH - Meal Management System';
   if(!s.setup_done){showPg('setup-page');return;}
   TK=localStorage.getItem('wt')||'';RL=localStorage.getItem('wr')||'';UN=localStorage.getItem('wu')||'';
   if(TK)startApp(s.company_name);else showPg('login-page');
@@ -603,7 +611,7 @@ async function doSetup(){const fn=v('s-nm'),un=v('s-un'),pw=v('s-pw'),pw2=v('s-p
 async function doLogin(){const fd=new FormData();fd.append('username',v('l-u'));fd.append('password',v('l-p'));try{const r=await fetch('/api/auth/login',{method:'POST',body:fd});if(!r.ok)throw new Error('Invalid credentials');const d=await r.json();TK=d.access_token;RL=d.role;UN=d.full_name;localStorage.setItem('wt',TK);localStorage.setItem('wr',RL);localStorage.setItem('wu',UN);const s=await fetch('/api/setup/status').then(r=>r.json()).catch(()=>({company_name:'GeometryHome'}));startApp(s.company_name||'GeometryHome');}catch(e){setE('le-err',e.message);}}
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('login-page')?.style.display==='flex')doLogin();});
 function doLogout(){localStorage.removeItem('wt');localStorage.removeItem('wr');localStorage.removeItem('wu');TK='';RL='';UN='';showPg('login-page');}
-async function startApp(cn){showPg('app');document.getElementById('sb-co').textContent=cn||'GeometryHome';document.getElementById('top-user').textContent=`${UN} (${RL})`;document.getElementById('top-dt').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});const t=tod();['rpt-dt','fc-dt','att-dt','r-dt','bill-s','bill-e','ovr-s','ovr-e','hol-dt'].forEach(id=>sv(id,t));const lm=new Date();lm.setDate(lm.getDate()-30);sv('hist-s',lm.toISOString().split('T')[0]);sv('hist-e',t);const _th=localStorage.getItem('th')||'blue';
+async function startApp(cn){showPg('app');document.getElementById('sb-co').textContent='GH - Meal Mgmt';document.getElementById('top-user').textContent=`${UN} (${RL})`;document.getElementById('top-dt').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});const t=tod();['rpt-dt','fc-dt','att-dt','r-dt','bill-s','bill-e','ovr-s','ovr-e','hol-dt'].forEach(id=>sv(id,t));const lm=new Date();lm.setDate(lm.getDate()-30);sv('hist-s',lm.toISOString().split('T')[0]);sv('hist-e',t);const _th=localStorage.getItem('th')||'blue';
   if(!DARK_THEMES.includes(_th))lastLight=_th;
   setTh(_th);initSB();['ch-loc','ch-fp','ch-sh','ch-tr'].forEach(id=>{const saved=CP[id];if(saved){const k=id.split('-')[1];const sel=document.getElementById('sc-'+k);if(sel)sel.value=saved;}});await Promise.all([loadLocs(),loadFPs()]);try{const r=await API('/meal-rules');window.__countIftar=r?(r.count_iftar!==false):true;}catch(e){window.__countIftar=true;}loadDash();}
 const PT={dashboard:'Dashboard','supplier-report':'Supplier Report','report-history':'Report History','food-calc':'Food Calculator',billing:'Billing',employees:'Employees',attendance:'Attendance',vacation:'Vacation / Leave',suspensions:'Suspensions',fasting:'Fasting (Ramadan)','meal-exceptions':'Meal Exceptions','temp-overrides':'Temporary Overrides',holidays:'Holidays','bulk-edit':'Bulk Edit',locations:'Locations','food-prefs':'Food Preferences',users:'Users',reports:'Reports',settings:'Settings'};
@@ -652,32 +660,33 @@ function bAccGT(accSummary,accs,fps2,grandTotal,isSun,countIftar){
   return`<div id="rpt-s-gt" class="rpt-sec"><div class="rpt-ttl" style="background:#388E3C;">${isSun?'SUNDAYS & HOLIDAYS':'TOTAL COUNT'}</div><table class="rt"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table></div>`;
 }
 function bFastingSec(faSummary,accs,fps2){
-  const aw=accs.filter(a=>fps2.some(f=>{const s=faSummary[a]?.[f];return s&&(s.bk||s.iftar||s.dn);}));
+  const allAccs=[...new Set([...accs,...Object.keys(faSummary||{})])];
+  const aw=allAccs.filter(a=>fps2.some(f=>{const s=faSummary[a]?.[f];return s&&(s.bk||s.iftar);}));
   if(!aw.length)return'';
-  const ml=['bk','iftar','dn'];const ml2={bk:'Breakfast',iftar:'Iftar Kit',dn:'Dinner'};
+  const ml=['bk','iftar'];const ml2={bk:'Suhoor',iftar:'Iftar'};
   let h1=`<tr><th rowspan="2" style="text-align:left;background:#555;color:#fff;min-width:110px;">Food</th>`;
-  aw.forEach(a=>h1+=`<th colspan="3" class="acc-hdr">${a}</th>`);
-  h1+=`<th colspan="3" style="background:#E65100;color:#fff;font-weight:700;font-size:10px;">Grand Total</th></tr>`;
+  aw.forEach(a=>h1+=`<th colspan="2" class="acc-hdr">${a}</th>`);
+  h1+=`<th colspan="2" style="background:#E65100;color:#fff;font-weight:700;font-size:10px;">Grand Total</th></tr>`;
   let h2='<tr>';
   aw.forEach(()=>ml.forEach(m=>h2+=`<th class="ah">${ml2[m]}</th>`));
   ml.forEach(m=>h2+=`<th style="background:#E65100;color:#fff;font-size:10px;">${ml2[m]}</th>`);
   h2+='</tr>';
   let body='';
-  const cBk={},cIf={},cDn={};aw.forEach(a=>{cBk[a]=0;cIf[a]=0;cDn[a]=0;});
-  let gBk=0,gIf=0,gDn=0;
+  const cBk={},cIf={};aw.forEach(a=>{cBk[a]=0;cIf[a]=0;});
+  let gBk=0,gIf=0;
   fps2.forEach(fp=>{
-    let rBk=0,rIf=0,rDn=0,cells='';
-    aw.forEach(a=>{const s=faSummary[a]?.[fp]||{bk:0,iftar:0,dn:0};
-      cells+=`<td>${s.bk||''}</td><td>${s.iftar||''}</td><td>${s.dn||''}</td>`;
-      rBk+=s.bk||0;rIf+=s.iftar||0;rDn+=s.dn||0;
-      cBk[a]+=s.bk||0;cIf[a]+=s.iftar||0;cDn[a]+=s.dn||0;});
-    if(!rBk&&!rIf&&!rDn)return;
-    body+=`<tr><td>${fp}</td>${cells}<td style="background:#FFF3E0;font-weight:600;">${rBk||''}</td><td style="background:#FFF3E0;font-weight:600;">${rIf||''}</td><td style="background:#FFF3E0;font-weight:600;">${rDn||''}</td></tr>`;
-    gBk+=rBk;gIf+=rIf;gDn+=rDn;
+    let rBk=0,rIf=0,cells='';
+    aw.forEach(a=>{const s=faSummary[a]?.[fp]||{bk:0,iftar:0};
+      cells+=`<td>${s.bk||''}</td><td>${s.iftar||''}</td>`;
+      rBk+=s.bk||0;rIf+=s.iftar||0;
+      cBk[a]+=s.bk||0;cIf[a]+=s.iftar||0;});
+    if(!rBk&&!rIf)return;
+    body+=`<tr><td>${fp}</td>${cells}<td style="background:#FFF3E0;font-weight:600;">${rBk||''}</td><td style="background:#FFF3E0;font-weight:600;">${rIf||''}</td></tr>`;
+    gBk+=rBk;gIf+=rIf;
   });
-  let fCells='';aw.forEach(a=>{fCells+=`<td>${cBk[a]}</td><td>${cIf[a]}</td><td>${cDn[a]}</td>`;});
-  body+=`<tr><td>Grand Total</td>${fCells}<td>${gBk}</td><td>${gIf}</td><td>${gDn}</td></tr>`;
-  return`<div id="rpt-s-fasting" class="rpt-sec"><div class="rpt-ttl" style="background:#E65100;">Fasting Employees — Breakfast / Iftar Kit / Dinner</div><table class="rt"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table></div>`;
+  let fCells='';aw.forEach(a=>{fCells+=`<td>${cBk[a]}</td><td>${cIf[a]}</td>`;});
+  body+=`<tr><td>Grand Total</td>${fCells}<td>${gBk}</td><td>${gIf}</td></tr>`;
+  return`<div id="rpt-s-fasting" class="rpt-sec"><div class="rpt-ttl" style="background:#E65100;">Fasting Employees \u2014 Suhoor &amp; Iftar</div><table class="rt"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table></div>`;
 }
 
 function togSec(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'':'none';}
@@ -719,7 +728,7 @@ function rendRpt(data,tid){
   ${isSun?'':bSec('Lunch to Site -- Delivered with Breakfast',l2s,accs,fps2,'#1B5E20','rpt-s-l2s')}
   ${data.fasting_summary?bFastingSec(data.fasting_summary,accs,fps2):''}
   ${sunSec}
-  <div class="rpt-wm">Created by Denil Joseph | ${cn||'GeometryHome'} Internal System</div>`;
+  <div class="rpt-wm">Created by Denil Joseph | GH - Meal Management System</div>`;
 }
 async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;}
 async function dlImg(){const el=document.getElementById('rpt-preview');if(!el||el.style.display==='none'){alert('Generate report first');return;}const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';try{const c=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});const a=document.createElement('a');a.download='meal_report_'+v('rpt-dt')+'.png';a.href=c.toDataURL('image/png');a.click();}catch(e){alert('Failed: '+e.message);}finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';}}
@@ -731,7 +740,26 @@ async function delH(id){if(!confirm('Delete?'))return;await API('/report-history
 async function loadBill(){const prices=await API('/meal-prices')||[];const fpL=["Arabic","North Indian","North Indian Veg","South Indian","South Indian Veg"];const meals=['breakfast','lunch','dinner','iftar_kit'];const pM={};prices.forEach(p=>pM[p.food_pref+'|'+p.meal_type]=p.price);document.getElementById('px-tb').innerHTML=fpL.map(fp=>`<tr><td><strong>${fp}</strong></td>${meals.map(m=>`<td><input type="number" class="form-control form-control-sm" style="width:70px;" id="pr-${fp.replace(/\s/g,'_')}-${m}" value="${pM[fp+'|'+m]||0}" step="0.01" min="0"></td>`).join('')}</tr>`).join('');}
 async function savePx(){const fpL=["Arabic","North Indian","North Indian Veg","South Indian","South Indian Veg"];const meals=['breakfast','lunch','dinner','iftar_kit'];const prices=[];fpL.forEach(fp=>meals.forEach(m=>{const el=document.getElementById('pr-'+fp.replace(/\s/g,'_')+'-'+m);if(el)prices.push({food_pref:fp,meal_type:m,price:parseFloat(el.value)||0});}));try{await API('/meal-prices','POST',{prices});alert('Prices saved!');}catch(e){alert(e.message);}}
 async function calcBill(){const s=v('bill-s'),e=v('bill-e');if(!s||!e){alert('Select date range');return;}try{const data=await API('/billing/calculate?start_date='+s+'&end_date='+e);const isR=s!==e;const lbl=isR?fmt(s)+' to '+fmt(e):fmt(s);const rows=data.line_items.map(i=>`<tr><td>${i.food}</td><td><span class="chip chp">${i.meal}</span></td><td>${i.qty}</td><td>AED ${(i.unit_price||0).toFixed(2)}</td><td>AED ${(i.total||0).toFixed(2)}</td></tr>`).join('');document.getElementById('bill-res').innerHTML=`<p style="color:var(--tx2);font-size:12px;">Period: <strong style="color:var(--tx);">${lbl}</strong> <small>(based on Supplier Report)</small></p><div class="table-responsive mb-3"><table class="table mt table-sm"><thead><tr><th>Food</th><th>Meal</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="text-center" style="color:var(--tx2);">No items. Set prices first.</td></tr>'}</tbody></table></div><div class="bill-total"><div class="d-flex justify-content-between mb-1"><span>Subtotal</span><strong>AED ${data.subtotal.toFixed(2)}</strong></div><div class="d-flex justify-content-between mb-1"><span>VAT (5%)</span><strong>AED ${data.vat_5pct.toFixed(2)}</strong></div><hr style="border-color:rgba(255,255,255,.3);margin:8px 0;"><div class="d-flex justify-content-between"><span style="font-size:15px;font-weight:700;">Net Total</span><strong style="font-size:18px;">AED ${data.net_total.toFixed(2)}</strong></div></div>`;}catch(e){alert(e.message);}}
-async function loadEmps(){let url='/employees?_=1';const s=v('emp-srch'),sh=v('f-sh'),fp=v('f-fp');if(s)url+='&search='+encodeURIComponent(s);if(sh)url+='&shift_type='+sh;if(fp)url+='&food_pref='+encodeURIComponent(fp);const emps=await API(url)||[];document.getElementById('emp-tb').innerHTML=emps.map(e=>`<tr><td><input type="checkbox" class="emp-c" value="${e.id}" onchange="updBD('emp-c','emp-bd')"></td><td><code style="font-size:11px;">${e.emp_id}</code></td><td><strong>${e.full_name}</strong>${e.department?'<br><small style="color:var(--tx2);">'+e.department+'</small>':''}</td><td><span class="chip chp" style="font-size:11px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td><td>${e.food_pref_name||'--'}</td><td>${e.no_food_sunday?'<span class="bs bs-f" style="font-size:10px;">No Sun</span>':'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editEmp(${e.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delEmp(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="8" class="text-center py-4" style="color:var(--tx2);">No employees found</td></tr>';}
+let _empData=[],_empSort={col:null,dir:1};
+function sortEmp(col){
+  if(_empSort.col===col)_empSort.dir*=-1;else{_empSort.col=col;_empSort.dir=1;}
+  document.querySelectorAll('[id^="srt-"]').forEach(el=>el.textContent='');
+  const el=document.getElementById('srt-'+col);if(el)el.textContent=_empSort.dir===1?' \u25b2':' \u25bc';
+  renderEmps();
+}
+function renderEmps(){
+  let data=[..._empData];
+  if(_empSort.col){data.sort((a,b)=>{const av=(a[_empSort.col]||'').toString().toLowerCase();const bv=(b[_empSort.col]||'').toString().toLowerCase();return av.localeCompare(bv)*_empSort.dir;});}
+  document.getElementById('emp-tb').innerHTML=data.map(e=>`<tr><td><input type="checkbox" class="emp-c" value="${e.id}" onchange="updBD('emp-c','emp-bd')"></td><td><code style="font-size:11px;">${e.emp_id}</code></td><td><strong>${e.full_name}</strong>${e.department?'<br><small style="color:var(--tx2);">'+e.department+'</small>':''}</td><td><span class="chip chp" style="font-size:11px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td><td>${e.food_pref_name||'--'}</td><td>${e.no_food_sunday?'<span class="bs bs-f" style="font-size:10px;">No Sun</span>':'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editEmp(${e.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delEmp(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="8" class="text-center py-4" style="color:var(--tx2);">No employees found</td></tr>';
+}
+async function loadEmps(){
+  let url='/employees?_=1';const s=v('emp-srch'),sh=v('f-sh'),fp=v('f-fp');
+  if(s)url+='&search='+encodeURIComponent(s);
+  if(sh)url+='&shift_type='+sh;
+  if(fp)url+='&food_pref='+encodeURIComponent(fp);
+  _empData=await API(url)||[];
+  renderEmps();
+}
 async function showEmpM(emp=null){if(!locs.length)await loadLocs();if(!fps.length)await loadFPs();document.getElementById('em-ttl').textContent=emp?'Edit Employee':'Add Employee';sv('em-id',emp?.id||'');sv('em-nm',emp?.full_name||'');sv('em-dept',emp?.department||'');sv('em-eid',emp?.emp_id||'');sv('em-rem',emp?.remarks||'');sv('em-sh',emp?.shift_type||'normal');document.getElementById('em-sun').checked=!!emp?.no_food_sunday;const aS=document.getElementById('em-acc');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');const fS=document.getElementById('em-fp');fS.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(emp?.accommodation_id)aS.value=String(emp.accommodation_id);if(emp?.food_pref_id)fS.value=String(emp.food_pref_id);bsM('empMdl').show();}
 async function editEmp(id){const e=await API('/employees/'+id);if(e)await showEmpM(e);}
 async function saveEmp(){const id=v('em-id');const d={emp_id:v('em-eid')||null,full_name:v('em-nm'),department:v('em-dept')||null,accommodation_id:parseInt(v('em-acc'))||null,shift_type:v('em-sh'),food_pref_id:parseInt(v('em-fp'))||null,no_food_sunday:document.getElementById('em-sun').checked?1:0,remarks:v('em-rem')};if(!d.full_name){alert('Name required');return;}try{if(id)await API('/employees/'+id,'PUT',d);else await API('/employees','POST',d);bsM('empMdl').hide();loadEmps();}catch(e){alert(e.message);}}
@@ -744,8 +772,26 @@ function filtA(q){rendAL(attAll.filter(e=>e.full_name.toLowerCase().includes(q.t
 function rendAL(emps){document.getElementById('att-cnt').textContent=emps.length;document.getElementById('att-list').innerHTML=emps.map(e=>`<tr><td><input type="checkbox" class="att-c" value="${e.id}"></td><td>${e.full_name}</td><td><span class="chip chp" style="font-size:10px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td></tr>`).join('')||'<tr><td colspan="4" class="text-center py-2" style="color:var(--tx2);">All absent</td></tr>';}
 function rendAbL(records){const ab=records.filter(r=>r.status==='absent');document.getElementById('abs-cnt').textContent=ab.length;document.getElementById('abs-list').innerHTML=ab.map(r=>`<tr><td>${r.full_name}</td><td><small>${r.reason||'--'}</small></td><td><span class="abt text-success border-success" onclick="unAbs(${r.id})"><i class="fas fa-undo"></i></span></td></tr>`).join('')||'<tr><td colspan="3" class="text-center py-2" style="color:var(--tx2);">No absences</td></tr>';}
 function togAllA(chk){document.querySelectorAll('.att-c').forEach(c=>c.checked=chk.checked);}
-function markAbs(){absIds=[...document.querySelectorAll('.att-c:checked')].map(c=>parseInt(c.value));if(!absIds.length){alert('Select employees');return;}sv('abs-rsn','');bsM('absMdl').show();}
-async function confAbs(){const d=v('att-dt')||tod();await API('/attendance','POST',{employee_ids:absIds,att_date:d,status:'absent',reason:v('abs-rsn')});bsM('absMdl').hide();loadAtt();}
+function markAbs(){
+  absIds=[...document.querySelectorAll('.att-c:checked')].map(c=>parseInt(c.value));
+  if(!absIds.length){alert('Select at least one employee first.');return;}
+  sv('abs-rsn','');
+  bsM('absMdl').show();
+}
+async function confAbs(){
+  const d=v('att-dt')||tod();
+  const btn=document.querySelector('#absMdl .btn-danger');
+  if(btn){btn.disabled=true;btn.textContent='Saving...';}
+  try{
+    await API('/attendance','POST',{employee_ids:absIds,att_date:d,status:'absent',reason:v('abs-rsn')});
+    bsM('absMdl').hide();
+    loadAtt();
+  }catch(e){
+    alert('Failed to mark absent: '+e.message+'. Please try again.');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='Confirm Absent';}
+  }
+}
 async function unAbs(id){await API('/attendance/'+id,'DELETE');loadAtt();}
 async function loadVacs(){const data=await API('/vacation')||[];document.getElementById('vac-tb').innerHTML=data.map(v2=>`<tr><td><input type="checkbox" class="vac-c" value="${v2.id}" onchange="updBD('vac-c','vac-bd')"></td><td>${v2.full_name}<br><code style="font-size:10px;">${v2.emp_id}</code></td><td>${fmt(v2.start_date)}</td><td>${fmt(v2.end_date)}</td><td>${v2.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editVac(${v2.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delVac(${v2.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
 async function showVacM(rec=null){document.getElementById('vac-ttl').textContent=rec?'Edit':'Add Leave';sv('vac-id',rec?.id||'');sv('vac-s',rec?.start_date||tod());sv('vac-e',rec?.end_date||'');sv('vac-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('vac-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('vac-emp').value=rec.employee_id;bsM('vacMdl').show();}

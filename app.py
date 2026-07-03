@@ -37,57 +37,96 @@ DEFAULT_RULES={
 }
 
 # ── DATABASE LAYER ─────────────────────────────────────────────────────────────
+_pg_pool = None
+
+def _get_pool():
+    global _pg_pool
+    if _pg_pool is None:
+        import psycopg2.pool
+        url = DATABASE_URL.replace('postgres://','postgresql://',1)
+        # min=2 connections always ready, max=20 for burst
+        _pg_pool = psycopg2.pool.ThreadedConnectionPool(2, 20, url)
+    return _pg_pool
+
+class _PGConn:
+    """Wraps a psycopg2 connection; close() returns it to pool safely."""
+    def __init__(self, raw):
+        self._raw = raw
+    def close(self):
+        try:
+            if not self._raw.closed:
+                self._raw.rollback()   # reset any pending/aborted transaction
+            _get_pool().putconn(self._raw)
+        except Exception:
+            pass
+    def __del__(self):
+        try: self.close()
+        except: pass
+    def __getattr__(self, name):
+        return getattr(self._raw, name)
+
 def db_conn():
     if USE_PG:
-        import psycopg2
-        url = DATABASE_URL.replace('postgres://','postgresql://',1)
-        return psycopg2.connect(url)
+        raw = _get_pool().getconn()
+        raw.autocommit = False
+        return _PGConn(raw)
     c = sqlite3.connect(DB_PATH)
     c.row_factory = sqlite3.Row
     c.execute('PRAGMA foreign_keys=ON')
     return c
 
 def _sql(s):
-    """Adapt SQLite SQL to PostgreSQL"""
     return s.replace('?','%s') if USE_PG else s
 
 def q(c,s,p=()):
+    raw = c._raw if isinstance(c,_PGConn) else c
     if USE_PG:
         import psycopg2.extras
-        cur = c.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(_sql(s), p if p else None)
-        res = [dict(r) for r in cur.fetchall()]
-        cur.close(); return res
-    return [dict(r) for r in c.execute(s,p).fetchall()]
+        try:
+            cur = raw.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(_sql(s), p if p else None)
+            res = [dict(r) for r in cur.fetchall()]
+            cur.close(); return res
+        except Exception:
+            try: raw.rollback()
+            except: pass
+            raise
+    return [dict(r) for r in raw.execute(s,p).fetchall()]
 
 def q1(c,s,p=()):
     r=q(c,s,p); return r[0] if r else None
 
 def run(c,s,p=()):
+    raw = c._raw if isinstance(c,_PGConn) else c
     if USE_PG:
-        cur = c.cursor()
-        sql = _sql(s)
-        if sql.strip().upper().startswith('INSERT'):
-            try:
+        try:
+            cur = raw.cursor()
+            sql = _sql(s)
+            if sql.strip().upper().startswith('INSERT'):
                 cur.execute(sql+' RETURNING id', p if p else None)
-                row = cur.fetchone(); c.commit(); cur.close()
+                row = cur.fetchone(); raw.commit(); cur.close()
                 return row[0] if row else None
-            except Exception:
-                c.rollback(); cur.close(); return None
-        cur.execute(sql, p if p else None)
-        c.commit(); cur.close(); return None
-    cur = c.execute(s,p); c.commit(); return cur.lastrowid
+            cur.execute(sql, p if p else None)
+            raw.commit(); cur.close(); return None
+        except Exception:
+            try: raw.rollback()
+            except: pass
+            raise
+    cur = raw.execute(s,p); raw.commit(); return cur.lastrowid
 
 def exe(c,s,p=()):
-    """Execute without returning id"""
+    raw = c._raw if isinstance(c,_PGConn) else c
     if USE_PG:
-        cur = c.cursor()
-        try: cur.execute(_sql(s), p if p else None); c.commit()
-        except Exception: c.rollback()
-        finally: cur.close()
-    else:
-        try: c.execute(s,p); c.commit()
-        except: pass
+        try:
+            cur = raw.cursor()
+            cur.execute(_sql(s), p if p else None)
+            raw.commit(); cur.close()
+        except Exception:
+            try: raw.rollback()
+            except: pass
+        return
+    try: raw.execute(s,p); raw.commit()
+    except: pass
 
 def rows(r): return [dict(x) for x in r]
 
@@ -234,18 +273,18 @@ def build_report(conn,d,sunday_mode=False):
             if ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
             if ovr.get('override_accommodation_id') and ovr.get('new_acc_name'):eff_acc=ovr['new_acc_name']
         m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
-        in_fa=eff_acc in fa_sum and fp in fa_sum[eff_acc]
         in_ac=eff_acc in acc_sum and fp in acc_sum[eff_acc]
+        # Auto-create fa_sum entry for any acc/fp combination
+        if eff_acc not in fa_sum: fa_sum[eff_acc]={}
+        if fp not in fa_sum[eff_acc]: fa_sum[eff_acc][fp]={'bk':0,'iftar':0,'dn':0}
         if m['get_bk'] and e['id'] not in bk_ex and rules.get('count_bk',True):
             gt_bk[fp]=gt_bk.get(fp,0)+1
-            if is_fa:
-                if in_fa: fa_sum[eff_acc][fp]['bk']+=1
-            else:
-                if in_ac: acc_sum[eff_acc][fp]['bk']+=1
+            if is_fa: fa_sum[eff_acc][fp]['bk']+=1
+            elif in_ac: acc_sum[eff_acc][fp]['bk']+=1
         if is_fa:
             if rules.get('count_iftar',True):
                 gt_if[fp]=gt_if.get(fp,0)+1; add(i2a,eff_acc,fp)
-                if in_fa: fa_sum[eff_acc][fp]['iftar']+=1
+                fa_sum[eff_acc][fp]['iftar']+=1
         elif m['get_ln'] and e['id'] not in ln_ex:
             if sunday_mode:
                 add(l2a,eff_acc,fp)
@@ -262,18 +301,14 @@ def build_report(conn,d,sunday_mode=False):
             if sunday_mode:
                 if rules.get('count_dn_acc',True):
                     gt_dn[fp]=gt_dn.get(fp,0)+1
-                    if is_fa:
-                        if in_fa: fa_sum[eff_acc][fp]['dn']+=1
-                    else:
-                        if in_ac: acc_sum[eff_acc][fp]['dn']+=1
+                    if is_fa: fa_sum[eff_acc][fp]['dn']+=1
+                    elif in_ac: acc_sum[eff_acc][fp]['dn']+=1
             else:
                 if m['dn_to_factory']:add(d2f,eff_acc,fp)
                 if (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
                     gt_dn[fp]=gt_dn.get(fp,0)+1
-                    if is_fa:
-                        if in_fa: fa_sum[eff_acc][fp]['dn']+=1
-                    else:
-                        if in_ac: acc_sum[eff_acc][fp]['dn']+=1
+                    if is_fa: fa_sum[eff_acc][fp]['dn']+=1
+                    elif in_ac: acc_sum[eff_acc][fp]['dn']+=1
     return{'lunch_to_accommodation':l2a,'dinner_to_factory':d2f,'lunch_to_site':l2s,'iftar_to_accommodation':i2a,'accommodations':accs,'food_prefs':fps,'acc_summary':acc_sum,'fasting_summary':fa_sum,'grand_total':{'breakfast':gt_bk,'lunch':gt_ln,'dinner':gt_dn,'iftar_kit':gt_if},'is_sunday_mode':sunday_mode}
 
 # ── AUTH ───────────────────────────────────────────────────────────────────────
@@ -397,15 +432,13 @@ def trends(_=Depends(get_user)):
     result=[{'date':d,'absent':q1(conn,'SELECT COUNT(*) c FROM attendance WHERE att_date=? AND status=?',(d,'absent'))['c']} for d in days]
     conn.close(); return result
 
-@app.get('/api/food-count')
-def food_count(target_date:Optional[str]=None,_=Depends(get_user)):
-    conn=db_conn(); d=target_date or date.today().isoformat()
-    rules=get_rules(conn); susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
+def compute_food_count(d:str):
+    conn=db_conn();rules=get_rules(conn);susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
     emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.status=?',('active',))
     temp_ovr=get_temp_overrides(conn,d)
-    is_sun=date.fromisoformat(d).weekday()==6 or is_holiday(conn,d)
-    conn.close()
+    is_sun=date.fromisoformat(d).weekday()==6 or is_holiday(conn,d);conn.close()
     bk={};ln={};dn={};iftar={};bkt=lnt=dnt=iftt=0
+    excl_susp=len(susp);excl_ab=len(absent);excl_fa=len(fasting);excl_vac=len(vac)
     for e in emps:
         if e['id'] in susp or e['id'] in vac:continue
         if is_sun and e['no_food_sunday']:continue
@@ -426,7 +459,12 @@ def food_count(target_date:Optional[str]=None,_=Depends(get_user)):
             elif (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
                 dn[fp]=dn.get(fp,0)+1;dnt+=1
     bk['TOTAL']=bkt;ln['TOTAL']=lnt;dn['TOTAL']=dnt;iftar['TOTAL']=iftt
-    return{'date':d,'breakfast':bk,'lunch':ln,'dinner':dn,'iftar_kit':iftar,'excluded_suspended':len(susp),'excluded_absent':len(absent),'excluded_fasting':len(fasting),'excluded_vacation':len(vac)}
+    return{'date':d,'breakfast':bk,'lunch':ln,'dinner':dn,'iftar_kit':iftar,'excluded_suspended':excl_susp,'excluded_absent':excl_ab,'excluded_fasting':excl_fa,'excluded_vacation':excl_vac}
+
+@app.get('/api/food-count')
+def food_count(target_date:Optional[str]=None,_=Depends(get_user)):
+    d=target_date or date.today().isoformat()
+    return compute_food_count(d)
 
 @app.get('/api/supplier-report')
 def supplier_report(target_date:Optional[str]=None,show_sunday:bool=False,save:bool=True,user=Depends(get_user)):
@@ -523,7 +561,8 @@ def next_eid(conn):
 @app.get('/api/employees')
 def list_emp(search:Optional[str]=None,shift_type:Optional[str]=None,food_pref:Optional[str]=None,_=Depends(get_user)):
     conn=db_conn(); conds=['1=1'];params=[]
-    if search:conds.append('(e.full_name LIKE ? OR e.emp_id LIKE ? OR e.department LIKE ?)');params+=[f'%{search}%']*3
+    lop='ILIKE' if USE_PG else 'LIKE'
+    if search:conds.append(f'(e.full_name {lop} ? OR e.emp_id {lop} ? OR COALESCE(e.department,\'\') {lop} ?)');params+=[f'%{search}%']*3
     if shift_type:conds.append('e.shift_type=?');params.append(shift_type)
     if food_pref:conds.append('fp.name LIKE ?');params.append(f'%{food_pref}%')
     r=q(conn,EJ+' WHERE '+(' AND '.join(conds)),params); conn.close(); return r
@@ -837,7 +876,8 @@ def export_emp(_=Depends(get_user)):
 
 @app.get('/api/export/food-report')
 def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
-    d=target_date or date.today().isoformat();data=food_count(d,_)
+    d=target_date or date.today().isoformat()
+    data=compute_food_count(d)
     wb=openpyxl.Workbook();ws=wb.active;ws.title=f'Food {d}'
     hf=PatternFill('solid',fgColor='003c8f');hfont=Font(bold=True,color='FFFFFF')
     ws['A1']=f'Daily Food Report - {d}';ws['A1'].font=Font(bold=True,size=14);ws.merge_cells('A1:E1')
