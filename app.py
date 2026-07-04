@@ -37,39 +37,16 @@ DEFAULT_RULES={
 }
 
 # ── DATABASE LAYER ─────────────────────────────────────────────────────────────
-_pg_pool = None
-
-def _get_pool():
-    global _pg_pool
-    if _pg_pool is None:
-        import psycopg2.pool
-        url = DATABASE_URL.replace('postgres://','postgresql://',1)
-        # min=2 connections always ready, max=20 for burst
-        _pg_pool = psycopg2.pool.ThreadedConnectionPool(2, 20, url)
-    return _pg_pool
-
-class _PGConn:
-    """Wraps a psycopg2 connection; close() returns it to pool safely."""
-    def __init__(self, raw):
-        self._raw = raw
-    def close(self):
-        try:
-            if not self._raw.closed:
-                self._raw.rollback()   # reset any pending/aborted transaction
-            _get_pool().putconn(self._raw)
-        except Exception:
-            pass
-    def __del__(self):
-        try: self.close()
-        except: pass
-    def __getattr__(self, name):
-        return getattr(self._raw, name)
-
+# One fresh connection per request — no pool, no stale state, no lock leaks.
+# Railway PostgreSQL handles ~100 concurrent connections; this app never
+# needs more than a handful at once.
 def db_conn():
     if USE_PG:
-        raw = _get_pool().getconn()
-        raw.autocommit = False
-        return _PGConn(raw)
+        import psycopg2
+        url = DATABASE_URL.replace('postgres://','postgresql://',1)
+        conn = psycopg2.connect(url)
+        conn.autocommit = False
+        return conn
     c = sqlite3.connect(DB_PATH)
     c.row_factory = sqlite3.Row
     c.execute('PRAGMA foreign_keys=ON')
@@ -79,19 +56,18 @@ def _sql(s):
     return s.replace('?','%s') if USE_PG else s
 
 def q(c,s,p=()):
-    raw = c._raw if isinstance(c,_PGConn) else c
     if USE_PG:
         import psycopg2.extras
         try:
-            cur = raw.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur = c.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute(_sql(s), p if p else None)
             res = [dict(r) for r in cur.fetchall()]
             cur.close(); return res
         except Exception:
-            try: raw.rollback()
+            try: c.rollback()
             except: pass
             raise
-    return [dict(r) for r in raw.execute(s,p).fetchall()]
+    return [dict(r) for r in c.execute(s,p).fetchall()]
 
 def q1(c,s,p=()):
     r=q(c,s,p); return r[0] if r else None
@@ -100,42 +76,42 @@ def q1(c,s,p=()):
 _NO_ID_TABLES = ('settings','meal_prices')
 
 def run(c,s,p=()):
-    raw = c._raw if isinstance(c,_PGConn) else c
     if USE_PG:
         try:
-            cur = raw.cursor()
+            cur = c.cursor()
             sql = _sql(s)
             if sql.strip().upper().startswith('INSERT'):
-                # Only use RETURNING id for tables that have a serial id
                 has_id = not any(t in sql.lower() for t in _NO_ID_TABLES)
                 if has_id:
                     cur.execute(sql+' RETURNING id', p if p else None)
-                    row = cur.fetchone(); raw.commit(); cur.close()
+                    row = cur.fetchone(); c.commit(); cur.close()
                     return row[0] if row else None
                 else:
                     cur.execute(sql, p if p else None)
-                    raw.commit(); cur.close(); return None
+                    c.commit(); cur.close(); return None
             cur.execute(sql, p if p else None)
-            raw.commit(); cur.close(); return None
+            c.commit(); cur.close(); return None
         except Exception:
-            try: raw.rollback()
+            try: c.rollback()
             except: pass
             raise
-    cur = raw.execute(s,p); raw.commit(); return cur.lastrowid
+    cur = c.execute(s,p); c.commit(); return cur.lastrowid
 
-def exe(c,s,p=()):
-    raw = c._raw if isinstance(c,_PGConn) else c
+def exe(c,s,p=(),silent=False):
+    """Execute DML. Raises on error unless silent=True (used in init_db)."""
     if USE_PG:
         try:
-            cur = raw.cursor()
+            cur = c.cursor()
             cur.execute(_sql(s), p if p else None)
-            raw.commit(); cur.close()
+            c.commit(); cur.close()
         except Exception:
-            try: raw.rollback()
+            try: c.rollback()
             except: pass
+            if not silent: raise
         return
-    try: raw.execute(s,p); raw.commit()
-    except: pass
+    try: c.execute(s,p); c.commit()
+    except:
+        if not silent: raise
 
 def rows(r): return [dict(x) for x in r]
 
@@ -199,10 +175,10 @@ def init_db():
             exe(conn,'INSERT INTO users(username,password_hash,role,full_name)VALUES(?,?,?,?) ON CONFLICT DO NOTHING',('admin',h('admin123'),'admin','System Administrator'))
     for loc in [('LV2 - B#1','Building 1','accommodation'),('LV2 - B#11','Building 11','accommodation'),('LV2 - B#20','Building 20','accommodation'),('LV2 - B#21','Building 21','accommodation'),('Factory','Main Factory','factory')]:
         exe(conn,'INSERT INTO locations(name,description,loc_type)VALUES(?,?,?) ON CONFLICT DO NOTHING',loc)
-    exe(conn,'UPDATE food_preferences SET is_active=0')
+    exe(conn,'UPDATE food_preferences SET is_active=0',silent=True)
     for fp in [('Arabic','Arabic'),('North Indian','Indian'),('North Indian Veg','Indian'),('South Indian','Indian'),('South Indian Veg','Indian')]:
         exe(conn,'INSERT INTO food_preferences(name,category)VALUES(?,?) ON CONFLICT DO NOTHING',fp)
-        exe(conn,'UPDATE food_preferences SET is_active=1 WHERE name=?',(fp[0],))
+        exe(conn,'UPDATE food_preferences SET is_active=1 WHERE name=?',(fp[0],),silent=True)
     n = q1(conn,'SELECT COUNT(*) c FROM employees',()) or {}
     if not n.get('c',0):
         def lid(nm): r=q1(conn,'SELECT id FROM locations WHERE name=?',(nm,));return r['id'] if r else None
@@ -587,30 +563,49 @@ def create_emp(emp:EmpIn,user=Depends(require('admin','hr'))):
     conn=db_conn(); eid=emp.emp_id or next_eid(conn)
     try:
         nid=run(conn,'INSERT INTO employees(emp_id,full_name,department,accommodation_id,shift_type,food_pref_id,no_food_sunday,remarks,status)VALUES(?,?,?,?,?,?,?,?,?)',(eid,emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,'active'))
-        conn.close(); return{'id':nid,'emp_id':eid}
-    except Exception as e: conn.close(); raise HTTPException(400,str(e))
+        return{'id':nid,'emp_id':eid}
+    except Exception as e:
+        raise HTTPException(400,str(e))
+    finally:
+        conn.close()
 
 @app.put('/api/employees/{eid}')
 def update_emp(eid:int,emp:EmpIn,_=Depends(require('admin','hr'))):
     conn=db_conn()
-    exe(conn,'UPDATE employees SET full_name=?,department=?,accommodation_id=?,shift_type=?,food_pref_id=?,no_food_sunday=?,remarks=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',(emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,eid))
-    conn.close(); return{'ok':True}
+    try:
+        exe(conn,'UPDATE employees SET full_name=?,department=?,accommodation_id=?,shift_type=?,food_pref_id=?,no_food_sunday=?,remarks=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',(emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,eid))
+        return{'ok':True}
+    except Exception as e:
+        raise HTTPException(500,f'Update failed: {e}')
+    finally:
+        conn.close()
 
 @app.delete('/api/employees/{eid}')
 def delete_emp(eid:int,_=Depends(require('admin','hr'))):
     conn=db_conn()
-    for tbl in ['suspensions','fasting_records','vacation_records','meal_exceptions','temp_meal_overrides','attendance']:
-        exe(conn,f'DELETE FROM {tbl} WHERE employee_id=?',(eid,))
-    exe(conn,'DELETE FROM employees WHERE id=?',(eid,)); conn.close(); return{'ok':True}
+    try:
+        for tbl in ['suspensions','fasting_records','vacation_records','meal_exceptions','temp_meal_overrides','attendance']:
+            exe(conn,f'DELETE FROM {tbl} WHERE employee_id=?',(eid,))
+        exe(conn,'DELETE FROM employees WHERE id=?',(eid,))
+        return{'ok':True}
+    except Exception as e:
+        raise HTTPException(500,f'Delete failed: {e}')
+    finally:
+        conn.close()
 
 @app.post('/api/employees/bulk-delete')
 def bulk_del_emp(data:BulkDel,_=Depends(require('admin','hr'))):
     conn=db_conn()
-    for i in data.ids:
-        for tbl in ['suspensions','fasting_records','vacation_records','meal_exceptions','temp_meal_overrides','attendance']:
-            exe(conn,f'DELETE FROM {tbl} WHERE employee_id=?',(i,))
-        exe(conn,'DELETE FROM employees WHERE id=?',(i,))
-    conn.close(); return{'deleted':len(data.ids)}
+    try:
+        for i in data.ids:
+            for tbl in ['suspensions','fasting_records','vacation_records','meal_exceptions','temp_meal_overrides','attendance']:
+                exe(conn,f'DELETE FROM {tbl} WHERE employee_id=?',(i,))
+            exe(conn,'DELETE FROM employees WHERE id=?',(i,))
+        return{'deleted':len(data.ids)}
+    except Exception as e:
+        raise HTTPException(500,f'Bulk delete failed: {e}')
+    finally:
+        conn.close()
 
 @app.post('/api/employees/bulk-update')
 def bulk_update_emp(data:BulkUpdate,_=Depends(require('admin','hr'))):
@@ -631,17 +626,30 @@ def get_att(att_date:Optional[str]=None,_=Depends(get_user)):
 
 @app.post('/api/attendance')
 def mark_att(data:AttIn,user=Depends(require('admin','hr','supervisor'))):
-    conn=db_conn(); uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
-    for eid in data.employee_ids:
-        if USE_PG:
-            exe(conn,'INSERT INTO attendance(employee_id,att_date,status,reason,marked_by)VALUES(?,?,?,?,?) ON CONFLICT(employee_id,att_date) DO UPDATE SET status=EXCLUDED.status,reason=EXCLUDED.reason',(eid,data.att_date,data.status,data.reason,uid['id'] if uid else None))
-        else:
-            exe(conn,'INSERT OR REPLACE INTO attendance(employee_id,att_date,status,reason,marked_by)VALUES(?,?,?,?,?)',(eid,data.att_date,data.status,data.reason,uid['id'] if uid else None))
-    conn.close(); return{'ok':True}
+    conn=db_conn()
+    try:
+        uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
+        for eid in data.employee_ids:
+            if USE_PG:
+                exe(conn,'INSERT INTO attendance(employee_id,att_date,status,reason,marked_by)VALUES(?,?,?,?,?) ON CONFLICT(employee_id,att_date) DO UPDATE SET status=EXCLUDED.status,reason=EXCLUDED.reason',(eid,data.att_date,data.status,data.reason,uid['id'] if uid else None))
+            else:
+                exe(conn,'INSERT OR REPLACE INTO attendance(employee_id,att_date,status,reason,marked_by)VALUES(?,?,?,?,?)',(eid,data.att_date,data.status,data.reason,uid['id'] if uid else None))
+        return{'ok':True}
+    except Exception as e:
+        raise HTTPException(500,f'Attendance update failed: {e}')
+    finally:
+        conn.close()
 
 @app.delete('/api/attendance/{aid}')
 def del_att(aid:int,_=Depends(require('admin','hr','supervisor'))):
-    conn=db_conn(); exe(conn,'DELETE FROM attendance WHERE id=?',(aid,)); conn.close(); return{'ok':True}
+    conn=db_conn()
+    try:
+        exe(conn,'DELETE FROM attendance WHERE id=?',(aid,))
+        return{'ok':True}
+    except Exception as e:
+        raise HTTPException(500,f'Delete failed: {e}')
+    finally:
+        conn.close()
 
 @app.get('/api/suspensions')
 def list_susp(_=Depends(get_user)):
@@ -649,9 +657,16 @@ def list_susp(_=Depends(get_user)):
 
 @app.post('/api/suspensions')
 def add_susp(data:SuspIn,user=Depends(require('admin','hr'))):
-    conn=db_conn(); uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
-    sid=run(conn,'INSERT INTO suspensions(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(data.employee_id,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
-    exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(data.employee_id,)); conn.close(); return{'id':sid}
+    conn=db_conn()
+    try:
+        uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
+        sid=run(conn,'INSERT INTO suspensions(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(data.employee_id,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
+        exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(data.employee_id,))
+        return{'id':sid}
+    except Exception as e:
+        raise HTTPException(500,f'Suspension failed: {e}')
+    finally:
+        conn.close()
 
 @app.put('/api/suspensions/{sid}/lift')
 def lift_susp(sid:int,_=Depends(require('admin','hr'))):
