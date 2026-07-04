@@ -188,6 +188,19 @@ def init_db():
     upsert_setting(conn,'lookup_enabled','1')
     if not q1(conn,'SELECT value FROM settings WHERE key=?',('meal_rules',)):
         upsert_setting(conn,'meal_rules','{}')
+    # ── Reset all serial sequences to avoid duplicate key errors after migration ──
+    if USE_PG:
+        serial_tables=['users','locations','food_preferences','employees',
+                       'attendance','suspensions','fasting_records','vacation_records',
+                       'meal_exceptions','temp_meal_overrides','report_history','holidays']
+        for tbl in serial_tables:
+            try:
+                cur=conn.cursor()
+                cur.execute(f"SELECT setval(pg_get_serial_sequence('{tbl}','id'),COALESCE(MAX(id),0)+1,false) FROM {tbl}")
+                conn.commit(); cur.close()
+            except Exception: 
+                try: conn.rollback()
+                except: pass
     conn.close()
 
 def is_holiday(conn,d):
