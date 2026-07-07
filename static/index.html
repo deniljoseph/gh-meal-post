@@ -2,6 +2,9 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>GH - Meal Management System</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAEPklEQVR4nO1Vy0t6WxRee5+jPaRILE+RlQiVQUHQe1BEkyKUsmlNg6C/IQoCIyKoRtEkiBo0U6KZUNTQolRqkGFFmIOih3mw9BzXHaxfJ7Pundx74XL5fYPNdp+1v/XY31oC/Mb/HuzHU8455xwRfxkxlslkMplMjoGqqpqNZikIAiKqqvonDhnjnP/4SRCEv5sB55zCbG5udjqdLS0txcXFDw8Pfr/f6/VeXFyQe1VV+/r6urq61tfX7+7uGGOISGtJScnk5OTZ2ZnH49HYPtkBoLS0dHNzExERUVGUeDyu7aenpwFAr9cDwMrKCiJ2dXVpmdF1m82GiF6vFwBEUQQArrEjoiRJe3t7o6OjHo+np6fHZDKZzeaqqqqJiYnHx8eZmZmlpaVUKgUAiURCUZR0Op1TEFVVFUV5eXnJrRT5393dRcSpqanvpbTZbIFAABHHxsYAYGFhARHb2tpyMrBarYi4tbWlZSCShaqq3d3dg4ODPp9vdnZWEARSDhVXEIRIJNLT02OxWBRFAQAqLv8AIpKD7wIRAYAxBgAjIyOIuLy8zBhjjBERACAi0b28vGi5kzplWdbkS2sikfjBAVnb7XbG2Pn5OTGS12wwxkRRFEXx7e2Nvm5tbSWTyWwVUVmymyP3NyGTyUxMTLjdbkVR6A45eHp6AgCn00mRms1mCuU7wxcHJNhwONzf319XV3d9fQ0A0Wj08PBQVVXtDdPptMPh0Ol0sViMau10Oo+OjrIdVFdX39zc5GZPFAMDA4jo8XgAQKfTfY/FarXKshwMBgFgfn4eEVtbW+HjYYm0pqYmR0UcAFRV5Zz7fL7j4+OhoaHx8XESuCAIoijS/bKyMq/XW1hYODc3p8VEcuCca+v3l/sFYmlqanp6ekLExcVFm81Gn/Lz8wcGBujxV1dX6dDtdqfTacoguw9qamrS6fTGxoaWQW6h2traTk9PaTxcXV2FQiFyiYhutxsA8vLyIGtUUJfA11FBdf5sNAINWL/f39HRMTIy4nK5GhoaDAbD2dnZwcHB9vZ2IBAAgPf3d8bY/v6+IAjRaJQ0rc3219fXtbU1v98PH53xCb1e39vb29zc/HMRAejxy8vLac8Y0+v1BoPhR0VoYPAhU4fDkUqlCgoKJEkyGo23t7eJREKn05lMJs758/OzJEmFhYVFRUWXl5fhcHh4eDgUChkMhpubm/z8fKPRiIjxeLy2tjYYDO7s7BDt5+iQZVmSJLvdXltbm8lkmpqakslkZ2dnIBA4OTlpbGwsKiqSZfn+/j6ZTLpcrkAgIMtyRUVFKpVqb28PBoOhUKilpYVzXlJS8iUDDY2NjbFYTJblysrKu7u7+vr6cDis9WplZeXDwwPnPC8vz2az+f1+RVFKS0slSYpEIlqvWSyWaDQqy/Jfd/g/hty/TPKZPb9oox0CgHZCm5xItVv/euy/8V/BH+RnZMBCAH7eAAAAAElFTkSuQmCC">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
@@ -37,7 +40,7 @@
 [data-theme="ocean"]{--p:#0097A7;--pd:#006064;--ac:#4DD0E1;--sf:#fff;--bg:#E0F7FA;--tx:#001A1C;--tx2:#3D7080;--bd:#B2EBF2;--sh:0 2px 8px rgba(0,0,0,.1);--sbg:#006064;--stx:rgba(255,255,255,.82);--stxa:#fff;--inp:#fff;}
 [data-theme="carbon"]{--p:#00BCD4;--pd:#00838F;--ac:#80DEEA;--sf:#161616;--bg:#0A0A0A;--tx:#E4E4E4;--tx2:#707070;--bd:#242424;--sh:0 2px 12px rgba(0,0,0,.7);--sbg:#0E0E0E;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.08);}
 [data-theme="volcanic"]{--p:#FF5722;--pd:#BF360C;--ac:#FF8A65;--sf:#160A06;--bg:#0C0603;--tx:#FFE4D6;--tx2:#A06050;--bd:#3A1810;--sh:0 2px 12px rgba(0,0,0,.7);--sbg:#100704;--stx:rgba(255,255,255,.8);--stxa:#fff;--inp:rgba(255,255,255,.07);}
-*{box-sizing:border-box;}body{margin:0;font-family:'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;}
+
 .sb{position:fixed;left:0;top:0;width:248px;height:100vh;background:var(--sbg);overflow-y:auto;z-index:1000;box-shadow:3px 0 12px rgba(0,0,0,.3);transition:transform .25s ease;transform:translateX(-100%);}
 /* Desktop: sidebar open by default via JS initSB() */
 #sb-backdrop{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.55);transition:opacity .25s;}
@@ -132,7 +135,7 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
 /* Lookup detail card */
 #lk-detail{background:#1A1A1A!important;border-color:#2A2A2A!important;color:#E8E8E8!important;}
 /* REPORT STYLES */
-#rpt-preview,#hist-preview{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;padding:20px;min-width:700px;}
+#rpt-preview,#hist-preview{font-family:'DM Sans',Arial,sans-serif;background:#fff;color:#111;padding:24px;min-width:900px;border-radius:var(--md-radius-lg);}
 .rpt-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:10px;border-bottom:3px solid #1565C0;}
 .rpt-logo{width:48px;height:48px;background:#000;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;}
 .rpt-logo span{color:#fff;font-size:17px;font-weight:900;line-height:1;}.rpt-logo small{color:#fff;font-size:5px;}
@@ -165,8 +168,22 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
 
 /* ── Base reset ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Inter','Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);transition:background var(--md-duration) var(--md-transition),color var(--md-duration) var(--md-transition);-webkit-font-smoothing:antialiased;}
+body{font-family:'DM Sans',system-ui,sans-serif;font-size:14px;letter-spacing:-.01em;background:var(--bg);color:var(--tx);transition:background var(--md-duration) var(--md-transition),color var(--md-duration) var(--md-transition);-webkit-font-smoothing:antialiased;}
 body,.form-control,.form-select,.btn,.card,.modal-content{transition:background var(--md-duration) var(--md-transition),color var(--md-duration) var(--md-transition),border-color var(--md-duration) var(--md-transition);}
+
+/* Typography scale */
+h1,h2,h3,h4,h5,h6{font-family:'DM Sans',system-ui,sans-serif;font-weight:700;letter-spacing:-.02em;line-height:1.25;}
+h5{font-size:17px;}h6{font-size:14px;}
+p,span,label,td,th,li,input,select,textarea{font-family:'DM Sans',system-ui,sans-serif;}
+.tb-title{font-family:'DM Sans',system-ui,sans-serif;font-weight:600;letter-spacing:-.01em;}
+.nav-link{font-family:'DM Sans',system-ui,sans-serif;letter-spacing:.005em;}
+.stat-card h2{font-family:'DM Sans',system-ui,sans-serif;font-weight:800;letter-spacing:-.04em;}
+.stat-card p{font-family:'DM Sans',system-ui,sans-serif;font-weight:600;letter-spacing:.06em;}
+.form-label{font-family:'DM Sans',system-ui,sans-serif;font-weight:600;letter-spacing:.02em;}
+.btn{font-family:'DM Sans',system-ui,sans-serif;font-weight:600;letter-spacing:.01em;}
+.rpt-ttl{font-family:'DM Sans',system-ui,sans-serif;font-weight:700;letter-spacing:.05em;}
+.table>thead>tr>*{font-family:'DM Sans',system-ui,sans-serif;font-weight:700;letter-spacing:.05em;}
+.modal-title{font-family:'DM Sans',system-ui,sans-serif;font-weight:700;letter-spacing:-.01em;}
 
 /* ── Layout ── */
 .body-wrap{display:flex;min-height:100vh;}
@@ -342,7 +359,7 @@ body,.form-control,.form-select,.btn,.card,.modal-content{transition:background 
 
 /* ── Misc ── */
 .pg-wm{text-align:center;padding:8px;font-size:11px;color:var(--tx2);border-top:1px solid var(--bd);}
-code{background:rgba(21,101,192,.1);color:var(--p);padding:2px 6px;border-radius:4px;font-size:11px;}
+code{background:rgba(21,101,192,.1);color:var(--p);padding:2px 6px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;}
 .abt{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;border:1.5px solid;cursor:pointer;transition:all 180ms var(--md-transition);}
 .abt:hover{transform:scale(1.12);}
 .fw-600{font-weight:600;}
@@ -975,7 +992,41 @@ function rendRpt(data,tid){
   <div class="rpt-wm">Created by Denil Joseph | GH - Meal Management System</div>`;
 }
 async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;}
-async function dlImg(){const el=document.getElementById('rpt-preview');if(!el||el.style.display==='none'){alert('Generate report first');return;}const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';try{const c=await html2canvas(el,{scale:2,backgroundColor:'#ffffff',useCORS:true,logging:false});const a=document.createElement('a');a.download='meal_report_'+v('rpt-dt')+'.png';a.href=c.toDataURL('image/png');a.click();}catch(e){alert('Failed: '+e.message);}finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';}}
+async function dlImg(){
+  const el=document.getElementById('rpt-preview');
+  if(!el||el.style.display==='none'){alert('Generate report first');return;}
+  const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';
+  // ── Fixed 1400px width regardless of screen size ──
+  const TARGET_W=1400;
+  const origW=el.style.width;const origMW=el.style.minWidth;const origOverflow=document.body.style.overflow;
+  try{
+    // Force element to fixed width for consistent output
+    el.style.width=TARGET_W+'px';el.style.minWidth=TARGET_W+'px';
+    document.body.style.overflow='visible';
+    await new Promise(r=>setTimeout(r,60)); // let layout settle
+    const scale=2; // 2x for retina quality → 2800px output
+    const c=await html2canvas(el,{
+      scale,
+      width:TARGET_W,
+      windowWidth:TARGET_W+80,
+      backgroundColor:'#ffffff',
+      useCORS:true,
+      logging:false,
+      removeContainer:true,
+      scrollX:0,scrollY:0,
+    });
+    const a=document.createElement('a');
+    a.download='GH_MealReport_'+v('rpt-dt')+'.png';
+    a.href=c.toDataURL('image/png');
+    a.click();
+  }catch(e){alert('Failed: '+e.message);}
+  finally{
+    // Restore original styles
+    el.style.width=origW;el.style.minWidth=origMW;
+    document.body.style.overflow=origOverflow;
+    btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';
+  }
+}
 async function loadHist(){const data=await API('/report-history')||[];rendHL(data);}
 async function filterHist(){const s=v('hist-s'),e=v('hist-e');if(!s||!e){alert('Select both dates');return;}const data=await API('/report-history?start_date='+s+'&end_date='+e)||[];rendHL(data);}
 function rendHL(data){document.getElementById('hist-tb').innerHTML=data.map(h=>`<tr><td><input type="checkbox" class="hist-c" value="${h.id}" onchange="updBD('hist-c','hist-bd')"></td><td><a href="#" onclick="viewHist('${h.report_date}')" style="color:var(--ac);font-size:12px;">${h.report_date}</a></td><td><small style="color:var(--tx2);">${h.generated_by||'--'}</small></td><td><span class="abt text-danger border-danger" onclick="delH(${h.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="4" class="text-center py-3" style="color:var(--tx2);">No saved reports. Generate a supplier report first.</td></tr>';}
