@@ -934,7 +934,11 @@ def lookup_names(q_str:str=''):
     conn=db_conn()
     if not (q1(conn,'SELECT value FROM settings WHERE key=?',('lookup_enabled',)) or {}).get('value')=='1': conn.close(); raise HTTPException(403,'Disabled')
     if len(q_str)<1: conn.close(); return[]
-    r=q(conn,'SELECT id,full_name,department FROM employees WHERE full_name LIKE ? AND status=? LIMIT 15',(f'%{q_str}%','active')); conn.close(); return r
+    if USE_PG:
+        r=q(conn,'SELECT id,full_name,department FROM employees WHERE full_name ILIKE ? AND status=? LIMIT 15',(f'%{q_str}%','active'))
+    else:
+        r=q(conn,'SELECT id,full_name,department FROM employees WHERE LOWER(full_name) LIKE ? AND status=? LIMIT 15',(f'%{q_str.lower()}%','active'))
+    conn.close(); return r
 
 @app.get('/api/lookup/employee/{eid}')
 def lookup_emp(eid:int):
