@@ -357,6 +357,12 @@ p,span,label,td,th,li,input,select,textarea{font-family:'DM Sans',system-ui,sans
 .ripple-wave{position:absolute;border-radius:50%;background:rgba(255,255,255,.25);transform:scale(0);animation:rippleAnim 550ms linear;pointer-events:none;}
 @keyframes rippleAnim{to{transform:scale(4);opacity:0;}}
 
+/* ── Sectioned table headers ── */
+.tbl-section-hdr{padding:6px 12px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;background:var(--inp,rgba(0,0,0,.04));color:var(--tx2);border-bottom:1px solid var(--bd);}
+.tbl-section-hdr.active{color:#2E7D32;background:rgba(27,94,32,.07);}
+.tbl-section-hdr.upcoming{color:#1565C0;background:rgba(21,101,192,.07);}
+.tbl-section-hdr.expired{color:#888;background:rgba(0,0,0,.03);}
+tr.expired-row td{opacity:.55;}
 /* ── Misc ── */
 .pg-wm{text-align:center;padding:8px;font-size:11px;color:var(--tx2);border-top:1px solid var(--bd);}
 code{background:rgba(21,101,192,.1);color:var(--p);padding:2px 6px;border-radius:4px;font-size:11px;font-family:'DM Mono',monospace;}
@@ -1124,28 +1130,55 @@ async function confAbs(){
   }
 }
 async function unAbs(id){await API('/attendance/'+id,'DELETE');loadAtt();}
-async function loadVacs(){const data=await API('/vacation')||[];document.getElementById('vac-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(v2=>`<tr><td><input type="checkbox" class="vac-c" value="${v2.id}" onchange="updBD('vac-c','vac-bd')"></td><td>${v2.full_name}<br><code style="font-size:10px;">${v2.emp_id}</code></td><td>${fmt(v2.start_date)}</td><td>${fmt(v2.end_date)}</td><td>${v2.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editVac(${v2.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delVac(${v2.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
+async function loadVacs(){
+  const data=await API('/vacation')||[];
+  const rowFn=v2=>`<td><input type="checkbox" class="vac-c" value="${v2.id}" onchange="updBD('vac-c','vac-bd')"></td><td>${v2.full_name}<br><code style="font-size:10px;">${v2.emp_id}</code></td><td>${fmt(v2.start_date)}</td><td>${fmt(v2.end_date)}</td><td>${v2.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editVac(${v2.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delVac(${v2.id})"><i class="fas fa-trash"></i></span></td>`;
+  renderSectioned('vac-tb',data,rowFn,6);
+}
 async function showVacM(rec=null){document.getElementById('vac-ttl').textContent=rec?'Edit':'Add Leave';sv('vac-id',rec?.id||'');sv('vac-s',rec?.start_date||tod());sv('vac-e',rec?.end_date||'');sv('vac-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('vac-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('vac-emp').value=rec.employee_id;bsM('vacMdl').show();}
 async function saveVac(){const id=v('vac-id');const d={employee_id:parseInt(document.getElementById('vac-emp').value),start_date:v('vac-s'),end_date:v('vac-e'),reason:v('vac-r')};try{if(id)await API('/vacation/'+id,'PUT',d);else await API('/vacation','POST',d);bsM('vacMdl').hide();loadVacs();}catch(e){alert(e.message);}}
 let vcC=[];async function editVac(id){if(!vcC.length)vcC=await API('/vacation')||[];const r=vcC.find(x=>x.id===id);if(r)showVacM(r);vcC=[];}
 async function delVac(id){if(!confirm('Delete?'))return;await API('/vacation/'+id,'DELETE');loadVacs();}
-async function loadSusps(){const data=await API('/suspensions')||[];document.getElementById('susp-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(s=>`<tr><td><input type="checkbox" class="susp-c" value="${s.id}" onchange="updBD('susp-c','susp-bd')"></td><td>${s.full_name}<br><code style="font-size:10px;">${s.emp_id}</code></td><td>${fmt(s.start_date)}</td><td>${fmt(s.end_date)}</td><td>${s.reason||'--'}</td><td>${bss(s.is_active?'suspended':'active')}</td><td class="d-flex gap-1">${s.is_active?'<span class="abt text-success border-success" onclick="liftS('+s.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delS(${s.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No suspensions</td></tr>';}
+async function loadSusps(){
+  const data=await API('/suspensions')||[];
+  const rowFn=s=>`<td><input type="checkbox" class="susp-c" value="${s.id}" onchange="updBD('susp-c','susp-bd')"></td><td>${s.full_name}<br><code style="font-size:10px;">${s.emp_id}</code></td><td>${fmt(s.start_date)}</td><td>${fmt(s.end_date||'--')}</td><td>${s.reason||'--'}</td><td class="d-flex gap-1">${s.is_active?'<span class="abt text-success border-success" onclick="liftS('+s.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delS(${s.id})"><i class="fas fa-trash"></i></span></td>`;
+  renderSectioned('susp-tb',data,rowFn,6);
+}
 async function showSuspM(){const emps=await API('/employees')||[];document.getElementById('susp-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('susp-s',tod());sv('susp-e','');sv('susp-r','');bsM('suspMdl').show();}
 async function saveSusp(){const d={employee_id:parseInt(document.getElementById('susp-emp').value),start_date:v('susp-s'),end_date:v('susp-e')||null,reason:v('susp-r')};try{await API('/suspensions','POST',d);bsM('suspMdl').hide();loadSusps();}catch(e){alert(e.message);}}
 async function liftS(id){if(!confirm('Lift?'))return;await API('/suspensions/'+id+'/lift','PUT');loadSusps();}
 async function delS(id){if(!confirm('Delete?'))return;await API('/suspensions/'+id,'DELETE');loadSusps();}
-async function loadFasts(){const data=await API('/fasting')||[];document.getElementById('fast-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(f=>`<tr><td><input type="checkbox" class="fast-c" value="${f.id}" onchange="updBD('fast-c','fast-bd')"></td><td>${f.full_name}<br><code style="font-size:10px;">${f.emp_id}</code></td><td>${fmt(f.start_date)}</td><td>${fmt(f.end_date)}</td><td>${f.reason||'--'}</td><td>${bss(f.is_active?'fasting':'active')}</td><td class="d-flex gap-1">${f.is_active?'<span class="abt text-success border-success" onclick="endF('+f.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delF(${f.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
+async function loadFasts(){
+  const data=await API('/fasting')||[];
+  const rowFn=f=>`<td><input type="checkbox" class="fast-c" value="${f.id}" onchange="updBD('fast-c','fast-bd')"></td><td>${f.full_name}<br><code style="font-size:10px;">${f.emp_id}</code></td><td>${fmt(f.start_date)}</td><td>${fmt(f.end_date||'--')}</td><td>${f.reason||'--'}</td><td class="d-flex gap-1">${f.is_active?'<span class="abt text-success border-success" onclick="endF('+f.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delF(${f.id})"><i class="fas fa-trash"></i></span></td>`;
+  renderSectioned('fast-tb',data,rowFn,6);
+}
 async function showFastM(){const emps=await API('/employees')||[];document.getElementById('fast-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('fast-s',tod());sv('fast-e','');sv('fast-r','Ramadan');bsM('fastMdl').show();}
 async function saveFast(){const d={employee_id:parseInt(document.getElementById('fast-emp').value),start_date:v('fast-s'),end_date:v('fast-e')||null,reason:v('fast-r')};try{await API('/fasting','POST',d);bsM('fastMdl').hide();loadFasts();}catch(e){alert(e.message);}}
 async function endF(id){if(!confirm('End?'))return;await API('/fasting/'+id+'/end','PUT');loadFasts();}
 async function delF(id){if(!confirm('Delete?'))return;await API('/fasting/'+id,'DELETE');loadFasts();}
-async function loadMexs(){const data=await API('/meal-exceptions')||[];document.getElementById('mex-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(m=>`<tr><td><input type="checkbox" class="mex-c" value="${m.id}" onchange="updBD('mex-c','mex-bd')"></td><td>${m.full_name}<br><code style="font-size:10px;">${m.emp_id}</code></td><td><span class="chip chp">${m.meal_type}</span></td><td>${fmt(m.start_date)}</td><td>${fmt(m.end_date)}</td><td>${m.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editMex(${m.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delMex(${m.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No exceptions</td></tr>';}
+async function loadMexs(){
+  const data=await API('/meal-exceptions')||[];
+  const rowFn=m=>`<td><input type="checkbox" class="mex-c" value="${m.id}" onchange="updBD('mex-c','mex-bd')"></td><td>${m.full_name}<br><code style="font-size:10px;">${m.emp_id}</code></td><td><span class="chip chp">${m.meal_type}</span></td><td>${fmt(m.start_date)}</td><td>${fmt(m.end_date)}</td><td>${m.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editMex(${m.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delMex(${m.id})"><i class="fas fa-trash"></i></span></td>`;
+  renderSectioned('mex-tb',data,rowFn,7);
+}
 let mxC=[];
 async function showMexM(rec=null){document.getElementById('mex-ttl').textContent=rec?'Edit':'Add Exception';sv('mex-id',rec?.id||'');sv('mex-mt',rec?.meal_type||'breakfast');sv('mex-s',rec?.start_date||tod());sv('mex-e',rec?.end_date||'');sv('mex-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('mex-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('mex-emp').value=rec.employee_id;bsM('mexMdl').show();}
 async function saveMex(){const id=v('mex-id');const d={employee_id:parseInt(document.getElementById('mex-emp').value),meal_type:v('mex-mt'),start_date:v('mex-s'),end_date:v('mex-e'),reason:v('mex-r')};try{if(id)await API('/meal-exceptions/'+id,'PUT',d);else await API('/meal-exceptions','POST',d);bsM('mexMdl').hide();loadMexs();}catch(e){alert(e.message);}}
 async function editMex(id){if(!mxC.length)mxC=await API('/meal-exceptions')||[];const r=mxC.find(x=>x.id===id);if(r)showMexM(r);mxC=[];}
 async function delMex(id){if(!confirm('Delete?'))return;await API('/meal-exceptions/'+id,'DELETE');loadMexs();}
-async function loadOvrs(){const data=await API('/temp-overrides')||[];const today=tod();document.getElementById('ovr-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(o=>{const isA=o.start_date<=today&&o.end_date>=today;const desc=o.override_shift_type?'Shift to '+(STL[o.override_shift_type]||o.override_shift_type):'Block to '+(o.new_acc_name||'--');return`<tr><td><input type="checkbox" class="ovr-c" value="${o.id}" onchange="updBD('ovr-c','ovr-bd')"></td><td>${o.full_name}<br><code style="font-size:10px;">${o.emp_id}</code></td><td><div style="font-size:12px;">${desc}</div></td><td>${fmt(o.start_date)}</td><td>${fmt(o.end_date)}</td><td>${isA?'<span class="bs bs-a">Active</span>':'<span class="bs bs-ab">Expired</span>'}</td><td><span class="abt text-danger border-danger" onclick="delOvr(${o.id})"><i class="fas fa-trash"></i></span></td></tr>`;}).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No overrides</td></tr>';const emps=await API('/employees')||[];const sel=document.getElementById('ovr-emp');const cur=sel.value;sel.innerHTML='<option value="">Select...</option>'+emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}" data-sh="${e.shift_type}" data-acc="${e.accommodation_id||''}" data-accnm="${e.accommodation_name||''}">${e.full_name} (${STL[e.shift_type]||e.shift_type})</option>`).join('');if(cur)sel.value=cur;const aS=document.getElementById('ovr-av');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}
+async function loadOvrs(){
+  const data=await API('/temp-overrides')||[];
+  const rowFn=o=>{const desc=o.override_shift_type?'Shift \u2192 '+(STL[o.override_shift_type]||o.override_shift_type):'Block \u2192 '+(o.new_acc_name||'--');
+    return`<td><input type="checkbox" class="ovr-c" value="${o.id}" onchange="updBD('ovr-c','ovr-bd')"></td><td>${o.full_name}<br><code style="font-size:10px;">${o.emp_id}</code></td><td style="font-size:12px;">${desc}</td><td>${fmt(o.start_date)}</td><td>${fmt(o.end_date)}</td><td>${o.reason||'--'}</td><td><span class="abt text-danger border-danger" onclick="delOvr(${o.id})"><i class="fas fa-trash"></i></span></td>`;};
+  renderSectioned('ovr-tb',data,rowFn,7);
+  const emps=await API('/employees')||[];
+  const sel=document.getElementById('ovr-emp');const cur=sel.value;
+  sel.innerHTML='<option value="">Select...</option>'+emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}" data-sh="${e.shift_type}" data-acc="${e.accommodation_id||''}" data-accnm="${e.accommodation_name||''}">${e.full_name} (${STL[e.shift_type]||e.shift_type})</option>`).join('');
+  if(cur)sel.value=cur;
+  const aS=document.getElementById('ovr-av');
+  aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+}
 function loadOvrC(){const sel=document.getElementById('ovr-emp');const opt=sel.options[sel.selectedIndex];if(!opt||!opt.value){document.getElementById('ovr-curr').style.display='none';return;}const sh=opt.dataset.sh||'normal';const an=opt.dataset.accnm||'--';const md={shift1:'BK:'+an+' LN:Factory DN:'+an,shift2:'BK:'+an+' LN:'+an+' DN:Factory',shift3:'All:'+an,normal:'BK:'+an+' LN:Factory DN:'+an,site:'BK:'+an+' LN:packed-with-BK DN:'+an}[sh]||'--';document.getElementById('ovr-ci').innerHTML='Shift: '+(STL[sh]||sh)+' | Block: '+an+'<br><small>'+md+'</small>';document.getElementById('ovr-curr').style.display='block';}
 function togOvr(){const t=v('ovr-type');document.getElementById('ovr-sf').style.display=t==='shift'?'block':'none';document.getElementById('ovr-af').style.display=t==='accommodation'?'block':'none';}
 async function saveOvr(){const sel=document.getElementById('ovr-emp');const opt=sel.options[sel.selectedIndex];if(!opt||!opt.value){alert('Select employee');return;}const t=v('ovr-type');const d={employee_id:parseInt(opt.value),start_date:v('ovr-s'),end_date:v('ovr-e'),reason:v('ovr-r'),override_shift_type:t==='shift'?v('ovr-sv'):null,override_accommodation_id:t==='accommodation'?(parseInt(v('ovr-av'))||null):null,orig_shift_type:opt.dataset.sh||null,orig_accommodation_id:parseInt(opt.dataset.acc)||null,orig_acc_name:opt.dataset.accnm||null};if(!d.start_date||!d.end_date){alert('Dates required');return;}try{await API('/temp-overrides','POST',d);loadOvrs();sv('ovr-r','');alert('Override saved -- reverts after '+fmt(d.end_date));}catch(e){alert(e.message);}}
@@ -1255,6 +1288,31 @@ async function applyBulkEdit(){
     el.className='alert alert-danger py-2 small';el.textContent='Error: '+e.message;
   }
 }
+
+// ── Sectioned table renderer (Active / Upcoming / Expired) ──────────────────
+function renderSectioned(tbodyId,data,rowFn,colCount){
+  const today=tod();
+  const active=[],upcoming=[],expired=[];
+  data.forEach(r=>{
+    const sd=r.start_date||'';const ed=r.end_date||'9999-12-31';
+    if(ed<today) expired.push(r);
+    else if(sd>today) upcoming.push(r);
+    else active.push(r);
+  });
+  const sortDate=(a,b)=>(a.start_date||'').localeCompare(b.start_date||'');
+  active.sort(sortDate); upcoming.sort(sortDate);
+  expired.sort((a,b)=>(b.end_date||'').localeCompare(a.end_date||'')); // newest expired first
+  const hdr=(lbl,cls,count)=>count?`<tr><td colspan="${colCount}" class="tbl-section-hdr ${cls}"><i class="fas fa-circle me-1" style="font-size:7px;"></i>${lbl} <span style="font-weight:400;opacity:.7;">(${count})</span></td></tr>`:'';
+  const rows=(arr,cls)=>arr.map(r=>`<tr class="${cls}-row">${rowFn(r)}</tr>`).join('');
+  const tb=document.getElementById(tbodyId);
+  if(!tb)return;
+  if(!data.length){tb.innerHTML=`<tr><td colspan="${colCount}" class="text-center py-4" style="color:var(--tx2);">No records found</td></tr>`;return;}
+  tb.innerHTML=
+    hdr('Active',   'active',   active.length)+rows(active,'active')+
+    hdr('Upcoming', 'upcoming', upcoming.length)+rows(upcoming,'upcoming')+
+    hdr('Expired',  'expired',  expired.length)+rows(expired,'expired');
+}
+
 
 // ── Universal sortable table helper ────────────────────────────────────────
 const _tblSort={};
