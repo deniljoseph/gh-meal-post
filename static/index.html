@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GH - Meal Management System</title>
+<title>GH - Meal Management System v5.2</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAEPklEQVR4nO1Vy0t6WxRee5+jPaRILE+RlQiVQUHQe1BEkyKUsmlNg6C/IQoCIyKoRtEkiBo0U6KZUNTQolRqkGFFmIOih3mw9BzXHaxfJ7Pundx74XL5fYPNdp+1v/XY31oC/Mb/HuzHU8455xwRfxkxlslkMplMjoGqqpqNZikIAiKqqvonDhnjnP/4SRCEv5sB55zCbG5udjqdLS0txcXFDw8Pfr/f6/VeXFyQe1VV+/r6urq61tfX7+7uGGOISGtJScnk5OTZ2ZnH49HYPtkBoLS0dHNzExERUVGUeDyu7aenpwFAr9cDwMrKCiJ2dXVpmdF1m82GiF6vFwBEUQQArrEjoiRJe3t7o6OjHo+np6fHZDKZzeaqqqqJiYnHx8eZmZmlpaVUKgUAiURCUZR0Op1TEFVVFUV5eXnJrRT5393dRcSpqanvpbTZbIFAABHHxsYAYGFhARHb2tpyMrBarYi4tbWlZSCShaqq3d3dg4ODPp9vdnZWEARSDhVXEIRIJNLT02OxWBRFAQAqLv8AIpKD7wIRAYAxBgAjIyOIuLy8zBhjjBERACAi0b28vGi5kzplWdbkS2sikfjBAVnb7XbG2Pn5OTGS12wwxkRRFEXx7e2Nvm5tbSWTyWwVUVmymyP3NyGTyUxMTLjdbkVR6A45eHp6AgCn00mRms1mCuU7wxcHJNhwONzf319XV3d9fQ0A0Wj08PBQVVXtDdPptMPh0Ol0sViMau10Oo+OjrIdVFdX39zc5GZPFAMDA4jo8XgAQKfTfY/FarXKshwMBgFgfn4eEVtbW+HjYYm0pqYmR0UcAFRV5Zz7fL7j4+OhoaHx8XESuCAIoijS/bKyMq/XW1hYODc3p8VEcuCca+v3l/sFYmlqanp6ekLExcVFm81Gn/Lz8wcGBujxV1dX6dDtdqfTacoguw9qamrS6fTGxoaWQW6h2traTk9PaTxcXV2FQiFyiYhutxsA8vLyIGtUUJfA11FBdf5sNAINWL/f39HRMTIy4nK5GhoaDAbD2dnZwcHB9vZ2IBAAgPf3d8bY/v6+IAjRaJQ0rc3219fXtbU1v98PH53xCb1e39vb29zc/HMRAejxy8vLac8Y0+v1BoPhR0VoYPAhU4fDkUqlCgoKJEkyGo23t7eJREKn05lMJs758/OzJEmFhYVFRUWXl5fhcHh4eDgUChkMhpubm/z8fKPRiIjxeLy2tjYYDO7s7BDt5+iQZVmSJLvdXltbm8lkmpqakslkZ2dnIBA4OTlpbGwsKiqSZfn+/j6ZTLpcrkAgIMtyRUVFKpVqb28PBoOhUKilpYVzXlJS8iUDDY2NjbFYTJblysrKu7u7+vr6cDis9WplZeXDwwPnPC8vz2az+f1+RVFKS0slSYpEIlqvWSyWaDQqy/Jfd/g/hty/TPKZPb9oox0CgHZCm5xItVv/euy/8V/BH+RnZMBCAH7eAAAAAElFTkSuQmCC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -377,6 +377,16 @@ h6{font-weight:700;letter-spacing:.01em;}
 [data-theme="midnight"] .alert-info,[data-theme="carbon"] .alert-info,[data-theme="volcanic"] .alert-info{background:rgba(56,142,210,.18)!important;color:#90CAF9!important;}
 [data-theme="midnight"] .alert-warning,[data-theme="carbon"] .alert-warning,[data-theme="volcanic"] .alert-warning{background:rgba(230,115,0,.18)!important;color:#FFCC80!important;}
 
+
+/* Sort indicators */
+th[data-sort="asc"]::after{content:' ▲';font-size:9px;opacity:.9;color:#fff;}
+th[data-sort="desc"]::after{content:' ▼';font-size:9px;opacity:.9;color:#fff;}
+th[onclick]{cursor:pointer!important;user-select:none;}
+th[onclick]:hover{opacity:.85;background:rgba(255,255,255,.1)!important;}
+th[onclick]::after{content:' ⇅';font-size:8px;opacity:.35;color:#fff;}
+th[data-sort="asc"]::after{content:' ▲'!important;opacity:.95!important;}
+th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
+
 /* ── Mobile ── */
 @media(max-width:768px){.main{margin-left:0!important;}.pb{padding:14px;}}
 @media print{.rpt-ctrl,.topbar,.sb,#sb-backdrop{display:none!important}.main{margin-left:0!important}}
@@ -566,7 +576,11 @@ h6{font-weight:700;letter-spacing:.01em;}
   <div class="page" id="page-attendance">
     <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div></div></div>
     <div class="row g-3">
-      <div class="col-md-7"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Present <span id="att-cnt" class="badge bg-secondary">0</span></h6><div class="d-flex gap-2"><input class="form-control form-control-sm" style="width:140px;" placeholder="Filter..." oninput="filtA(this.value)"><button class="btn btn-sm btn-danger" onclick="markAbs()"><i class="fas fa-times me-1"></i>Mark Absent</button></div></div><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="att-all" onchange="togAllA(this)"></th><th>Name</th><th>Shift</th><th>Block</th></tr></thead><tbody id="att-list"></tbody></table></div></div></div>
+      <div class="col-md-7"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Present <span id="att-cnt" class="badge bg-secondary">0</span></h6><div class="d-flex gap-2"><input class="form-control form-control-sm" style="width:140px;" placeholder="Filter..." oninput="filtA(this.value)"><button class="btn btn-sm btn-danger" onclick="markAbs()"><i class="fas fa-times me-1"></i>Mark Absent</button></div></div><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="att-all" onchange="togAllA(this)"></th>
+<th id="att-th-full_name" onclick="sortAtt('full_name')" style="cursor:pointer;user-select:none;">Name</th>
+<th id="att-th-shift_type" onclick="sortAtt('shift_type')" style="cursor:pointer;user-select:none;">Shift</th>
+<th id="att-th-accommodation_name" onclick="sortAtt('accommodation_name')" style="cursor:pointer;user-select:none;">Block</th>
+</tr></thead><tbody id="att-list"></tbody></table></div></div></div>
       <div class="col-md-5"><div class="card pad"><h6>Absent <span class="badge bg-danger" id="abs-cnt">0</span></h6><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th>Name</th><th>Reason</th><th></th></tr></thead><tbody id="abs-list"></tbody></table></div></div></div>
     </div>
   </div>
@@ -1027,7 +1041,7 @@ async function dlImg(){
     btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';
   }
 }
-async function loadHist(){const data=await API('/report-history')||[];rendHL(data);}
+async function loadHist(){const data=(await API('/report-history')||[]).sort((a,b)=>b.report_date.localeCompare(a.report_date));rendHL(data);}
 async function filterHist(){const s=v('hist-s'),e=v('hist-e');if(!s||!e){alert('Select both dates');return;}const data=await API('/report-history?start_date='+s+'&end_date='+e)||[];rendHL(data);}
 function rendHL(data){document.getElementById('hist-tb').innerHTML=data.map(h=>`<tr><td><input type="checkbox" class="hist-c" value="${h.id}" onchange="updBD('hist-c','hist-bd')"></td><td><a href="#" onclick="viewHist('${h.report_date}')" style="color:var(--ac);font-size:12px;">${h.report_date}</a></td><td><small style="color:var(--tx2);">${h.generated_by||'--'}</small></td><td><span class="abt text-danger border-danger" onclick="delH(${h.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="4" class="text-center py-3" style="color:var(--tx2);">No saved reports. Generate a supplier report first.</td></tr>';}
 async function viewHist(d){try{const r=await API('/report-history/'+d);rendRpt(r.report_data,'hist-preview');}catch(e){document.getElementById('hist-preview').innerHTML='<div class="alert alert-warning">No report for '+d+'.</div>';}}
@@ -1052,26 +1066,48 @@ async function loadEmps(){
   if(s)url+='&search='+encodeURIComponent(s);
   if(sh)url+='&shift_type='+sh;
   if(fp)url+='&food_pref='+encodeURIComponent(fp);
-  _empData=await API(url)||[];
+  _empData=(await API(url)||[]).sort((a,b)=>a.full_name.localeCompare(b.full_name));
   renderEmps();
 }
-async function showEmpM(emp=null){if(!locs.length)await loadLocs();if(!fps.length)await loadFPs();document.getElementById('em-ttl').textContent=emp?'Edit Employee':'Add Employee';sv('em-id',emp?.id||'');sv('em-nm',emp?.full_name||'');sv('em-dept',emp?.department||'');sv('em-eid',emp?.emp_id||'');sv('em-rem',emp?.remarks||'');sv('em-sh',emp?.shift_type||'normal');document.getElementById('em-sun').checked=!!emp?.no_food_sunday;const aS=document.getElementById('em-acc');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');const fS=document.getElementById('em-fp');fS.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(emp?.accommodation_id)aS.value=String(emp.accommodation_id);if(emp?.food_pref_id)fS.value=String(emp.food_pref_id);bsM('empMdl').show();}
+async function showEmpM(emp=null){if(!locs.length)await loadLocs();if(!fps.length)await loadFPs();document.getElementById('em-ttl').textContent=emp?'Edit Employee':'Add Employee';sv('em-id',emp?.id||'');sv('em-nm',emp?.full_name||'');sv('em-dept',emp?.department||'');sv('em-eid',emp?.emp_id||'');sv('em-rem',emp?.remarks||'');sv('em-sh',emp?.shift_type||'normal');document.getElementById('em-sun').checked=!!emp?.no_food_sunday;const aS=document.getElementById('em-acc');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');const fS=document.getElementById('em-fp');fS.innerHTML='<option value="">Select...</option>'+fps.sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(emp?.accommodation_id)aS.value=String(emp.accommodation_id);if(emp?.food_pref_id)fS.value=String(emp.food_pref_id);bsM('empMdl').show();}
 async function editEmp(id){const e=await API('/employees/'+id);if(e)await showEmpM(e);}
 async function saveEmp(){const id=v('em-id');const d={emp_id:v('em-eid')||null,full_name:v('em-nm'),department:v('em-dept')||null,accommodation_id:parseInt(v('em-acc'))||null,shift_type:v('em-sh'),food_pref_id:parseInt(v('em-fp'))||null,no_food_sunday:document.getElementById('em-sun').checked?1:0,remarks:v('em-rem')};if(!d.full_name){alert('Name required');return;}try{if(id)await API('/employees/'+id,'PUT',d);else await API('/employees','POST',d);bsM('empMdl').hide();loadEmps();}catch(e){alert(e.message);}}
 async function delEmp(id,name){if(!confirm('Delete '+name+'?'))return;try{await API('/employees/'+id,'DELETE');loadEmps();}catch(e){alert('Delete failed: '+e.message);}}
 async function bulkD(entity){const cfg={employees:{cls:'emp-c',url:'/employees/bulk-delete',btn:'emp-bd',rld:loadEmps},suspensions:{cls:'susp-c',url:'/suspensions/bulk-delete',btn:'susp-bd',rld:loadSusps},fasting:{cls:'fast-c',url:'/fasting/bulk-delete',btn:'fast-bd',rld:loadFasts},vacation:{cls:'vac-c',url:'/vacation/bulk-delete',btn:'vac-bd',rld:loadVacs},'meal-exceptions':{cls:'mex-c',url:'/meal-exceptions/bulk-delete',btn:'mex-bd',rld:loadMexs},'temp-overrides':{cls:'ovr-c',url:'/temp-overrides/bulk-delete',btn:'ovr-bd',rld:loadOvrs},'report-history':{cls:'hist-c',url:'/report-history/bulk-delete',btn:'hist-bd',rld:loadHist}}[entity];if(!cfg)return;const ids=getSel(cfg.cls);if(!ids.length){alert('Select items');return;}if(!confirm('Delete '+ids.length+'?'))return;try{await API(cfg.url,'POST',{ids});document.getElementById(cfg.btn).style.display='none';cfg.rld();}catch(e){alert(e.message);}}
 function showImp(){sv('imp-f','');document.getElementById('imp-res').classList.add('d-none');bsM('impMdl').show();}
 async function doImport(){const file=document.getElementById('imp-f').files[0];if(!file){alert('Select file');return;}const fd=new FormData();fd.append('file',file);const r=await fetch('/api/import/employees',{method:'POST',headers:{'Authorization':'Bearer '+TK},body:fd});const d=await r.json();const el=document.getElementById('imp-res');el.classList.remove('d-none');el.className='alert '+(d.errors?.length?'alert-warning':'alert-success');el.innerHTML='Imported: '+d.imported+' | Skipped: '+d.skipped+(d.errors?.length?'<br>'+d.errors.join('; '):'');loadEmps();}
-async function loadAtt(){const d=v('att-dt')||tod();const[emps,att]=await Promise.all([API('/employees'),API('/attendance?att_date='+d)]);const abS=new Set((att?.records||[]).filter(r=>r.status==='absent').map(r=>r.employee_id));attAll=(emps||[]).filter(e=>e.status==='active'&&!abS.has(e.id));rendAL(attAll);rendAbL(att?.records||[]);}
+let _attSort={col:null,dir:1};
+async function loadAtt(){
+  const d=v('att-dt')||tod();sv('att-dt',d);
+  const[emps,att]=await Promise.all([API('/employees'),API('/attendance?att_date='+d)]);
+  const abS=new Set((att?.records||[]).filter(r=>r.status==='absent').map(r=>r.employee_id));
+  attAll=(emps||[]).filter(e=>e.status==='active'&&!abS.has(e.id));
+  rendAL(attAll);rendAbL(att?.records||[]);
+}
+function sortAtt(col){
+  if(_attSort.col===col)_attSort.dir*=-1;else{_attSort.col=col;_attSort.dir=1;}
+  rendAL(attAll);
+}
 function filtA(q){rendAL(attAll.filter(e=>e.full_name.toLowerCase().includes(q.toLowerCase())));}
-function rendAL(emps){document.getElementById('att-cnt').textContent=emps.length;document.getElementById('att-list').innerHTML=emps.map(e=>`<tr><td><input type="checkbox" class="att-c" value="${e.id}"></td><td>${e.full_name}</td><td><span class="chip chp" style="font-size:10px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td></tr>`).join('')||'<tr><td colspan="4" class="text-center py-2" style="color:var(--tx2);">All absent</td></tr>';}
-function rendAbL(records){const ab=records.filter(r=>r.status==='absent');document.getElementById('abs-cnt').textContent=ab.length;document.getElementById('abs-list').innerHTML=ab.map(r=>`<tr><td>${r.full_name}</td><td><small>${r.reason||'--'}</small></td><td><span class="abt text-success border-success" onclick="unAbs(${r.id})"><i class="fas fa-undo"></i></span></td></tr>`).join('')||'<tr><td colspan="3" class="text-center py-2" style="color:var(--tx2);">No absences</td></tr>';}
-function togAllA(chk){document.querySelectorAll('.att-c').forEach(c=>c.checked=chk.checked);}
-function markAbs(){
-  absIds=[...document.querySelectorAll('.att-c:checked')].map(c=>parseInt(c.value));
-  if(!absIds.length){alert('Select at least one employee first.');return;}
-  sv('abs-rsn','');
-  bsM('absMdl').show();
+function rendAL(emps){
+  if(_attSort.col){
+    emps=[...emps].sort((a,b)=>{
+      let av=a[_attSort.col]||'',bv=b[_attSort.col]||'';
+      return String(av).toLowerCase().localeCompare(String(bv).toLowerCase())*_attSort.dir;
+    });
+  }
+  // Update sort indicators
+  ['full_name','shift_type','accommodation_name'].forEach(col=>{
+    const th=document.getElementById('att-th-'+col);
+    if(th)th.dataset.sort=_attSort.col===col?(_attSort.dir===1?'asc':'desc'):'';
+  });
+  document.getElementById('att-cnt').textContent=emps.length;
+  document.getElementById('att-list').innerHTML=emps.map(e=>`<tr>
+    <td><input type="checkbox" class="att-c" value="${e.id}"></td>
+    <td>${e.full_name}</td>
+    <td><span class="chip chp" style="font-size:10px;">${STL[e.shift_type]||e.shift_type}</span></td>
+    <td>${e.accommodation_name||'--'}</td>
+  </tr>`).join('')||'<tr><td colspan="4" class="text-center py-4" style="color:var(--tx2);">All present today</td></tr>';
 }
 async function confAbs(){
   const d=v('att-dt')||tod();
@@ -1088,28 +1124,28 @@ async function confAbs(){
   }
 }
 async function unAbs(id){await API('/attendance/'+id,'DELETE');loadAtt();}
-async function loadVacs(){const data=await API('/vacation')||[];document.getElementById('vac-tb').innerHTML=data.map(v2=>`<tr><td><input type="checkbox" class="vac-c" value="${v2.id}" onchange="updBD('vac-c','vac-bd')"></td><td>${v2.full_name}<br><code style="font-size:10px;">${v2.emp_id}</code></td><td>${fmt(v2.start_date)}</td><td>${fmt(v2.end_date)}</td><td>${v2.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editVac(${v2.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delVac(${v2.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
-async function showVacM(rec=null){document.getElementById('vac-ttl').textContent=rec?'Edit':'Add Leave';sv('vac-id',rec?.id||'');sv('vac-s',rec?.start_date||tod());sv('vac-e',rec?.end_date||'');sv('vac-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('vac-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('vac-emp').value=rec.employee_id;bsM('vacMdl').show();}
+async function loadVacs(){const data=await API('/vacation')||[];document.getElementById('vac-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(v2=>`<tr><td><input type="checkbox" class="vac-c" value="${v2.id}" onchange="updBD('vac-c','vac-bd')"></td><td>${v2.full_name}<br><code style="font-size:10px;">${v2.emp_id}</code></td><td>${fmt(v2.start_date)}</td><td>${fmt(v2.end_date)}</td><td>${v2.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editVac(${v2.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delVac(${v2.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="6" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
+async function showVacM(rec=null){document.getElementById('vac-ttl').textContent=rec?'Edit':'Add Leave';sv('vac-id',rec?.id||'');sv('vac-s',rec?.start_date||tod());sv('vac-e',rec?.end_date||'');sv('vac-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('vac-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('vac-emp').value=rec.employee_id;bsM('vacMdl').show();}
 async function saveVac(){const id=v('vac-id');const d={employee_id:parseInt(document.getElementById('vac-emp').value),start_date:v('vac-s'),end_date:v('vac-e'),reason:v('vac-r')};try{if(id)await API('/vacation/'+id,'PUT',d);else await API('/vacation','POST',d);bsM('vacMdl').hide();loadVacs();}catch(e){alert(e.message);}}
 let vcC=[];async function editVac(id){if(!vcC.length)vcC=await API('/vacation')||[];const r=vcC.find(x=>x.id===id);if(r)showVacM(r);vcC=[];}
 async function delVac(id){if(!confirm('Delete?'))return;await API('/vacation/'+id,'DELETE');loadVacs();}
-async function loadSusps(){const data=await API('/suspensions')||[];document.getElementById('susp-tb').innerHTML=data.map(s=>`<tr><td><input type="checkbox" class="susp-c" value="${s.id}" onchange="updBD('susp-c','susp-bd')"></td><td>${s.full_name}<br><code style="font-size:10px;">${s.emp_id}</code></td><td>${fmt(s.start_date)}</td><td>${fmt(s.end_date)}</td><td>${s.reason||'--'}</td><td>${bss(s.is_active?'suspended':'active')}</td><td class="d-flex gap-1">${s.is_active?'<span class="abt text-success border-success" onclick="liftS('+s.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delS(${s.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No suspensions</td></tr>';}
-async function showSuspM(){const emps=await API('/employees')||[];document.getElementById('susp-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('susp-s',tod());sv('susp-e','');sv('susp-r','');bsM('suspMdl').show();}
+async function loadSusps(){const data=await API('/suspensions')||[];document.getElementById('susp-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(s=>`<tr><td><input type="checkbox" class="susp-c" value="${s.id}" onchange="updBD('susp-c','susp-bd')"></td><td>${s.full_name}<br><code style="font-size:10px;">${s.emp_id}</code></td><td>${fmt(s.start_date)}</td><td>${fmt(s.end_date)}</td><td>${s.reason||'--'}</td><td>${bss(s.is_active?'suspended':'active')}</td><td class="d-flex gap-1">${s.is_active?'<span class="abt text-success border-success" onclick="liftS('+s.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delS(${s.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No suspensions</td></tr>';}
+async function showSuspM(){const emps=await API('/employees')||[];document.getElementById('susp-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('susp-s',tod());sv('susp-e','');sv('susp-r','');bsM('suspMdl').show();}
 async function saveSusp(){const d={employee_id:parseInt(document.getElementById('susp-emp').value),start_date:v('susp-s'),end_date:v('susp-e')||null,reason:v('susp-r')};try{await API('/suspensions','POST',d);bsM('suspMdl').hide();loadSusps();}catch(e){alert(e.message);}}
 async function liftS(id){if(!confirm('Lift?'))return;await API('/suspensions/'+id+'/lift','PUT');loadSusps();}
 async function delS(id){if(!confirm('Delete?'))return;await API('/suspensions/'+id,'DELETE');loadSusps();}
-async function loadFasts(){const data=await API('/fasting')||[];document.getElementById('fast-tb').innerHTML=data.map(f=>`<tr><td><input type="checkbox" class="fast-c" value="${f.id}" onchange="updBD('fast-c','fast-bd')"></td><td>${f.full_name}<br><code style="font-size:10px;">${f.emp_id}</code></td><td>${fmt(f.start_date)}</td><td>${fmt(f.end_date)}</td><td>${f.reason||'--'}</td><td>${bss(f.is_active?'fasting':'active')}</td><td class="d-flex gap-1">${f.is_active?'<span class="abt text-success border-success" onclick="endF('+f.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delF(${f.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
-async function showFastM(){const emps=await API('/employees')||[];document.getElementById('fast-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('fast-s',tod());sv('fast-e','');sv('fast-r','Ramadan');bsM('fastMdl').show();}
+async function loadFasts(){const data=await API('/fasting')||[];document.getElementById('fast-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(f=>`<tr><td><input type="checkbox" class="fast-c" value="${f.id}" onchange="updBD('fast-c','fast-bd')"></td><td>${f.full_name}<br><code style="font-size:10px;">${f.emp_id}</code></td><td>${fmt(f.start_date)}</td><td>${fmt(f.end_date)}</td><td>${f.reason||'--'}</td><td>${bss(f.is_active?'fasting':'active')}</td><td class="d-flex gap-1">${f.is_active?'<span class="abt text-success border-success" onclick="endF('+f.id+')"><i class="fas fa-check"></i></span>':''}<span class="abt text-danger border-danger" onclick="delF(${f.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';}
+async function showFastM(){const emps=await API('/employees')||[];document.getElementById('fast-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');sv('fast-s',tod());sv('fast-e','');sv('fast-r','Ramadan');bsM('fastMdl').show();}
 async function saveFast(){const d={employee_id:parseInt(document.getElementById('fast-emp').value),start_date:v('fast-s'),end_date:v('fast-e')||null,reason:v('fast-r')};try{await API('/fasting','POST',d);bsM('fastMdl').hide();loadFasts();}catch(e){alert(e.message);}}
 async function endF(id){if(!confirm('End?'))return;await API('/fasting/'+id+'/end','PUT');loadFasts();}
 async function delF(id){if(!confirm('Delete?'))return;await API('/fasting/'+id,'DELETE');loadFasts();}
-async function loadMexs(){const data=await API('/meal-exceptions')||[];document.getElementById('mex-tb').innerHTML=data.map(m=>`<tr><td><input type="checkbox" class="mex-c" value="${m.id}" onchange="updBD('mex-c','mex-bd')"></td><td>${m.full_name}<br><code style="font-size:10px;">${m.emp_id}</code></td><td><span class="chip chp">${m.meal_type}</span></td><td>${fmt(m.start_date)}</td><td>${fmt(m.end_date)}</td><td>${m.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editMex(${m.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delMex(${m.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No exceptions</td></tr>';}
+async function loadMexs(){const data=await API('/meal-exceptions')||[];document.getElementById('mex-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(m=>`<tr><td><input type="checkbox" class="mex-c" value="${m.id}" onchange="updBD('mex-c','mex-bd')"></td><td>${m.full_name}<br><code style="font-size:10px;">${m.emp_id}</code></td><td><span class="chip chp">${m.meal_type}</span></td><td>${fmt(m.start_date)}</td><td>${fmt(m.end_date)}</td><td>${m.reason||'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editMex(${m.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delMex(${m.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No exceptions</td></tr>';}
 let mxC=[];
-async function showMexM(rec=null){document.getElementById('mex-ttl').textContent=rec?'Edit':'Add Exception';sv('mex-id',rec?.id||'');sv('mex-mt',rec?.meal_type||'breakfast');sv('mex-s',rec?.start_date||tod());sv('mex-e',rec?.end_date||'');sv('mex-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('mex-emp').innerHTML=emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('mex-emp').value=rec.employee_id;bsM('mexMdl').show();}
+async function showMexM(rec=null){document.getElementById('mex-ttl').textContent=rec?'Edit':'Add Exception';sv('mex-id',rec?.id||'');sv('mex-mt',rec?.meal_type||'breakfast');sv('mex-s',rec?.start_date||tod());sv('mex-e',rec?.end_date||'');sv('mex-r',rec?.reason||'');const emps=await API('/employees')||[];document.getElementById('mex-emp').innerHTML=emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}">${e.full_name}</option>`).join('');if(rec)document.getElementById('mex-emp').value=rec.employee_id;bsM('mexMdl').show();}
 async function saveMex(){const id=v('mex-id');const d={employee_id:parseInt(document.getElementById('mex-emp').value),meal_type:v('mex-mt'),start_date:v('mex-s'),end_date:v('mex-e'),reason:v('mex-r')};try{if(id)await API('/meal-exceptions/'+id,'PUT',d);else await API('/meal-exceptions','POST',d);bsM('mexMdl').hide();loadMexs();}catch(e){alert(e.message);}}
 async function editMex(id){if(!mxC.length)mxC=await API('/meal-exceptions')||[];const r=mxC.find(x=>x.id===id);if(r)showMexM(r);mxC=[];}
 async function delMex(id){if(!confirm('Delete?'))return;await API('/meal-exceptions/'+id,'DELETE');loadMexs();}
-async function loadOvrs(){const data=await API('/temp-overrides')||[];const today=tod();document.getElementById('ovr-tb').innerHTML=data.map(o=>{const isA=o.start_date<=today&&o.end_date>=today;const desc=o.override_shift_type?'Shift to '+(STL[o.override_shift_type]||o.override_shift_type):'Block to '+(o.new_acc_name||'--');return`<tr><td><input type="checkbox" class="ovr-c" value="${o.id}" onchange="updBD('ovr-c','ovr-bd')"></td><td>${o.full_name}<br><code style="font-size:10px;">${o.emp_id}</code></td><td><div style="font-size:12px;">${desc}</div></td><td>${fmt(o.start_date)}</td><td>${fmt(o.end_date)}</td><td>${isA?'<span class="bs bs-a">Active</span>':'<span class="bs bs-ab">Expired</span>'}</td><td><span class="abt text-danger border-danger" onclick="delOvr(${o.id})"><i class="fas fa-trash"></i></span></td></tr>`;}).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No overrides</td></tr>';const emps=await API('/employees')||[];const sel=document.getElementById('ovr-emp');const cur=sel.value;sel.innerHTML='<option value="">Select...</option>'+emps.filter(e=>e.status==='active').map(e=>`<option value="${e.id}" data-sh="${e.shift_type}" data-acc="${e.accommodation_id||''}" data-accnm="${e.accommodation_name||''}">${e.full_name} (${STL[e.shift_type]||e.shift_type})</option>`).join('');if(cur)sel.value=cur;const aS=document.getElementById('ovr-av');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}
+async function loadOvrs(){const data=await API('/temp-overrides')||[];const today=tod();document.getElementById('ovr-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(o=>{const isA=o.start_date<=today&&o.end_date>=today;const desc=o.override_shift_type?'Shift to '+(STL[o.override_shift_type]||o.override_shift_type):'Block to '+(o.new_acc_name||'--');return`<tr><td><input type="checkbox" class="ovr-c" value="${o.id}" onchange="updBD('ovr-c','ovr-bd')"></td><td>${o.full_name}<br><code style="font-size:10px;">${o.emp_id}</code></td><td><div style="font-size:12px;">${desc}</div></td><td>${fmt(o.start_date)}</td><td>${fmt(o.end_date)}</td><td>${isA?'<span class="bs bs-a">Active</span>':'<span class="bs bs-ab">Expired</span>'}</td><td><span class="abt text-danger border-danger" onclick="delOvr(${o.id})"><i class="fas fa-trash"></i></span></td></tr>`;}).join('')||'<tr><td colspan="7" class="text-center py-3" style="color:var(--tx2);">No overrides</td></tr>';const emps=await API('/employees')||[];const sel=document.getElementById('ovr-emp');const cur=sel.value;sel.innerHTML='<option value="">Select...</option>'+emps.filter(e=>e.status==='active').sort((a,b)=>a.full_name.localeCompare(b.full_name)).map(e=>`<option value="${e.id}" data-sh="${e.shift_type}" data-acc="${e.accommodation_id||''}" data-accnm="${e.accommodation_name||''}">${e.full_name} (${STL[e.shift_type]||e.shift_type})</option>`).join('');if(cur)sel.value=cur;const aS=document.getElementById('ovr-av');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}
 function loadOvrC(){const sel=document.getElementById('ovr-emp');const opt=sel.options[sel.selectedIndex];if(!opt||!opt.value){document.getElementById('ovr-curr').style.display='none';return;}const sh=opt.dataset.sh||'normal';const an=opt.dataset.accnm||'--';const md={shift1:'BK:'+an+' LN:Factory DN:'+an,shift2:'BK:'+an+' LN:'+an+' DN:Factory',shift3:'All:'+an,normal:'BK:'+an+' LN:Factory DN:'+an,site:'BK:'+an+' LN:packed-with-BK DN:'+an}[sh]||'--';document.getElementById('ovr-ci').innerHTML='Shift: '+(STL[sh]||sh)+' | Block: '+an+'<br><small>'+md+'</small>';document.getElementById('ovr-curr').style.display='block';}
 function togOvr(){const t=v('ovr-type');document.getElementById('ovr-sf').style.display=t==='shift'?'block':'none';document.getElementById('ovr-af').style.display=t==='accommodation'?'block':'none';}
 async function saveOvr(){const sel=document.getElementById('ovr-emp');const opt=sel.options[sel.selectedIndex];if(!opt||!opt.value){alert('Select employee');return;}const t=v('ovr-type');const d={employee_id:parseInt(opt.value),start_date:v('ovr-s'),end_date:v('ovr-e'),reason:v('ovr-r'),override_shift_type:t==='shift'?v('ovr-sv'):null,override_accommodation_id:t==='accommodation'?(parseInt(v('ovr-av'))||null):null,orig_shift_type:opt.dataset.sh||null,orig_accommodation_id:parseInt(opt.dataset.acc)||null,orig_acc_name:opt.dataset.accnm||null};if(!d.start_date||!d.end_date){alert('Dates required');return;}try{await API('/temp-overrides','POST',d);loadOvrs();sv('ovr-r','');alert('Override saved -- reverts after '+fmt(d.end_date));}catch(e){alert(e.message);}}
@@ -1118,17 +1154,17 @@ async function delOvr(id){if(!confirm('Delete?'))return;await API('/temp-overrid
 async function loadHol(){const data=await API('/holidays')||[];document.getElementById('hol-tb').innerHTML=data.map(h=>`<tr><td>${fmt(h.date)}</td><td>${h.name}</td><td><span class="abt text-danger border-danger" onclick="delHoliday(${h.id})"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="3" class="text-center py-3" style="color:var(--tx2);">No holidays marked</td></tr>';}
 async function saveHoliday(){const d=v('hol-dt'),n=v('hol-nm');if(!d||!n){alert('Date and name required');return;}try{await API('/holidays','POST',{date:d,name:n});sv('hol-nm','');loadHol();}catch(e){alert(e.message);}}
 async function delHoliday(id){if(!confirm('Remove holiday?'))return;await API('/holidays/'+id,'DELETE');loadHol();}
-async function loadLocs(){locs=await API('/locations')||[];const s=document.getElementById('em-acc');if(s){const c=s.value;s.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');if(c)s.value=c;}const aS=document.getElementById('ovr-av');if(aS){aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}const grid=document.getElementById('loc-grid');if(!grid)return locs;grid.innerHTML=locs.map(l=>`<div class="col-md-4 col-sm-6"><div class="card pad"><div class="d-flex justify-content-between align-items-start"><div><h6 class="mb-1"><i class="fas fa-building me-2" style="color:var(--p);"></i>${l.name}</h6><small style="color:var(--tx2);">${l.description||'--'}</small><br><span class="chip chp mt-1">${l.loc_type}</span></div><div class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editLoc(${l.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delLoc(${l.id})"><i class="fas fa-archive"></i></span></div></div></div></div>`).join('');return locs;}
+async function loadLocs(){locs=await API('/locations')||[];const s=document.getElementById('em-acc');if(s){const c=s.value;s.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');if(c)s.value=c;}const aS=document.getElementById('ovr-av');if(aS){aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');}const grid=document.getElementById('loc-grid');if(!grid)return locs;grid.innerHTML=locs.map(l=>`<div class="col-md-4 col-sm-6"><div class="card pad"><div class="d-flex justify-content-between align-items-start"><div><h6 class="mb-1"><i class="fas fa-building me-2" style="color:var(--p);"></i>${l.name}</h6><small style="color:var(--tx2);">${l.description||'--'}</small><br><span class="chip chp mt-1">${l.loc_type}</span></div><div class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editLoc(${l.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delLoc(${l.id})"><i class="fas fa-archive"></i></span></div></div></div></div>`).join('');return locs;}
 function showLocM(rec=null){document.getElementById('loc-ttl').textContent=rec?'Edit':'Add Location';sv('loc-id',rec?.id||'');sv('loc-nm',rec?.name||'');sv('loc-dc',rec?.description||'');sv('loc-tp',rec?.loc_type||'accommodation');bsM('locMdl').show();}
 async function editLoc(id){const l=locs.find(x=>x.id===id);if(l)showLocM(l);}
 async function saveLoc(){const id=v('loc-id');const d={name:v('loc-nm'),description:v('loc-dc'),loc_type:v('loc-tp')};try{if(id)await API('/locations/'+id,'PUT',d);else await API('/locations','POST',d);bsM('locMdl').hide();loadLocs();}catch(e){alert(e.message);}}
 async function delLoc(id){if(!confirm('Archive?'))return;await API('/locations/'+id,'DELETE');loadLocs();}
-async function loadFPs(){fps=await API('/food-preferences')||[];const s=document.getElementById('em-fp');if(s){const c=s.value;s.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(c)s.value=c;}const grid=document.getElementById('fp-grid');if(!grid)return fps;grid.innerHTML=fps.map(f=>`<div class="col-md-4 col-sm-6"><div class="card pad"><div class="d-flex justify-content-between align-items-start"><div><h6 class="mb-1"><i class="fas fa-drumstick-bite me-2" style="color:var(--ac);"></i>${f.name}</h6><span class="chip chp">${f.category||'--'}</span></div><div class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editFp(${f.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delFp(${f.id})"><i class="fas fa-trash"></i></span></div></div></div></div>`).join('');return fps;}
+async function loadFPs(){fps=await API('/food-preferences')||[];const s=document.getElementById('em-fp');if(s){const c=s.value;s.innerHTML='<option value="">Select...</option>'+fps.sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(c)s.value=c;}const grid=document.getElementById('fp-grid');if(!grid)return fps;grid.innerHTML=fps.map(f=>`<div class="col-md-4 col-sm-6"><div class="card pad"><div class="d-flex justify-content-between align-items-start"><div><h6 class="mb-1"><i class="fas fa-drumstick-bite me-2" style="color:var(--ac);"></i>${f.name}</h6><span class="chip chp">${f.category||'--'}</span></div><div class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editFp(${f.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delFp(${f.id})"><i class="fas fa-trash"></i></span></div></div></div></div>`).join('');return fps;}
 function showFpM(rec=null){document.getElementById('fp-ttl').textContent=rec?'Edit':'Add Food Preference';sv('fp-id',rec?.id||'');sv('fp-nm',rec?.name||'');sv('fp-ct',rec?.category||'');bsM('fpMdl').show();}
 async function editFp(id){const f=fps.find(x=>x.id===id);if(f)showFpM(f);}
 async function saveFp(){const id=v('fp-id');const d={name:v('fp-nm'),category:v('fp-ct')};try{if(id)await API('/food-preferences/'+id,'PUT',d);else await API('/food-preferences','POST',d);bsM('fpMdl').hide();loadFPs();}catch(e){alert(e.message);}}
 async function delFp(id){if(!confirm('Delete?'))return;await API('/food-preferences/'+id,'DELETE');loadFPs();}
-async function loadUsrs(){const data=await API('/users')||[];document.getElementById('user-tb').innerHTML=data.map(u=>`<tr><td><code>${u.username}</code></td><td>${u.full_name}</td><td><span class="chip chp">${u.role}</span></td><td>${bss(u.is_active?'active':'suspended')}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editUsr(${u.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="deacU(${u.id})"><i class="fas fa-user-slash"></i></span></td></tr>`).join('');}
+async function loadUsrs(){const data=await API('/users')||[];document.getElementById('user-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(u=>`<tr><td><code>${u.username}</code></td><td>${u.full_name}</td><td><span class="chip chp">${u.role}</span></td><td>${bss(u.is_active?'active':'suspended')}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editUsr(${u.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="deacU(${u.id})"><i class="fas fa-user-slash"></i></span></td></tr>`).join('');}
 let ucC=[];function showUsrM(rec=null){document.getElementById('usr-ttl').textContent=rec?'Edit':'Add User';sv('usr-id',rec?.id||'');sv('u-nm',rec?.full_name||'');sv('u-un',rec?.username||'');sv('u-pw','');sv('u-role',rec?.role||'viewer');bsM('usrMdl').show();}
 async function editUsr(id){if(!ucC.length)ucC=await API('/users')||[];const u=ucC.find(x=>x.id===id);if(u)showUsrM(u);ucC=[];}
 async function saveUsr(){const id=v('usr-id');const d={full_name:v('u-nm'),username:v('u-un'),password:v('u-pw'),role:v('u-role')};try{if(id)await API('/users/'+id,'PUT',d);else await API('/users','POST',d);bsM('usrMdl').hide();loadUsrs();}catch(e){alert(e.message);}}
@@ -1153,9 +1189,9 @@ async function loadBE(){
   const accSet=[...new Set(beEmps.map(e=>e.accommodation_name).filter(Boolean))].sort();
   document.getElementById('be-facc').innerHTML='<option value="">All Blocks</option>'+accSet.map(a=>`<option>${a}</option>`).join('');
   const fpD=document.getElementById('be-new-fp');
-  fpD.innerHTML='<option value="">Select...</option>'+fps.map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  fpD.innerHTML='<option value="">Select...</option>'+fps.sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
   const accD=document.getElementById('be-new-acc');
-  accD.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+  accD.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
   [['be-chk-sh','be-new-sh'],['be-chk-fp','be-new-fp'],['be-chk-acc','be-new-acc']].forEach(([chk,sel])=>{
     const c=document.getElementById(chk),s=document.getElementById(sel);
     if(c)c.onchange=()=>{s.disabled=!c.checked;beUpdCount();};
@@ -1219,6 +1255,64 @@ async function applyBulkEdit(){
     el.className='alert alert-danger py-2 small';el.textContent='Error: '+e.message;
   }
 }
+
+// ── Universal sortable table helper ────────────────────────────────────────
+const _tblSort={};
+function mkSortable(tbodyId,data,colDefs,renderFn){
+  // colDefs: [{key,label,th_id}]
+  // renders sorted data using renderFn(row) => html string
+  if(!_tblSort[tbodyId])_tblSort[tbodyId]={col:null,dir:1};
+  const st=_tblSort[tbodyId];
+  colDefs.forEach(cd=>{
+    const th=document.getElementById(cd.th_id);
+    if(!th)return;
+    th.style.cursor='pointer';th.style.userSelect='none';
+    th.onclick=()=>{
+      if(st.col===cd.key)st.dir*=-1;else{st.col=cd.key;st.dir=1;}
+      colDefs.forEach(c=>{const t=document.getElementById(c.th_id);if(t)t.dataset.sort='';});
+      th.dataset.sort=st.dir===1?'asc':'desc';
+      renderSortedTable(tbodyId,data,st,renderFn);
+    };
+  });
+  renderSortedTable(tbodyId,data,st,renderFn);
+}
+function renderSortedTable(tbodyId,data,st,renderFn){
+  let d=[...data];
+  if(st.col){
+    d.sort((a,b)=>{
+      let av=a[st.col],bv=b[st.col];
+      if(av==null)av='';if(bv==null)bv='';
+      if(!isNaN(av)&&!isNaN(bv))return(+av-+bv)*st.dir;
+      return String(av).toLowerCase().localeCompare(String(bv).toLowerCase())*st.dir;
+    });
+  }
+  const tb=document.getElementById(tbodyId);
+  if(tb)tb.innerHTML=d.map(renderFn).join('')||'<tr><td colspan="20" class="text-center py-4" style="color:var(--tx2);">No records</td></tr>';
+}
+
+// Simple per-table sort: stores data in _tblData[tbId], sorts and re-renders via _tblRender[tbId]
+const _tblData={};const _tblRender={};const _tblSortState={};
+function sortTbl(tbodyId,data,col){
+  if(!_tblSortState[tbodyId])_tblSortState[tbodyId]={col:null,dir:1};
+  const st=_tblSortState[tbodyId];
+  if(st.col===col)st.dir*=-1;else{st.col=col;st.dir=1;}
+  // Update header indicators
+  document.querySelectorAll(`[id^="${tbodyId.replace('-list','-th-').replace('-tb','-th-')}"]`).forEach(th=>{
+    const thCol=th.id.split('-th-').pop();
+    th.dataset.sort=thCol===col?(st.dir===1?'asc':'desc'):'';
+  });
+  const d=[...(data||_tblData[tbodyId]||[])].sort((a,b)=>{
+    let av=a[col]||'',bv=b[col]||'';
+    return String(av).toLowerCase().localeCompare(String(bv).toLowerCase())*st.dir;
+  });
+  const tb=document.getElementById(tbodyId);
+  if(tb&&_tblRender[tbodyId])tb.innerHTML=d.map(_tblRender[tbodyId]).join('')||'<tr><td colspan="20" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';
+}
+function initTblSort(tbodyId,data,renderFn){
+  _tblData[tbodyId]=data;
+  _tblRender[tbodyId]=renderFn;
+}
+
 
 setTh(localStorage.getItem('th')||'blue');
 </script></body></html>

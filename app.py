@@ -563,7 +563,7 @@ def list_emp(search:Optional[str]=None,shift_type:Optional[str]=None,food_pref:O
     if search:conds.append(f'(e.full_name {lop} ? OR e.emp_id {lop} ? OR COALESCE(e.department,\'\') {lop} ?)');params+=[f'%{search}%']*3
     if shift_type:conds.append('e.shift_type=?');params.append(shift_type)
     if food_pref:conds.append('fp.name LIKE ?');params.append(f'%{food_pref}%')
-    r=q(conn,EJ+' WHERE '+(' AND '.join(conds)),params); conn.close(); return r
+    r=q(conn,EJ+' WHERE '+(' AND '.join(conds))+' ORDER BY e.full_name',params); conn.close(); return r
 
 @app.get('/api/employees/{eid}')
 def get_emp(eid:int,_=Depends(get_user)):
