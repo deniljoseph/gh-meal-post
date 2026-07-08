@@ -249,7 +249,7 @@ def build_report(conn,d,sunday_mode=False):
     rules=get_rules(conn); susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
     temp_ovr=get_temp_overrides(conn,d)
     emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref,l.name acc FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id LEFT JOIN locations l ON e.accommodation_id=l.id WHERE e.status=?',('active',))
-    accs_raw=q(conn,'SELECT name FROM locations WHERE loc_type=? AND is_active=1',('accommodation',))
+    accs_raw=q(conn,'SELECT name FROM locations WHERE loc_type=? AND is_active=1 ORDER BY name',('accommodation',))
     accs=[a['name'] for a in accs_raw]; fps=['Arabic','North Indian','North Indian Veg','South Indian','South Indian Veg']
     def mk(): return{a:{f:0 for f in fps} for a in accs}
     l2a=mk();d2f=mk();l2s=mk();i2a=mk()
@@ -802,7 +802,7 @@ def bulk_del_overrides(data:BulkDel,_=Depends(require('admin','hr'))):
 
 @app.get('/api/locations')
 def list_locs(_=Depends(get_user)):
-    conn=db_conn(); r=q(conn,'SELECT * FROM locations WHERE is_active=1'); conn.close(); return r
+    conn=db_conn(); r=q(conn,'SELECT * FROM locations WHERE is_active=1 ORDER BY name'); conn.close(); return r
 
 @app.post('/api/locations')
 def add_loc(data:LocIn,_=Depends(require('admin','hr'))):
@@ -818,7 +818,7 @@ def del_loc(lid:int,_=Depends(require('admin'))):
 
 @app.get('/api/food-preferences')
 def list_fp(_=Depends(get_user)):
-    conn=db_conn(); r=q(conn,'SELECT * FROM food_preferences WHERE is_active=1'); conn.close(); return r
+    conn=db_conn(); r=q(conn,'SELECT * FROM food_preferences WHERE is_active=1 ORDER BY name'); conn.close(); return r
 
 @app.post('/api/food-preferences')
 def add_fp(data:FpIn,_=Depends(require('admin','hr'))):
@@ -834,7 +834,7 @@ def del_fp(fid:int,_=Depends(require('admin'))):
 
 @app.get('/api/users')
 def list_users(_=Depends(require('admin'))):
-    conn=db_conn(); r=q(conn,'SELECT id,username,role,full_name,is_active,created_at FROM users'); conn.close(); return r
+    conn=db_conn(); r=q(conn,'SELECT id,username,role,full_name,is_active,created_at FROM users ORDER BY full_name'); conn.close(); return r
 
 @app.post('/api/users')
 def add_user(data:dict,_=Depends(require('admin'))):
