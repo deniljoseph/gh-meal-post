@@ -1115,6 +1115,13 @@ function rendAL(emps){
     <td>${e.accommodation_name||'--'}</td>
   </tr>`).join('')||'<tr><td colspan="4" class="text-center py-4" style="color:var(--tx2);">All present today</td></tr>';
 }
+function togAllA(chk){document.querySelectorAll('.att-c').forEach(c=>c.checked=chk.checked);}
+function markAbs(){
+  absIds=[...document.querySelectorAll('.att-c:checked')].map(c=>parseInt(c.value));
+  if(!absIds.length){alert('Select at least one employee first.');return;}
+  sv('abs-rsn','');
+  bsM('absMdl').show();
+}
 async function confAbs(){
   const d=v('att-dt')||tod();
   const btn=document.querySelector('#absMdl .btn-danger');
