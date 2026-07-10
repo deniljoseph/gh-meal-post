@@ -1136,6 +1136,14 @@ async function confAbs(){
     if(btn){btn.disabled=false;btn.textContent='Confirm Absent';}
   }
 }
+function rendAbL(records){
+  document.getElementById('abs-cnt').textContent=records.length;
+  document.getElementById('abs-list').innerHTML=records.map(r=>`<tr>
+    <td>${r.full_name}</td>
+    <td style="font-size:12px;color:var(--tx2);">${r.reason||'--'}</td>
+    <td><span class="abt text-success border-success" onclick="unAbs(${r.id})" title="Restore"><i class="fas fa-undo"></i></span></td>
+  </tr>`).join('')||'<tr><td colspan="3" class="text-center py-3" style="color:var(--tx2);">No one marked absent</td></tr>';
+}
 async function unAbs(id){await API('/attendance/'+id,'DELETE');loadAtt();}
 async function loadVacs(){
   const data=await API('/vacation')||[];
