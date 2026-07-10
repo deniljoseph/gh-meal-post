@@ -681,6 +681,17 @@ def add_susp(data:SuspIn,user=Depends(require('admin','hr'))):
     finally:
         conn.close()
 
+@app.put('/api/suspensions/{sid}')
+def update_susp(sid:int,data:SuspIn,_=Depends(require('admin','hr'))):
+    conn=db_conn()
+    try:
+        exe(conn,'UPDATE suspensions SET employee_id=?,start_date=?,end_date=?,reason=? WHERE id=?',(data.employee_id,data.start_date,data.end_date,data.reason,sid))
+        return{'ok':True}
+    except Exception as e:
+        raise HTTPException(500,f'Update failed: {e}')
+    finally:
+        conn.close()
+
 @app.put('/api/suspensions/{sid}/lift')
 def lift_susp(sid:int,_=Depends(require('admin','hr'))):
     conn=db_conn(); s=q1(conn,'SELECT employee_id FROM suspensions WHERE id=?',(sid,))
@@ -929,7 +940,105 @@ def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
     buf=io.BytesIO();wb.save(buf);buf.seek(0)
     return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename=food_report_{d}.xlsx'})
 
-@app.get('/api/lookup/names')
+# ── FULL DATABASE BACKUP / RESTORE ─────────────────────────────────────────────
+# Tables in dependency order (parents before children) — used for both
+# export sheet order and restore insert order.
+BACKUP_TABLES=['settings','locations','food_preferences','users','employees',
+    'attendance','suspensions','fasting_records','vacation_records',
+    'meal_exceptions','temp_meal_overrides','report_history','meal_prices','holidays']
+
+@app.get('/api/backup/export')
+def backup_export(_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        wb=openpyxl.Workbook(); wb.remove(wb.active)
+        hf=PatternFill('solid',fgColor='003c8f'); hfont=Font(bold=True,color='FFFFFF')
+        for tbl in BACKUP_TABLES:
+            rows_=q(conn,f'SELECT * FROM {tbl}')
+            ws=wb.create_sheet(title=tbl[:31])  # Excel sheet name limit
+            if rows_:
+                cols=list(rows_[0].keys())
+                for i,h in enumerate(cols,1):
+                    c=ws.cell(1,i,h); c.fill=hf; c.font=hfont
+                for ri,row in enumerate(rows_,2):
+                    for ci,col in enumerate(cols,1):
+                        val=row.get(col)
+                        # Excel can't store dicts/lists — stringify if needed
+                        if isinstance(val,(dict,list)): val=json.dumps(val)
+                        ws.cell(ri,ci,val)
+                for col_cells in ws.columns:
+                    ws.column_dimensions[col_cells[0].column_letter].width=18
+            else:
+                ws.cell(1,1,'(empty table)')
+        # Metadata sheet
+        meta=wb.create_sheet(title='_backup_info',index=0)
+        meta['A1']='GH Meal Management System - Full Backup'; meta['A1'].font=Font(bold=True,size=13)
+        meta['A2']=f'Created: {datetime.utcnow().isoformat()} UTC'
+        meta['A3']=f'Database: {"PostgreSQL" if USE_PG else "SQLite"}'
+        meta['A4']=f'Tables: {len(BACKUP_TABLES)}'
+        meta['A6']='⚠️  Restoring this file will REPLACE ALL current data. Use with caution.'
+        meta['A6'].font=Font(bold=True,color='B71C1C')
+        buf=io.BytesIO(); wb.save(buf); buf.seek(0)
+        fname=f'GH_Backup_{date.today().isoformat()}.xlsx'
+        return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={fname}'})
+    finally:
+        conn.close()
+
+@app.post('/api/backup/restore')
+async def backup_restore(file:UploadFile=File(...),_=Depends(require('admin'))):
+    content=await file.read()
+    try:
+        wb=openpyxl.load_workbook(io.BytesIO(content),data_only=True)
+    except Exception as e:
+        raise HTTPException(400,f'Cannot read backup file: {e}')
+
+    conn=db_conn()
+    try:
+        restored={}
+        # Wipe in reverse dependency order (children first) to satisfy FKs
+        for tbl in reversed(BACKUP_TABLES):
+            exe(conn,f'DELETE FROM {tbl}',silent=True)
+
+        for tbl in BACKUP_TABLES:
+            if tbl not in wb.sheetnames:
+                restored[tbl]=0; continue
+            ws=wb[tbl]
+            rows_iter=list(ws.iter_rows(values_only=True))
+            if not rows_iter or len(rows_iter)<2:
+                restored[tbl]=0; continue
+            headers=[str(h) for h in rows_iter[0] if h is not None]
+            count=0
+            for r in rows_iter[1:]:
+                if all(v is None for v in r): continue
+                vals=list(r[:len(headers)])
+                placeholders=','.join(['?']*len(headers))
+                col_str=','.join(headers)
+                try:
+                    exe(conn,f'INSERT INTO {tbl}({col_str}) VALUES({placeholders})',vals)
+                    count+=1
+                except Exception:
+                    pass  # skip malformed row, keep going
+            restored[tbl]=count
+
+        # Reset PG sequences after restore so new inserts don't collide
+        if USE_PG:
+            for tbl in BACKUP_TABLES:
+                if tbl in ('settings','meal_prices'): continue
+                try:
+                    cur=conn.cursor()
+                    cur.execute(f"SELECT setval(pg_get_serial_sequence('{tbl}','id'),COALESCE(MAX(id),0)+1,false) FROM {tbl}")
+                    conn.commit(); cur.close()
+                except Exception:
+                    try: conn.rollback()
+                    except: pass
+
+        return{'ok':True,'restored':restored,'total':sum(restored.values())}
+    except Exception as e:
+        raise HTTPException(500,f'Restore failed: {e}')
+    finally:
+        conn.close()
+
+
 def lookup_names(q_str:str=''):
     conn=db_conn()
     if not (q1(conn,'SELECT value FROM settings WHERE key=?',('lookup_enabled',)) or {}).get('value')=='1': conn.close(); raise HTTPException(403,'Disabled')
