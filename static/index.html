@@ -1262,9 +1262,10 @@ let lkT;
 function lkSearch(q){clearTimeout(lkT);const nn=document.getElementById('lk-names');const dt=document.getElementById('lk-detail');dt.style.display='none';if(q.length<2){nn.style.display='none';return;}lkT=setTimeout(async()=>{try{const data=await fetch('/api/lookup/names?q_str='+encodeURIComponent(q)).then(r=>r.json());if(!data.length){nn.innerHTML='<div style="padding:14px;text-align:center;color:#555;font-size:13px;">No employee found</div>';nn.style.display='block';return;}nn.style.display='block';nn.innerHTML=data.map(e=>`<div class="lk-item" onclick="showLkD(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><div class="lk-av">${e.full_name.charAt(0)}</div><div><div style="font-weight:600;color:#E8E8E8;">${e.full_name}</div><div style="font-size:11px;color:#888;">${e.department||''}</div></div></div>`).join('');}catch(e){nn.innerHTML='<div style="padding:14px;color:#EF9A9A;font-size:13px;">Lookup unavailable</div>';nn.style.display='block';}},300);}
 async function showLkD(id,name){document.getElementById('lk-names').style.display='none';document.getElementById('lk-in').value=name;const dt=document.getElementById('lk-detail');dt.style.display='block';dt.innerHTML='<div class="text-center py-2"><i class="fas fa-spinner fa-spin" style="color:#1565C0;"></i></div>';try{const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());const sC={active:'#2E7D32',fasting:'#E65100',suspended:'#C62828',absent:'#757575',vacation:'#1565C0'};const sL={active:'Active',fasting:'Fasting (Ramadan)',suspended:'Suspended',absent:'Absent Today',vacation:'On Leave'};dt.innerHTML=`<div class="d-flex justify-content-between align-items-start mb-3"><div><h5 class="mb-0" style="color:#E8E8E8;">${e.full_name}</h5><small style="color:#888;">${e.department||''}</small></div><span style="background:${sC[e.current_status]||'#555'};color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;">${sL[e.current_status]||e.current_status}</span></div><div class="row g-2 mb-3"><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Accommodation</strong><br><span style="color:#42A5F5;">${e.acc_name||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Shift</strong><br><span style="color:#42A5F5;">${e.shift_label||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Food</strong><br><span style="color:#42A5F5;">${e.food_pref||'--'}</span></div></div><div style="background:#222;border-radius:8px;padding:14px;border:1px solid #333;"><div style="font-weight:600;color:#42A5F5;margin-bottom:8px;font-size:13px;">Meal Allocation Today</div>${e.get_bk?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Breakfast</span><strong style="color:#42A5F5;">${e.bk_loc}</strong></div>`:'<div style="padding:7px 0;border-bottom:1px solid #333;color:#555;">No Breakfast</div>'}${e.get_ln&&!e.iftar_kit?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Lunch</span><strong style="color:#42A5F5;">${e.ln_loc}</strong></div>`:''}${e.iftar_kit?`<div style="padding:7px 0;border-bottom:1px solid #333;color:#FFA726;font-weight:600;font-size:13px;">Iftar Kit + Dinner at ${e.bk_loc}</div>`:''}${e.get_dn?`<div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="color:#aaa;">Dinner</span><strong style="color:#42A5F5;">${e.dn_loc}</strong></div>`:'<div style="padding:7px 0;color:#555;">No Dinner</div>'}</div>`;}catch(e){dt.innerHTML='<div style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:10px;font-size:13px;">Not found or lookup disabled</div>';}}
 // === BULK EDIT ===
-let beEmps=[], beFiltered=[];
+let beEmps=[], beFiltered=[], beSelected=new Set();
 async function loadBE(){
   beEmps=await API('/employees')||[];
+  beSelected=new Set();
   const accSet=[...new Set(beEmps.map(e=>e.accommodation_name).filter(Boolean))].sort();
   document.getElementById('be-facc').innerHTML='<option value="">All Blocks</option>'+accSet.map(a=>`<option>${a}</option>`).join('');
   const fpD=document.getElementById('be-new-fp');
@@ -1288,25 +1289,41 @@ function beFilter(){
   });
   const STL2={shift1:'1st Shift',shift2:'2nd Shift',shift3:'3rd Shift',normal:'Normal',site:'Site'};
   document.getElementById('be-tb').innerHTML=beFiltered.map(e=>`<tr>
-    <td><input type="checkbox" class="be-c" value="${e.id}" onchange="beUpdCount()"></td>
+    <td><input type="checkbox" class="be-c" value="${e.id}" ${beSelected.has(e.id)?'checked':''} onchange="beOnCheck(${e.id},this.checked)"></td>
     <td><strong>${e.full_name}</strong><br><code style="font-size:10px;">${e.emp_id}</code></td>
     <td><span class="chip chp" style="font-size:10px;">${STL2[e.shift_type]||e.shift_type}</span></td>
     <td style="font-size:12px;">${e.food_pref_name||'--'}</td>
     <td style="font-size:12px;">${e.accommodation_name||'--'}</td>
   </tr>`).join('')||'<tr><td colspan="5" class="text-center py-3" style="color:var(--tx2);">No employees match filter</td></tr>';
   document.getElementById('be-showing').textContent=beFiltered.length;
-  document.getElementById('be-all').checked=false;
+  // "select all" checkbox reflects whether every currently-shown row is selected
+  const allShownSelected=beFiltered.length>0&&beFiltered.every(e=>beSelected.has(e.id));
+  document.getElementById('be-all').checked=allShownSelected;
   beUpdCount();
 }
-function beToggleAll(chk){document.querySelectorAll('.be-c').forEach(c=>c.checked=chk.checked);beUpdCount();}
-function beSelectAll(){document.querySelectorAll('.be-c').forEach(c=>c.checked=true);document.getElementById('be-all').checked=true;beUpdCount();}
+function beOnCheck(id,checked){
+  if(checked)beSelected.add(id);else beSelected.delete(id);
+  document.getElementById('be-all').checked=beFiltered.length>0&&beFiltered.every(e=>beSelected.has(e.id));
+  beUpdCount();
+}
+function beToggleAll(chk){
+  beFiltered.forEach(e=>{if(chk.checked)beSelected.add(e.id);else beSelected.delete(e.id);});
+  document.querySelectorAll('.be-c').forEach(c=>c.checked=chk.checked);
+  beUpdCount();
+}
+function beSelectAll(){
+  beFiltered.forEach(e=>beSelected.add(e.id));
+  document.querySelectorAll('.be-c').forEach(c=>c.checked=true);
+  document.getElementById('be-all').checked=true;
+  beUpdCount();
+}
 function beUpdCount(){
-  const n=document.querySelectorAll('.be-c:checked').length;
+  const n=beSelected.size;
   const sc=document.getElementById('be-sel-cnt');if(sc)sc.textContent=n;
   const bc=document.getElementById('be-btn-cnt');if(bc)bc.textContent=n;
 }
 async function applyBulkEdit(){
-  const ids=[...document.querySelectorAll('.be-c:checked')].map(c=>parseInt(c.value));
+  const ids=[...beSelected];
   if(!ids.length){alert('Select at least one employee first.');return;}
   const chkSh=document.getElementById('be-chk-sh')?.checked;
   const chkFp=document.getElementById('be-chk-fp')?.checked;
@@ -1326,8 +1343,6 @@ async function applyBulkEdit(){
     if(chkFp){const s=document.getElementById('be-new-fp');what.push('Food to '+s.options[s.selectedIndex].text);}
     if(chkAcc){const s=document.getElementById('be-new-acc');what.push('Block to '+s.options[s.selectedIndex].text);}
     el.innerHTML='<i class="fas fa-check-circle me-1"></i><strong>'+res.updated+' employee(s) updated:</strong> '+what.join(' | ');
-    document.querySelectorAll('.be-c').forEach(c=>c.checked=false);
-    document.getElementById('be-all').checked=false;beUpdCount();
     await loadBE();
   }catch(e){
     const el=document.getElementById('be-result');el.style.display='block';
