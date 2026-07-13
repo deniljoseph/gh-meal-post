@@ -1161,7 +1161,7 @@ async function sendWhatsApp(){
       // Fallback for desktop browsers without Web Share API file support:
       // download the image and open WhatsApp Web so it can be attached manually
       const a=document.createElement('a');a.download=fname;a.href=c.toDataURL('image/png');a.click();
-      alert('Your browser can\\'t attach images directly to WhatsApp.\\nThe report image has been downloaded — open WhatsApp and attach it manually.\\n\\n(This works automatically on mobile devices.)');
+      alert("Your browser can't attach images directly to WhatsApp.\nThe report image has been downloaded — open WhatsApp and attach it manually.\n\n(This works automatically on mobile devices.)");
       window.open('https://wa.me/','_blank');
     }
   }catch(e){
