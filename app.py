@@ -146,6 +146,7 @@ def init_db():
             """CREATE TABLE IF NOT EXISTS meal_prices(food_pref TEXT NOT NULL,meal_type TEXT NOT NULL,price REAL DEFAULT 0,PRIMARY KEY(food_pref,meal_type))""",
             """CREATE TABLE IF NOT EXISTS holidays(id SERIAL PRIMARY KEY,date TEXT NOT NULL UNIQUE,name TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT)""",
+            """CREATE TABLE IF NOT EXISTS audit_logs(id SERIAL PRIMARY KEY,username TEXT,action TEXT NOT NULL,entity TEXT,entity_id INTEGER,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
         ]
         for s in stmts: exe(conn,s)
     else:
@@ -164,6 +165,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS meal_prices(food_pref TEXT NOT NULL,meal_type TEXT NOT NULL,price REAL DEFAULT 0,PRIMARY KEY(food_pref,meal_type));
         CREATE TABLE IF NOT EXISTS holidays(id INTEGER PRIMARY KEY AUTOINCREMENT,date TEXT NOT NULL UNIQUE,name TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);
+        CREATE TABLE IF NOT EXISTS audit_logs(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT,action TEXT NOT NULL,entity TEXT,entity_id INTEGER,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         """)
         for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'']:
             try: conn.execute(col); conn.commit()
@@ -202,6 +204,13 @@ def init_db():
                 try: conn.rollback()
                 except: pass
     conn.close()
+
+def log_audit(conn,username,action,entity=None,entity_id=None,detail=None):
+    """Best-effort audit log write — never breaks the calling request."""
+    try:
+        exe(conn,'INSERT INTO audit_logs(username,action,entity,entity_id,detail)VALUES(?,?,?,?,?)',(username,action,entity,entity_id,detail),silent=True)
+    except Exception:
+        pass
 
 def is_holiday(conn,d):
     r=q1(conn,'SELECT id FROM holidays WHERE date=?',(d,)); return bool(r)
@@ -576,6 +585,7 @@ def create_emp(emp:EmpIn,user=Depends(require('admin','hr'))):
     conn=db_conn(); eid=emp.emp_id or next_eid(conn)
     try:
         nid=run(conn,'INSERT INTO employees(emp_id,full_name,department,accommodation_id,shift_type,food_pref_id,no_food_sunday,remarks,status)VALUES(?,?,?,?,?,?,?,?,?)',(eid,emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,'active'))
+        log_audit(conn,user['sub'],'create','employee',nid,emp.full_name)
         return{'id':nid,'emp_id':eid}
     except Exception as e:
         raise HTTPException(400,str(e))
@@ -583,10 +593,11 @@ def create_emp(emp:EmpIn,user=Depends(require('admin','hr'))):
         conn.close()
 
 @app.put('/api/employees/{eid}')
-def update_emp(eid:int,emp:EmpIn,_=Depends(require('admin','hr'))):
+def update_emp(eid:int,emp:EmpIn,user=Depends(require('admin','hr'))):
     conn=db_conn()
     try:
         exe(conn,'UPDATE employees SET full_name=?,department=?,accommodation_id=?,shift_type=?,food_pref_id=?,no_food_sunday=?,remarks=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',(emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,eid))
+        log_audit(conn,user['sub'],'update','employee',eid,emp.full_name)
         return{'ok':True}
     except Exception as e:
         raise HTTPException(500,f'Update failed: {e}')
@@ -594,12 +605,14 @@ def update_emp(eid:int,emp:EmpIn,_=Depends(require('admin','hr'))):
         conn.close()
 
 @app.delete('/api/employees/{eid}')
-def delete_emp(eid:int,_=Depends(require('admin','hr'))):
+def delete_emp(eid:int,user=Depends(require('admin','hr'))):
     conn=db_conn()
     try:
+        emp_name=(q1(conn,'SELECT full_name FROM employees WHERE id=?',(eid,)) or {}).get('full_name','')
         for tbl in ['suspensions','fasting_records','vacation_records','meal_exceptions','temp_meal_overrides','attendance']:
             exe(conn,f'DELETE FROM {tbl} WHERE employee_id=?',(eid,))
         exe(conn,'DELETE FROM employees WHERE id=?',(eid,))
+        log_audit(conn,user['sub'],'delete','employee',eid,emp_name)
         return{'ok':True}
     except Exception as e:
         raise HTTPException(500,f'Delete failed: {e}')
@@ -621,7 +634,7 @@ def bulk_del_emp(data:BulkDel,_=Depends(require('admin','hr'))):
         conn.close()
 
 @app.post('/api/employees/bulk-update')
-def bulk_update_emp(data:BulkUpdate,_=Depends(require('admin','hr'))):
+def bulk_update_emp(data:BulkUpdate,user=Depends(require('admin','hr'))):
     conn=db_conn();parts=[];vals=[]
     if data.shift_type: parts.append('shift_type=?');vals.append(data.shift_type)
     if data.food_pref_id: parts.append('food_pref_id=?');vals.append(data.food_pref_id)
@@ -629,6 +642,7 @@ def bulk_update_emp(data:BulkUpdate,_=Depends(require('admin','hr'))):
     if not parts: conn.close(); return{'updated':0}
     sql=f'UPDATE employees SET {",".join(parts)},updated_at=CURRENT_TIMESTAMP WHERE id=?'
     for eid in data.ids: exe(conn,sql,vals+[eid])
+    log_audit(conn,user['sub'],'bulk_update','employee',None,f'{len(data.ids)} employee(s): {",".join(parts)}')
     conn.close(); return{'updated':len(data.ids)}
 
 @app.get('/api/attendance')
@@ -647,6 +661,7 @@ def mark_att(data:AttIn,user=Depends(require('admin','hr','supervisor'))):
                 exe(conn,'INSERT INTO attendance(employee_id,att_date,status,reason,marked_by)VALUES(?,?,?,?,?) ON CONFLICT(employee_id,att_date) DO UPDATE SET status=EXCLUDED.status,reason=EXCLUDED.reason',(eid,data.att_date,data.status,data.reason,uid['id'] if uid else None))
             else:
                 exe(conn,'INSERT OR REPLACE INTO attendance(employee_id,att_date,status,reason,marked_by)VALUES(?,?,?,?,?)',(eid,data.att_date,data.status,data.reason,uid['id'] if uid else None))
+        log_audit(conn,user['sub'],'mark_'+data.status,'attendance',None,f'{len(data.employee_ids)} employee(s) on {data.att_date}')
         return{'ok':True}
     except Exception as e:
         raise HTTPException(500,f'Attendance update failed: {e}')
@@ -675,6 +690,7 @@ def add_susp(data:SuspIn,user=Depends(require('admin','hr'))):
         uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
         sid=run(conn,'INSERT INTO suspensions(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(data.employee_id,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
         exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(data.employee_id,))
+        log_audit(conn,user['sub'],'suspend','employee',data.employee_id,data.reason)
         return{'id':sid}
     except Exception as e:
         raise HTTPException(500,f'Suspension failed: {e}')
@@ -945,7 +961,136 @@ def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
 # export sheet order and restore insert order.
 BACKUP_TABLES=['settings','locations','food_preferences','users','employees',
     'attendance','suspensions','fasting_records','vacation_records',
-    'meal_exceptions','temp_meal_overrides','report_history','meal_prices','holidays']
+    'meal_exceptions','temp_meal_overrides','report_history','meal_prices','holidays','audit_logs']
+
+@app.get('/api/audit-log')
+def get_audit_log(limit:int=200,_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        r=q(conn,'SELECT * FROM audit_logs ORDER BY id DESC LIMIT ?',(limit,))
+        return r
+    finally:
+        conn.close()
+
+class BulkSuspIn(BaseModel):
+    employee_ids:List[int];start_date:str;end_date:Optional[str]=None;reason:Optional[str]=None
+class BulkVacIn(BaseModel):
+    employee_ids:List[int];start_date:str;end_date:str;reason:Optional[str]=None
+class BulkFastIn(BaseModel):
+    employee_ids:List[int];start_date:str;end_date:Optional[str]=None;reason:Optional[str]=None
+
+@app.post('/api/suspensions/bulk-add')
+def bulk_add_susp(data:BulkSuspIn,user=Depends(require('admin','hr'))):
+    conn=db_conn()
+    try:
+        uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
+        n=0
+        for eid in data.employee_ids:
+            run(conn,'INSERT INTO suspensions(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(eid,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
+            exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(eid,))
+            n+=1
+        log_audit(conn,user['sub'],'bulk_suspend','employee',None,f'{n} employee(s)')
+        return{'created':n}
+    except Exception as e:
+        raise HTTPException(500,f'Bulk suspend failed: {e}')
+    finally:
+        conn.close()
+
+@app.post('/api/vacation/bulk-add')
+def bulk_add_vac(data:BulkVacIn,user=Depends(require('admin','hr'))):
+    conn=db_conn()
+    try:
+        uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
+        n=0
+        for eid in data.employee_ids:
+            run(conn,'INSERT INTO vacation_records(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(eid,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
+            n+=1
+        log_audit(conn,user['sub'],'bulk_vacation','employee',None,f'{n} employee(s)')
+        return{'created':n}
+    except Exception as e:
+        raise HTTPException(500,f'Bulk vacation failed: {e}')
+    finally:
+        conn.close()
+
+@app.post('/api/fasting/bulk-add')
+def bulk_add_fast(data:BulkFastIn,user=Depends(require('admin','hr','supervisor'))):
+    conn=db_conn()
+    try:
+        uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
+        n=0
+        for eid in data.employee_ids:
+            run(conn,'INSERT INTO fasting_records(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(eid,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
+            n+=1
+        log_audit(conn,user['sub'],'bulk_fasting','employee',None,f'{n} employee(s)')
+        return{'created':n}
+    except Exception as e:
+        raise HTTPException(500,f'Bulk fasting failed: {e}')
+    finally:
+        conn.close()
+
+@app.get('/api/alerts')
+def get_alerts(_=Depends(get_user)):
+    conn=db_conn()
+    try:
+        today=date.today().isoformat()
+        soon=(date.today()+timedelta(days=3)).isoformat()
+        alerts=[]
+        # Suspensions expiring soon
+        exp_susp=q(conn,"SELECT s.id,e.full_name,s.end_date FROM suspensions s JOIN employees e ON s.employee_id=e.id WHERE s.is_active=1 AND s.end_date IS NOT NULL AND s.end_date>=? AND s.end_date<=?",(today,soon))
+        for r in exp_susp:
+            alerts.append({'type':'suspension_expiring','severity':'warning','message':f"{r['full_name']}'s suspension ends {r['end_date']}",'link':'suspensions'})
+        # Temp overrides expiring soon
+        exp_ovr=q(conn,"SELECT t.id,e.full_name,t.end_date FROM temp_meal_overrides t JOIN employees e ON t.employee_id=e.id WHERE t.is_active=1 AND t.end_date>=? AND t.end_date<=?",(today,soon))
+        for r in exp_ovr:
+            alerts.append({'type':'override_expiring','severity':'info','message':f"{r['full_name']}'s temporary override ends {r['end_date']}",'link':'temp-overrides'})
+        # Vacation ending soon (returning to work)
+        end_vac=q(conn,"SELECT v.id,e.full_name,v.end_date FROM vacation_records v JOIN employees e ON v.employee_id=e.id WHERE v.is_active=1 AND v.end_date>=? AND v.end_date<=?",(today,soon))
+        for r in end_vac:
+            alerts.append({'type':'vacation_ending','severity':'info','message':f"{r['full_name']} returns from leave {r['end_date']}",'link':'vacation'})
+        # Employees missing accommodation
+        no_acc=q(conn,"SELECT COUNT(*) c FROM employees WHERE status='active' AND accommodation_id IS NULL")
+        if no_acc and no_acc[0]['c']>0:
+            alerts.append({'type':'missing_accommodation','severity':'danger','message':f"{no_acc[0]['c']} active employee(s) have no accommodation assigned",'link':'employees'})
+        # Employees missing food preference
+        no_fp=q(conn,"SELECT COUNT(*) c FROM employees WHERE status='active' AND food_pref_id IS NULL")
+        if no_fp and no_fp[0]['c']>0:
+            alerts.append({'type':'missing_food_pref','severity':'danger','message':f"{no_fp[0]['c']} active employee(s) have no food preference set",'link':'employees'})
+        # No report generated today
+        rpt_today=q1(conn,'SELECT id FROM report_history WHERE report_date=?',(today,))
+        if not rpt_today:
+            alerts.append({'type':'no_report_today','severity':'warning','message':"No supplier report generated yet today",'link':'supplier-report'})
+        return{'alerts':alerts,'count':len(alerts)}
+    finally:
+        conn.close()
+
+@app.get('/api/export/csv/{section}')
+def export_csv(section:str,_=Depends(get_user)):
+    conn=db_conn()
+    try:
+        queries={
+            'suspensions':"SELECT e.full_name,e.emp_id,s.start_date,s.end_date,s.reason,s.is_active FROM suspensions s JOIN employees e ON s.employee_id=e.id ORDER BY s.start_date DESC",
+            'vacation':"SELECT e.full_name,e.emp_id,v.start_date,v.end_date,v.reason FROM vacation_records v JOIN employees e ON v.employee_id=e.id ORDER BY v.start_date DESC",
+            'fasting':"SELECT e.full_name,e.emp_id,f.start_date,f.end_date,f.reason,f.is_active FROM fasting_records f JOIN employees e ON f.employee_id=e.id ORDER BY f.start_date DESC",
+            'meal-exceptions':"SELECT e.full_name,e.emp_id,m.meal_type,m.start_date,m.end_date,m.reason FROM meal_exceptions m JOIN employees e ON m.employee_id=e.id ORDER BY m.start_date DESC",
+            'temp-overrides':"SELECT e.full_name,e.emp_id,t.override_shift_type,t.orig_acc_name,t.start_date,t.end_date,t.reason FROM temp_meal_overrides t JOIN employees e ON t.employee_id=e.id ORDER BY t.start_date DESC",
+            'attendance':"SELECT e.full_name,e.emp_id,a.att_date,a.status,a.reason FROM attendance a JOIN employees e ON a.employee_id=e.id ORDER BY a.att_date DESC",
+            'audit-log':"SELECT username,action,entity,entity_id,detail,created_at FROM audit_logs ORDER BY id DESC LIMIT 500",
+        }
+        if section not in queries:
+            raise HTTPException(404,'Unknown export section')
+        rows_=q(conn,queries[section])
+        buf=io.StringIO()
+        if rows_:
+            import csv
+            w=csv.DictWriter(buf,fieldnames=list(rows_[0].keys()))
+            w.writeheader()
+            for r in rows_: w.writerow(r)
+        else:
+            buf.write('No records\n')
+        buf.seek(0)
+        return StreamingResponse(io.BytesIO(buf.getvalue().encode()),media_type='text/csv',headers={'Content-Disposition':f'attachment; filename={section}_{date.today().isoformat()}.csv'})
+    finally:
+        conn.close()
 
 @app.get('/api/backup/export')
 def backup_export(_=Depends(require('admin'))):
@@ -985,7 +1130,7 @@ def backup_export(_=Depends(require('admin'))):
         conn.close()
 
 @app.post('/api/backup/restore')
-async def backup_restore(file:UploadFile=File(...),_=Depends(require('admin'))):
+async def backup_restore(file:UploadFile=File(...),user=Depends(require('admin'))):
     content=await file.read()
     try:
         wb=openpyxl.load_workbook(io.BytesIO(content),data_only=True)
@@ -1032,6 +1177,7 @@ async def backup_restore(file:UploadFile=File(...),_=Depends(require('admin'))):
                     try: conn.rollback()
                     except: pass
 
+        log_audit(conn,user['sub'],'restore','backup',None,f'{sum(restored.values())} rows restored from {file.filename}')
         return{'ok':True,'restored':restored,'total':sum(restored.values())}
     except Exception as e:
         raise HTTPException(500,f'Restore failed: {e}')

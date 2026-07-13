@@ -63,7 +63,7 @@
 .topbar{background:var(--sf);padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh);position:sticky;top:0;z-index:100;border-bottom:1px solid var(--bd);}
 .pb{padding:18px 20px;}.page{display:none;}.page.active{display:block;}
 .card{background:var(--sf);border-radius:10px;box-shadow:var(--sh);border:1px solid var(--bd);}.card.pad{padding:18px;}
-.stat-card{padding:18px 20px;border-radius:10px;color:#fff;cursor:default;}
+.stat-card{padding:20px 22px;border-radius:20px;color:#fff;cursor:default;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.14);}
 .stat-card h2{font-size:32px;font-weight:700;margin:4px 0 0;}.stat-card p{margin:0;font-size:11px;opacity:.9;}
 table.mt thead th{background:var(--pd);color:#fff;font-weight:500;font-size:12px;padding:7px 8px;white-space:nowrap;}
 table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);font-size:13px;color:var(--tx);background:var(--sf);}
@@ -192,7 +192,7 @@ p,span,label,td,th,li,input,select,textarea{font-family:'DM Sans',system-ui,sans
 .pb{flex:1;padding:20px 24px;max-width:1600px;width:100%;}
 
 /* ── Topbar — Material ── */
-.topbar{height:56px;background:var(--p);color:#fff;display:flex;align-items:center;gap:12px;padding:0 16px;position:sticky;top:0;z-index:900;box-shadow:0 2px 8px rgba(0,0,0,.18);transition:background var(--md-duration) var(--md-transition);}
+.topbar{height:58px;background:linear-gradient(135deg,var(--p),var(--pd));color:#fff;display:flex;align-items:center;gap:12px;padding:0 18px;position:sticky;top:0;z-index:900;box-shadow:0 2px 12px rgba(0,0,0,.2);transition:background var(--md-duration) var(--md-transition);}
 .topbar .tb-title{flex:1;font-size:18px;font-weight:600;letter-spacing:.01em;}
 #ham{background:none;border:none;color:#fff;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 200ms;flex-shrink:0;}
 #ham:hover{background:rgba(255,255,255,.15);}
@@ -245,6 +245,9 @@ p,span,label,td,th,li,input,select,textarea{font-family:'DM Sans',system-ui,sans
 
 /* ── Dashboard stat cards ── */
 .stat-card{border-radius:var(--md-radius-xl)!important;border:none!important;transition:transform 200ms var(--md-transition),box-shadow 200ms var(--md-transition)!important;cursor:default;overflow:hidden;position:relative;}
+.stat-card::before{content:'';position:absolute;top:-30%;right:-20%;width:70%;height:140%;background:rgba(255,255,255,.08);border-radius:50%;pointer-events:none;}
+.stat-card i{position:relative;z-index:1;}
+.stat-card h2,.stat-card p{position:relative;z-index:1;}
 .stat-card::after{content:'';position:absolute;inset:0;background:rgba(0,0,0,.04);opacity:0;transition:opacity 200ms;}
 .stat-card:hover{transform:translateY(-3px)!important;box-shadow:0 12px 32px rgba(0,0,0,.22)!important;}
 .stat-card:hover::after{opacity:1;}
@@ -393,6 +396,13 @@ th[onclick]::after{content:' ⇅';font-size:8px;opacity:.35;color:#fff;}
 th[data-sort="asc"]::after{content:' ▲'!important;opacity:.95!important;}
 th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 
+/* ── Notification bell ── */
+@keyframes bellShake{0%,100%{transform:rotate(0);}10%,30%{transform:rotate(-12deg);}20%,40%{transform:rotate(12deg);}50%{transform:rotate(-6deg);}60%{transform:rotate(6deg);}70%{transform:rotate(0);}}
+#bell-badge{animation:bellPulse 2s ease-in-out infinite;}
+@keyframes bellPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+#notif-panel{animation:notifIn 220ms var(--md-transition) both;}
+@keyframes notifIn{from{opacity:0;transform:translateY(-8px) scale(.96);}to{opacity:1;transform:none;}}
+
 /* ── Mobile ── */
 @media(max-width:768px){.main{margin-left:0!important;}.pb{padding:14px;}}
 @media print{.rpt-ctrl,.topbar,.sb,#sb-backdrop{display:none!important}.main{margin-left:0!important}}
@@ -456,6 +466,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
     <div class="nav-sl">Other</div>
     <li><a class="nav-link" href="#" onclick="nav('reports')"><i class="fas fa-file-excel"></i>Reports</a></li>
     <li><a class="nav-link" href="#" onclick="nav('settings')"><i class="fas fa-cog"></i>Settings</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('audit-log')"><i class="fas fa-history"></i>Audit Log</a></li>
     <li><a class="nav-link" href="/lookup" target="_blank"><i class="fas fa-search"></i>Meal Lookup</a></li>
 
   </ul>
@@ -472,6 +483,16 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
     </div>
     <div class="d-flex align-items-center gap-2">
       <span class="chip chp" id="top-dt" style="font-size:11px;"></span>
+      <div style="position:relative;">
+        <button class="btn btn-sm" id="bell-btn" onclick="toggleNotif()" title="Notifications" style="width:32px;height:32px;padding:0;border:1px solid var(--bd);background:var(--inp,var(--sf));color:var(--tx);font-size:14px;position:relative;">
+          <i class="fas fa-bell"></i>
+          <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#E53935;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;">0</span>
+        </button>
+        <div id="notif-panel" style="display:none;position:absolute;top:40px;right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--sf);border:1px solid var(--bd);border-radius:var(--md-radius-lg);box-shadow:var(--md-elevation-4);z-index:1500;">
+          <div style="padding:12px 16px;border-bottom:1px solid var(--bd);font-weight:700;font-size:13px;color:var(--tx);">Notifications</div>
+          <div id="notif-list" style="padding:6px;"></div>
+        </div>
+      </div>
       <button class="btn btn-sm" id="dk-btn" onclick="toggleDark()" title="Toggle dark mode" style="width:32px;height:32px;padding:0;border:1px solid var(--bd);background:var(--inp,var(--sf));color:var(--tx);font-size:14px;">🌙</button>
       <span class="d-none d-lg-block small" id="top-user" style="color:var(--tx2);font-size:12px;"></span>
       <button class="btn btn-sm btn-outline-danger" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
@@ -480,6 +501,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="pb">
 
   <div class="page active" id="page-dashboard">
+    <div id="dash-alerts" style="display:none;margin-bottom:14px;"></div>
     <div class="row g-3 mb-3">
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#1565C0,#1E88E5)"><i class="fas fa-users"></i><h2 id="d-tot">0</h2><p>Active Employees</p></div></div>
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#2E7D32,#43A047)"><i class="fas fa-utensils"></i><h2 id="d-ml">0</h2><p>Meal Count</p></div></div>
@@ -580,9 +602,9 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 </tr></thead><tbody id="emp-tb"></tbody></table></div></div>
   </div>
   <div class="page" id="page-attendance">
-    <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div></div></div>
+    <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div><div class="col-auto ms-auto"><a class="btn btn-outline-secondary" href="/api/export/csv/attendance" target="_blank" title="Export CSV"><i class="fas fa-file-csv me-1"></i>Export</a></div></div></div>
     <div class="row g-3">
-      <div class="col-md-7"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Present <span id="att-cnt" class="badge bg-secondary">0</span></h6><div class="d-flex gap-2"><input class="form-control form-control-sm" style="width:140px;" placeholder="Filter..." oninput="filtA(this.value)"><button class="btn btn-sm btn-danger" onclick="markAbs()"><i class="fas fa-times me-1"></i>Mark Absent</button></div></div><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="att-all" onchange="togAllA(this)"></th>
+      <div class="col-md-7"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Present <span id="att-cnt" class="badge bg-secondary">0</span></h6><div class="d-flex gap-2 align-items-center"><input class="form-control form-control-sm" style="width:140px;" placeholder="Filter..." oninput="filtA(this.value)"><span class="chip" style="background:rgba(183,28,28,.1);color:#B71C1C;font-size:11px;">Selected: <span id="att-sel-cnt">0</span></span><button class="btn btn-sm btn-danger" onclick="markAbs()"><i class="fas fa-times me-1"></i>Mark Absent</button></div></div><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="att-all" onchange="togAllA(this)"></th>
 <th id="att-th-full_name" onclick="sortAtt('full_name')" style="cursor:pointer;user-select:none;">Name</th>
 <th id="att-th-shift_type" onclick="sortAtt('shift_type')" style="cursor:pointer;user-select:none;">Shift</th>
 <th id="att-th-accommodation_name" onclick="sortAtt('accommodation_name')" style="cursor:pointer;user-select:none;">Block</th>
@@ -590,10 +612,10 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
       <div class="col-md-5"><div class="card pad"><h6>Absent <span class="badge bg-danger" id="abs-cnt">0</span></h6><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th>Name</th><th>Reason</th><th></th></tr></thead><tbody id="abs-list"></tbody></table></div></div></div>
     </div>
   </div>
-  <div class="page" id="page-vacation"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Vacation / Leave</h6><div class="d-flex gap-2"><button id="vac-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('vacation')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showVacM()"><i class="fas fa-plus me-1"></i>Add Leave</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="vac-all" onchange="togAll('vac-c',this,'vac-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="vac-tb"></tbody></table></div></div></div>
-  <div class="page" id="page-suspensions"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Suspensions</h6><div class="d-flex gap-2"><button id="susp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('suspensions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-danger" onclick="showSuspM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="susp-all" onchange="togAll('susp-c',this,'susp-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="susp-tb"></tbody></table></div></div></div>
-  <div class="page" id="page-fasting"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Fasting Records</h6><small style="color:var(--tx2);">No lunch - Iftar Kit + Dinner at accommodation</small></div><div class="d-flex gap-2"><button id="fast-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('fasting')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-warning" onclick="showFastM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="fast-all" onchange="togAll('fast-c',this,'fast-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fast-tb"></tbody></table></div></div></div>
-  <div class="page" id="page-meal-exceptions"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Meal Exceptions</h6><small style="color:var(--tx2);">Skip specific meals for a date range</small></div><div class="d-flex gap-2"><button id="mex-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('meal-exceptions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showMexM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="mex-all" onchange="togAll('mex-c',this,'mex-bd')"></th><th>Name</th><th>Skip Meal</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="mex-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-vacation"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Vacation / Leave</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/vacation" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="vac-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('vacation')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showVacM()"><i class="fas fa-plus me-1"></i>Add Leave</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="vac-all" onchange="togAll('vac-c',this,'vac-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="vac-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-suspensions"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Suspensions</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/suspensions" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="susp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('suspensions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-danger" onclick="showSuspM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="susp-all" onchange="togAll('susp-c',this,'susp-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="susp-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-fasting"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Fasting Records</h6><small style="color:var(--tx2);">No lunch - Iftar Kit + Dinner at accommodation</small></div><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/fasting" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="fast-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('fasting')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-warning" onclick="showFastM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="fast-all" onchange="togAll('fast-c',this,'fast-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fast-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-meal-exceptions"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Meal Exceptions</h6><small style="color:var(--tx2);">Skip specific meals for a date range</small></div><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/meal-exceptions" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="mex-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('meal-exceptions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showMexM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="mex-all" onchange="togAll('mex-c',this,'mex-bd')"></th><th>Name</th><th>Skip Meal</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="mex-tb"></tbody></table></div></div></div>
   <div class="page" id="page-temp-overrides">
     <div class="row g-3 mb-2">
       <div class="col-md-5"><div class="card pad"><h6 class="mb-3"><i class="fas fa-exchange-alt me-2" style="color:var(--p);"></i>Add Temporary Override</h6>
@@ -606,7 +628,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
         <div class="mb-3"><label class="form-label">Reason</label><input id="ovr-r" class="form-control" placeholder="e.g. Temporary transfer..."></div>
         <button class="btn w-100" style="background:var(--pd);color:#fff;" onclick="saveOvr()"><i class="fas fa-save me-1"></i>Save Override</button>
       </div></div>
-      <div class="col-md-7"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Active &amp; Past Overrides</h6><button id="ovr-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('temp-overrides')"><i class="fas fa-trash me-1"></i>Delete</button></div>
+      <div class="col-md-7"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Active &amp; Past Overrides</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/temp-overrides" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="ovr-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('temp-overrides')"><i class="fas fa-trash me-1"></i>Delete</button></div></div>
         <div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="ovr-all" onchange="togAll('ovr-c',this,'ovr-bd')"></th><th>Employee</th><th>Override</th><th>From</th><th>To</th><th>Status</th><th></th></tr></thead><tbody id="ovr-tb"></tbody></table></div></div>
         <small style="color:var(--tx2);font-size:11px;"><i class="fas fa-info-circle me-1"></i>Automatically reverts after end date.</small>
       </div>
@@ -629,6 +651,24 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="page" id="page-food-prefs"><div class="d-flex justify-content-between mb-2"><h6>Food Preferences</h6><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showFpM()"><i class="fas fa-plus me-1"></i>Add</button></div><div class="row g-3" id="fp-grid"></div></div>
   <div class="page" id="page-users"><div class="d-flex justify-content-between mb-2"><h6>Users</h6><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showUsrM()"><i class="fas fa-plus me-1"></i>Add User</button></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th>Username</th><th>Full Name</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody id="user-tb"></tbody></table></div></div></div>
   <div class="page" id="page-reports"><div class="row g-3"><div class="col-md-6"><div class="card pad"><h6><i class="fas fa-users me-2" style="color:var(--p);"></i>Employee List</h6><button class="btn btn-sm btn-outline-primary" onclick="dlX('/api/export/employees','employees.xlsx')"><i class="fas fa-download me-1"></i>Download Excel</button></div></div><div class="col-md-6"><div class="card pad"><h6><i class="fas fa-utensils me-2" style="color:var(--p);"></i>Daily Food Report</h6><div class="input-group input-group-sm"><input type="date" id="r-dt" class="form-control"><button class="btn btn-outline-success" onclick="dlFR()"><i class="fas fa-download"></i></button></div></div></div></div></div>
+  <div class="page" id="page-audit-log">
+    <div class="card pad">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="mb-0"><i class="fas fa-history me-2" style="color:var(--p);"></i>Audit Log <span style="font-size:11px;color:var(--tx2);font-weight:400;">— last 200 actions</span></h6>
+        <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-outline-secondary" onclick="loadAuditLog()"><i class="fas fa-sync-alt"></i></button>
+          <a class="btn btn-sm" style="background:var(--pd);color:#fff;" href="/api/export/csv/audit-log" target="_blank"><i class="fas fa-file-csv me-1"></i>Export CSV</a>
+        </div>
+      </div>
+      <div style="overflow-y:auto;max-height:640px;">
+        <table class="table table-sm mt mb-0">
+          <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Entity</th><th>Detail</th></tr></thead>
+          <tbody id="audit-tb"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="page" id="page-bulk-edit">
     <div class="row g-3">
       <!-- LEFT: employee selector -->
@@ -703,9 +743,33 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
           </button>
           <div id="be-result" class="mt-3" style="display:none;"></div>
         </div>
+
+        <div class="card pad mt-3">
+          <h6 class="mb-3"><i class="fas fa-bolt me-2" style="color:var(--p);"></i>Bulk Status Actions</h6>
+          <p style="font-size:12px;color:var(--tx2);margin-bottom:12px;">Apply a suspension, vacation, or fasting record to all selected employees in one click.</p>
+          <div class="d-flex gap-2 mb-2">
+            <button class="btn btn-sm btn-outline-danger flex-fill" onclick="openBulkStatus('suspend')"><i class="fas fa-ban me-1"></i>Suspend</button>
+            <button class="btn btn-sm btn-outline-primary flex-fill" onclick="openBulkStatus('vacation')"><i class="fas fa-plane me-1"></i>Vacation</button>
+            <button class="btn btn-sm btn-outline-warning flex-fill" onclick="openBulkStatus('fasting')"><i class="fas fa-moon me-1"></i>Fasting</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- Bulk Status Modal (Suspend/Vacation/Fasting) -->
+  <div class="modal fade" id="bulkStatusMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="bs-title">Bulk Action</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <p id="bs-desc" style="font-size:13px;color:var(--tx2);"></p>
+      <div class="row g-2">
+        <div class="col-6"><label class="form-label">Start Date</label><input type="date" class="form-control" id="bs-start"></div>
+        <div class="col-6"><label class="form-label" id="bs-end-label">End Date</label><input type="date" class="form-control" id="bs-end"></div>
+      </div>
+      <div class="mt-2"><label class="form-label">Reason</label><input type="text" class="form-control" id="bs-reason" placeholder="Optional"></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-danger" onclick="confirmBulkStatus()">Apply to <span id="bs-count">0</span> Employee(s)</button></div>
+  </div></div></div>
 
   <div class="page" id="page-settings">
     <div class="row g-3">
@@ -908,15 +972,33 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 function doLogout(){localStorage.removeItem('wt');localStorage.removeItem('wr');localStorage.removeItem('wu');TK='';RL='';UN='';showPg('login-page');}
 async function startApp(cn){showPg('app');document.getElementById('sb-co').textContent='GH - Meal Mgmt';document.getElementById('top-user').textContent=`${UN} (${RL})`;document.getElementById('top-dt').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});const t=tod();['rpt-dt','fc-dt','att-dt','r-dt','bill-s','bill-e','ovr-s','ovr-e','hol-dt'].forEach(id=>sv(id,t));const lm=new Date();lm.setDate(lm.getDate()-30);sv('hist-s',lm.toISOString().split('T')[0]);sv('hist-e',t);const _th=localStorage.getItem('th')||'blue';
   if(!DARK_THEMES.includes(_th))lastLight=_th;
-  setTh(_th);initSB();['ch-loc','ch-fp','ch-sh','ch-tr'].forEach(id=>{const saved=CP[id];if(saved){const k=id.split('-')[1];const sel=document.getElementById('sc-'+k);if(sel)sel.value=saved;}});await Promise.all([loadLocs(),loadFPs()]);try{const r=await API('/meal-rules');window.__countIftar=r?(r.count_iftar!==false):true;}catch(e){window.__countIftar=true;}loadDash();}
-const PT={dashboard:'Dashboard','supplier-report':'Supplier Report','report-history':'Report History','food-calc':'Food Calculator',billing:'Billing',employees:'Employees',attendance:'Attendance',vacation:'Vacation / Leave',suspensions:'Suspensions',fasting:'Fasting (Ramadan)','meal-exceptions':'Meal Exceptions','temp-overrides':'Temporary Overrides',holidays:'Holidays','bulk-edit':'Bulk Edit',locations:'Locations','food-prefs':'Food Preferences',users:'Users',reports:'Reports',settings:'Settings'};
-function nav(n){document.querySelectorAll('.page').forEach(p=>{if(p.classList.contains('active')){p.style.animation='none';p.classList.remove('active');}});const np=document.getElementById('page-'+n);if(np){np.style.animation='';np.classList.add('active');}document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.getAttribute('onclick')?.includes("'"+n+"'")));document.getElementById('pg-ttl').textContent=PT[n]||n;if(isMob()&&sbO)toggleSB();({dashboard:loadDash,'supplier-report':()=>{},'report-history':loadHist,'food-calc':loadFC,billing:loadBill,employees:()=>loadEmps(),attendance:loadAtt,vacation:loadVacs,suspensions:loadSusps,fasting:loadFasts,'meal-exceptions':loadMexs,'temp-overrides':loadOvrs,holidays:loadHol,'bulk-edit':loadBE,locations:loadLocs,'food-prefs':loadFPs,users:loadUsrs,settings:loadSet})[n]?.();}
+  setTh(_th);initSB();['ch-loc','ch-fp','ch-sh','ch-tr'].forEach(id=>{const saved=CP[id];if(saved){const k=id.split('-')[1];const sel=document.getElementById('sc-'+k);if(sel)sel.value=saved;}});await Promise.all([loadLocs(),loadFPs()]);try{const r=await API('/meal-rules');window.__countIftar=r?(r.count_iftar!==false):true;}catch(e){window.__countIftar=true;}loadDash();loadNotifs();setInterval(loadNotifs,120000);}
+const PT={dashboard:'Dashboard','supplier-report':'Supplier Report','report-history':'Report History','food-calc':'Food Calculator',billing:'Billing',employees:'Employees',attendance:'Attendance',vacation:'Vacation / Leave',suspensions:'Suspensions',fasting:'Fasting (Ramadan)','meal-exceptions':'Meal Exceptions','temp-overrides':'Temporary Overrides',holidays:'Holidays','bulk-edit':'Bulk Edit',locations:'Locations','food-prefs':'Food Preferences',users:'Users',reports:'Reports',settings:'Settings','audit-log':'Audit Log'};
+function nav(n){document.querySelectorAll('.page').forEach(p=>{if(p.classList.contains('active')){p.style.animation='none';p.classList.remove('active');}});const np=document.getElementById('page-'+n);if(np){np.style.animation='';np.classList.add('active');}document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.getAttribute('onclick')?.includes("'"+n+"'")));document.getElementById('pg-ttl').textContent=PT[n]||n;if(isMob()&&sbO)toggleSB();({dashboard:loadDash,'supplier-report':()=>{},'report-history':loadHist,'food-calc':loadFC,billing:loadBill,employees:()=>loadEmps(),attendance:loadAtt,vacation:loadVacs,suspensions:loadSusps,fasting:loadFasts,'meal-exceptions':loadMexs,'temp-overrides':loadOvrs,holidays:loadHol,'bulk-edit':loadBE,locations:loadLocs,'food-prefs':loadFPs,users:loadUsrs,settings:loadSet,'audit-log':loadAuditLog})[n]?.();}
+async function loadAuditLog(){
+  const data=await API('/audit-log')||[];
+  const ACT_ICON={create:'fa-plus-circle',update:'fa-edit',delete:'fa-trash',suspend:'fa-ban',bulk_update:'fa-layer-group',bulk_suspend:'fa-ban',bulk_vacation:'fa-plane',bulk_fasting:'fa-moon',mark_absent:'fa-user-times',mark_present:'fa-user-check',restore:'fa-database'};
+  const ACT_COLOR={create:'#2E7D32',update:'#1565C0',delete:'#B71C1C',suspend:'#E65100',restore:'#6A1B9A'};
+  document.getElementById('audit-tb').innerHTML=data.map(a=>{
+    const icon=ACT_ICON[a.action]||'fa-circle';
+    const color=ACT_COLOR[a.action]||'#546E7A';
+    const dt=new Date(a.created_at);const dstr=isNaN(dt)?a.created_at:dt.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    return`<tr>
+      <td style="font-size:11.5px;color:var(--tx2);white-space:nowrap;">${dstr}</td>
+      <td style="font-size:12px;font-weight:600;">${a.username||'system'}</td>
+      <td><span class="chip" style="background:${color}1a;color:${color};font-size:11px;"><i class="fas ${icon} me-1"></i>${(a.action||'').replace(/_/g,' ')}</span></td>
+      <td style="font-size:12px;">${a.entity||'--'}${a.entity_id?' #'+a.entity_id:''}</td>
+      <td style="font-size:12px;color:var(--tx2);">${a.detail||'--'}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="5" class="text-center py-4" style="color:var(--tx2);">No activity recorded yet</td></tr>';
+}
 function mkC(id,dt,labels,data,title,ex={}){if(CH[id])CH[id].destroy();const ctx=document.getElementById(id);if(!ctx)return;const dk=['navy','slate'].includes(document.body.dataset.theme);const tc=dk?'#CBD5E0':'#333';const type=gCP(id,dt);const at=type==='horizontalBar'?'bar':type;const iH=type==='horizontalBar';CH[id]=new Chart(ctx,{type:at,data:{labels,datasets:[{label:title,data,backgroundColor:gc(Math.max(data.length,1)),borderColor:gc(Math.max(data.length,1)),borderWidth:1,...(ex.ds||{})}]},options:{responsive:true,indexAxis:iH?'y':'x',plugins:{legend:{position:'bottom',labels:{color:tc,boxWidth:12,font:{size:11}}}},scales:['pie','doughnut'].includes(at)?{}:{x:{ticks:{color:tc}},y:{ticks:{color:tc}}}}});CD[id]={dt,labels,data,title,ex};}
 function chgC(id,t){sCP(id,t);const d=CD[id];if(d)mkC(id,d.dt,d.labels,d.data,d.title,d.ex);}
 function redrawCH(){Object.keys(CH).forEach(id=>{const d=CD[id];if(d)mkC(id,d.dt,d.labels,d.data,d.title,d.ex);});}
 async function loadDash(){
   const[d,tr,fc]=await Promise.all([API('/dashboard'),API('/dashboard/trends'),API('/food-count?target_date='+tod())]);
   if(!d){console.error('Dashboard load failed');return;}
+  renderDashAlerts();
   st('d-tot',d.total_employees);st('d-ml',d.active_meal_count);st('d-ab',d.absent_today);st('d-su',d.suspended);st('d-fa',d.fasting);st('d-va',d.on_vacation);
   mkC('ch-loc','bar',d.by_location.map(x=>x.name),d.by_location.map(x=>x.cnt),'By Accommodation');
   mkC('ch-fp','pie',d.by_food.map(x=>x.name),d.by_food.map(x=>x.cnt),'Food Preference');
@@ -1097,19 +1179,26 @@ async function bulkD(entity){const cfg={employees:{cls:'emp-c',url:'/employees/b
 function showImp(){sv('imp-f','');document.getElementById('imp-res').classList.add('d-none');bsM('impMdl').show();}
 async function doImport(){const file=document.getElementById('imp-f').files[0];if(!file){alert('Select file');return;}const fd=new FormData();fd.append('file',file);const r=await fetch('/api/import/employees',{method:'POST',headers:{'Authorization':'Bearer '+TK},body:fd});const d=await r.json();const el=document.getElementById('imp-res');el.classList.remove('d-none');el.className='alert '+(d.errors?.length?'alert-warning':'alert-success');el.innerHTML='Imported: '+d.imported+' | Skipped: '+d.skipped+(d.errors?.length?'<br>'+d.errors.join('; '):'');loadEmps();}
 let _attSort={col:null,dir:1};
+let attSelected=new Set();
 async function loadAtt(){
   const d=v('att-dt')||tod();sv('att-dt',d);
   const[emps,att]=await Promise.all([API('/employees'),API('/attendance?att_date='+d)]);
   const abS=new Set((att?.records||[]).filter(r=>r.status==='absent').map(r=>r.employee_id));
   attAll=(emps||[]).filter(e=>e.status==='active'&&!abS.has(e.id));
+  attSelected=new Set();
   rendAL(attAll);rendAbL(att?.records||[]);
 }
 function sortAtt(col){
   if(_attSort.col===col)_attSort.dir*=-1;else{_attSort.col=col;_attSort.dir=1;}
-  rendAL(attAll);
+  rendAL(_attShown||attAll);
 }
-function filtA(q){rendAL(attAll.filter(e=>e.full_name.toLowerCase().includes(q.toLowerCase())));}
+function filtA(q){
+  const filtered=attAll.filter(e=>e.full_name.toLowerCase().includes(q.toLowerCase()));
+  rendAL(filtered);
+}
+let _attShown=[];
 function rendAL(emps){
+  _attShown=emps;
   if(_attSort.col){
     emps=[...emps].sort((a,b)=>{
       let av=a[_attSort.col]||'',bv=b[_attSort.col]||'';
@@ -1123,15 +1212,32 @@ function rendAL(emps){
   });
   document.getElementById('att-cnt').textContent=emps.length;
   document.getElementById('att-list').innerHTML=emps.map(e=>`<tr>
-    <td><input type="checkbox" class="att-c" value="${e.id}"></td>
+    <td><input type="checkbox" class="att-c" value="${e.id}" ${attSelected.has(e.id)?'checked':''} onchange="attOnCheck(${e.id},this.checked)"></td>
     <td>${e.full_name}</td>
     <td><span class="chip chp" style="font-size:10px;">${STL[e.shift_type]||e.shift_type}</span></td>
     <td>${e.accommodation_name||'--'}</td>
   </tr>`).join('')||'<tr><td colspan="4" class="text-center py-4" style="color:var(--tx2);">All present today</td></tr>';
+  const allShownSelected=emps.length>0&&emps.every(e=>attSelected.has(e.id));
+  const allChk=document.getElementById('att-all');if(allChk)allChk.checked=allShownSelected;
+  updAttSelCount();
 }
-function togAllA(chk){document.querySelectorAll('.att-c').forEach(c=>c.checked=chk.checked);}
+function attOnCheck(id,checked){
+  if(checked)attSelected.add(id);else attSelected.delete(id);
+  const allChk=document.getElementById('att-all');
+  if(allChk)allChk.checked=_attShown.length>0&&_attShown.every(e=>attSelected.has(e.id));
+  updAttSelCount();
+}
+function togAllA(chk){
+  _attShown.forEach(e=>{if(chk.checked)attSelected.add(e.id);else attSelected.delete(e.id);});
+  document.querySelectorAll('.att-c').forEach(c=>c.checked=chk.checked);
+  updAttSelCount();
+}
+function updAttSelCount(){
+  const el=document.getElementById('att-sel-cnt');
+  if(el)el.textContent=attSelected.size;
+}
 function markAbs(){
-  absIds=[...document.querySelectorAll('.att-c:checked')].map(c=>parseInt(c.value));
+  absIds=[...attSelected];
   if(!absIds.length){alert('Select at least one employee first.');return;}
   sv('abs-rsn','');
   bsM('absMdl').show();
@@ -1476,6 +1582,85 @@ async function restoreBackup(){
   }
   fileInput.value='';
 }
+
+async function renderDashAlerts(){
+  try{
+    const r=await API('/alerts');
+    const el=document.getElementById('dash-alerts');
+    if(!r||!r.alerts.length){el.style.display='none';return;}
+    el.style.display='block';
+    el.innerHTML=r.alerts.slice(0,4).map(a=>`<div class="card pad mb-2" style="border-left:4px solid ${SEV_COLOR[a.severity]||'#666'};padding:12px 16px!important;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="nav('${a.link}')">
+      <i class="fas ${SEV_ICON[a.severity]||'fa-bell'}" style="color:${SEV_COLOR[a.severity]||'#666'};font-size:15px;"></i>
+      <span style="font-size:13px;color:var(--tx);flex:1;">${a.message}</span>
+      <i class="fas fa-chevron-right" style="color:var(--tx2);font-size:11px;"></i>
+    </div>`).join('')+(r.alerts.length>4?`<div style="text-align:center;font-size:11.5px;color:var(--tx2);padding:4px;">+${r.alerts.length-4} more — see notification bell</div>`:'');
+  }catch(e){/* non-critical */}
+}
+// ── Bulk Status Actions (Suspend/Vacation/Fasting) ─────────────────────────
+let _bsType=null;
+function openBulkStatus(type){
+  if(!beSelected.size){alert('Select at least one employee first.');return;}
+  _bsType=type;
+  const cfg={
+    suspend:{title:'Bulk Suspend',desc:'Mark selected employees as suspended for a date range.',endLabel:'End Date (optional)',btnClass:'btn-danger'},
+    vacation:{title:'Bulk Vacation / Leave',desc:'Add a vacation record for selected employees.',endLabel:'End Date',btnClass:'btn-primary'},
+    fasting:{title:'Bulk Fasting (Ramadan)',desc:'Mark selected employees as fasting for a date range.',endLabel:'End Date (optional)',btnClass:'btn-warning'},
+  }[type];
+  document.getElementById('bs-title').textContent=cfg.title;
+  document.getElementById('bs-desc').textContent=cfg.desc;
+  document.getElementById('bs-end-label').textContent=cfg.endLabel;
+  document.getElementById('bs-start').value=tod();
+  document.getElementById('bs-end').value='';
+  document.getElementById('bs-reason').value='';
+  document.getElementById('bs-count').textContent=beSelected.size;
+  bsM('bulkStatusMdl').show();
+}
+async function confirmBulkStatus(){
+  const ids=[...beSelected];
+  const start=v('bs-start'),end=v('bs-end')||null,reason=v('bs-reason');
+  if(!start){alert('Start date is required.');return;}
+  if(_bsType==='vacation'&&!end){alert('End date is required for vacation.');return;}
+  const endpoints={suspend:'/suspensions/bulk-add',vacation:'/vacation/bulk-add',fasting:'/fasting/bulk-add'};
+  try{
+    const res=await API(endpoints[_bsType],'POST',{employee_ids:ids,start_date:start,end_date:end,reason});
+    bsM('bulkStatusMdl').hide();
+    alert((res.created||ids.length)+' employee(s) updated successfully.');
+    loadBE();
+  }catch(e){alert('Failed: '+e.message);}
+}
+
+// ── Notification Center ─────────────────────────────────────────────────────
+let _notifOpen=false;
+const SEV_ICON={warning:'fa-exclamation-triangle',info:'fa-info-circle',danger:'fa-exclamation-circle'};
+const SEV_COLOR={warning:'#E65100',info:'#1565C0',danger:'#B71C1C'};
+async function loadNotifs(){
+  try{
+    const r=await API('/alerts');
+    if(!r)return;
+    const badge=document.getElementById('bell-badge');
+    if(r.count>0){badge.style.display='flex';badge.textContent=r.count>9?'9+':r.count;}
+    else{badge.style.display='none';}
+    const list=document.getElementById('notif-list');
+    if(!r.alerts.length){
+      list.innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--tx2);font-size:12.5px;"><i class="fas fa-check-circle mb-2" style="font-size:22px;color:#2E7D32;display:block;"></i>All clear — no alerts</div>';
+      return;
+    }
+    list.innerHTML=r.alerts.map(a=>`<div onclick="nav('${a.link}');toggleNotif(false)" style="padding:10px 12px;border-radius:var(--md-radius-sm);cursor:pointer;display:flex;gap:10px;align-items:flex-start;transition:background 150ms;" onmouseover="this.style.background='var(--inp,rgba(0,0,0,.04))'" onmouseout="this.style.background=''">
+      <i class="fas ${SEV_ICON[a.severity]||'fa-bell'}" style="color:${SEV_COLOR[a.severity]||'#666'};margin-top:2px;font-size:13px;"></i>
+      <span style="font-size:12.5px;color:var(--tx);line-height:1.4;">${a.message}</span>
+    </div>`).join('');
+  }catch(e){/* fail silently, non-critical */}
+}
+function toggleNotif(force){
+  const panel=document.getElementById('notif-panel');
+  _notifOpen=force!==undefined?force:!_notifOpen;
+  panel.style.display=_notifOpen?'block':'none';
+}
+document.addEventListener('click',e=>{
+  if(_notifOpen&&!e.target.closest('#notif-panel')&&!e.target.closest('#bell-btn')){
+    toggleNotif(false);
+  }
+});
 
 setTh(localStorage.getItem('th')||'blue');
 </script></body></html>
