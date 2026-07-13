@@ -526,6 +526,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
       <div class="col-auto d-flex gap-2 align-items-end">
         <button class="btn" style="background:var(--pd);color:#fff;" onclick="genRpt()"><i class="fas fa-sync me-1"></i>Generate & Save</button>
         <button class="btn btn-success" id="rpt-dl" onclick="dlImg()" disabled><i class="fas fa-image me-1"></i>Download PNG</button>
+        <button class="btn" id="rpt-wa" onclick="sendWhatsApp()" disabled style="background:#25D366;color:#fff;"><i class="fab fa-whatsapp me-1"></i>Send to WhatsApp</button>
       </div></div>
       <div class="mt-2"><small style="color:var(--tx2);"><i class="fas fa-sun me-1" style="color:#E65100;"></i><strong>Sunday/Holiday rule:</strong> all meals to accommodation only.</small></div>
     </div>
@@ -1107,22 +1108,19 @@ function rendRpt(data,tid){
   ${sunSec}
   <div class="rpt-wm">Created by Denil Joseph | GH - Meal Management System</div>`;
 }
-async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;}
-async function dlImg(){
+async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;document.getElementById('rpt-wa').disabled=false;}
+async function captureRptCanvas(){
   const el=document.getElementById('rpt-preview');
-  if(!el||el.style.display==='none'){alert('Generate report first');return;}
-  const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';
+  if(!el||el.style.display==='none'){throw new Error('Generate report first');}
   // ── Fixed 1400px width regardless of screen size ──
   const TARGET_W=1400;
   const origW=el.style.width;const origMW=el.style.minWidth;const origOverflow=document.body.style.overflow;
   try{
-    // Force element to fixed width for consistent output
     el.style.width=TARGET_W+'px';el.style.minWidth=TARGET_W+'px';
     document.body.style.overflow='visible';
     await new Promise(r=>setTimeout(r,60)); // let layout settle
-    const scale=2; // 2x for retina quality → 2800px output
     const c=await html2canvas(el,{
-      scale,
+      scale:2, // 2x for retina quality → 2800px output
       width:TARGET_W,
       windowWidth:TARGET_W+80,
       backgroundColor:'#ffffff',
@@ -1131,16 +1129,45 @@ async function dlImg(){
       removeContainer:true,
       scrollX:0,scrollY:0,
     });
+    return c;
+  }finally{
+    el.style.width=origW;el.style.minWidth=origMW;
+    document.body.style.overflow=origOverflow;
+  }
+}
+async function dlImg(){
+  const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';
+  try{
+    const c=await captureRptCanvas();
     const a=document.createElement('a');
     a.download='GH_MealReport_'+v('rpt-dt')+'.png';
     a.href=c.toDataURL('image/png');
     a.click();
   }catch(e){alert('Failed: '+e.message);}
-  finally{
-    // Restore original styles
-    el.style.width=origW;el.style.minWidth=origMW;
-    document.body.style.overflow=origOverflow;
-    btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';
+  finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';}
+}
+async function sendWhatsApp(){
+  const btn=document.getElementById('rpt-wa');
+  btn.disabled=true;const origHTML=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';
+  try{
+    const c=await captureRptCanvas();
+    const blob=await new Promise(res=>c.toBlob(res,'image/png'));
+    const fname='GH_MealReport_'+v('rpt-dt')+'.png';
+    const file=new File([blob],fname,{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      // Native share sheet — WhatsApp appears as an option, contact picker shown by WhatsApp itself
+      await navigator.share({files:[file],title:'GH Meal Report',text:'GeometryHome Meal Report — '+fmt(v('rpt-dt'))});
+    }else{
+      // Fallback for desktop browsers without Web Share API file support:
+      // download the image and open WhatsApp Web so it can be attached manually
+      const a=document.createElement('a');a.download=fname;a.href=c.toDataURL('image/png');a.click();
+      alert('Your browser can\\'t attach images directly to WhatsApp.\\nThe report image has been downloaded — open WhatsApp and attach it manually.\\n\\n(This works automatically on mobile devices.)');
+      window.open('https://wa.me/','_blank');
+    }
+  }catch(e){
+    if(e.name!=='AbortError'){alert('Failed: '+e.message);} // AbortError = user cancelled share sheet, not an error
+  }finally{
+    btn.disabled=false;btn.innerHTML=origHTML;
   }
 }
 async function loadHist(){const data=(await API('/report-history')||[]).sort((a,b)=>b.report_date.localeCompare(a.report_date));rendHL(data);}
