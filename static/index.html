@@ -405,7 +405,17 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 
 /* ── Mobile ── */
 @media(max-width:768px){.main{margin-left:0!important;}.pb{padding:14px;}}
-@media print{.rpt-ctrl,.topbar,.sb,#sb-backdrop{display:none!important}.main{margin-left:0!important}}
+@media print{
+  .rpt-ctrl,.topbar,.sb,#sb-backdrop{display:none!important}
+  .main{margin-left:0!important}
+  body.glance-printing .pb>*:not(#glance-print){display:none!important}
+  body.glance-printing #glance-print{display:block!important;}
+  #glance-print{font-family:'DM Sans',Arial,sans-serif;color:#111;}
+  #glance-print table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+  #glance-print th,#glance-print td{border:1px solid #ccc;padding:5px 8px;text-align:left;}
+  #glance-print th{background:#1565C0;color:#fff;}
+  #glance-print h3{font-size:16px;margin:14px 0 6px;color:#1565C0;}
+}
 </style></head><body data-theme="blue">
 
 <div id="setup-page" style="display:none"><div class="auth-card" style="width:440px;">
@@ -479,7 +489,12 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="topbar">
     <div class="d-flex align-items-center gap-2">
       <button class="btn btn-sm btn-outline-secondary" onclick="toggleSB()"><i class="fas fa-bars"></i></button>
-      <h6 class="mb-0 fw-bold" id="pg-ttl" style="color:var(--tx);">Dashboard</h6>
+      <h6 class="mb-0 fw-bold d-none d-md-block" id="pg-ttl" style="color:var(--tx);">Dashboard</h6>
+    </div>
+    <div style="position:relative;flex:1;max-width:380px;margin:0 16px;">
+      <input type="text" id="gsearch" class="form-control form-control-sm" placeholder="Search employees..." style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;" oninput="gSearchInput(this.value)" onfocus="if(this.value)gSearchInput(this.value)">
+      <i class="fas fa-search" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.6);font-size:11px;pointer-events:none;"></i>
+      <div id="gsearch-results" style="display:none;position:absolute;top:32px;left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:var(--md-radius);box-shadow:var(--md-elevation-4);max-height:340px;overflow-y:auto;z-index:1600;"></div>
     </div>
     <div class="d-flex align-items-center gap-2">
       <span class="chip chp" id="top-dt" style="font-size:11px;"></span>
@@ -502,13 +517,44 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 
   <div class="page active" id="page-dashboard">
     <div id="dash-alerts" style="display:none;margin-bottom:14px;"></div>
+    <div class="d-flex justify-content-end mb-2">
+      <button class="btn btn-sm btn-outline-secondary" onclick="printGlance()"><i class="fas fa-print me-1"></i>Today at a Glance (Print)</button>
+    </div>
+    <div id="glance-print" style="display:none;"></div>
+    <div class="modal fade" id="statDetailMdl" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sd-title">Detail</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p id="sd-desc" style="font-size:13px;color:var(--tx2);margin-bottom:14px;"></p>
+        <div style="max-height:440px;overflow-y:auto;">
+          <table class="table table-sm mt mb-0">
+            <thead id="sd-thead"></thead>
+            <tbody id="sd-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-sm" id="sd-goto" style="background:var(--pd);color:#fff;">Go to page</button>
+      </div>
+    </div></div></div>
+    <div class="modal fade" id="gsQuickMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="gs-name">Employee</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="gs-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+        <button class="btn btn-sm" style="background:var(--pd);color:#fff;" id="gs-edit-btn">Edit Employee</button>
+      </div>
+    </div></div></div>
     <div class="row g-3 mb-3">
-      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#1565C0,#1E88E5)"><i class="fas fa-users"></i><h2 id="d-tot">0</h2><p>Active Employees</p></div></div>
-      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#2E7D32,#43A047)"><i class="fas fa-utensils"></i><h2 id="d-ml">0</h2><p>Meal Count</p></div></div>
-      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#E65100,#EF6C00)"><i class="fas fa-user-times"></i><h2 id="d-ab">0</h2><p>Absent Today</p></div></div>
-      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#C62828,#E53935)"><i class="fas fa-ban"></i><h2 id="d-su">0</h2><p>Suspended</p></div></div>
-      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#6A1B9A,#8E24AA)"><i class="fas fa-moon"></i><h2 id="d-fa">0</h2><p>Fasting</p></div></div>
-      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#00695C,#00897B)"><i class="fas fa-plane"></i><h2 id="d-va">0</h2><p>On Leave</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#1565C0,#1E88E5);cursor:pointer;" onclick="showStatDetail('active')"><i class="fas fa-users"></i><h2 id="d-tot">0</h2><p>Active Employees</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#2E7D32,#43A047);cursor:pointer;" onclick="showStatDetail('meal_count')"><i class="fas fa-utensils"></i><h2 id="d-ml">0</h2><p>Meal Count</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#E65100,#EF6C00);cursor:pointer;" onclick="showStatDetail('absent')"><i class="fas fa-user-times"></i><h2 id="d-ab">0</h2><p>Absent Today</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#C62828,#E53935);cursor:pointer;" onclick="showStatDetail('suspended')"><i class="fas fa-ban"></i><h2 id="d-su">0</h2><p>Suspended</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#6A1B9A,#8E24AA);cursor:pointer;" onclick="showStatDetail('fasting')"><i class="fas fa-moon"></i><h2 id="d-fa">0</h2><p>Fasting</p></div></div>
+      <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#00695C,#00897B);cursor:pointer;" onclick="showStatDetail('vacation')"><i class="fas fa-plane"></i><h2 id="d-va">0</h2><p>On Leave</p></div></div>
     </div>
     <div class="card pad mb-3"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0"><i class="fas fa-utensils me-2" style="color:var(--ac);"></i>Today's Food Count</h6><small id="dash-fc-note" style="color:var(--tx2);font-size:11px;"></small></div><div id="dash-fc"><small style="color:var(--tx2);">Loading...</small></div></div>
     <div class="row g-3">
@@ -788,6 +834,12 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
         </button>
         <div id="bk-result" class="mt-3" style="display:none;"></div>
       </div></div>
+      <div class="col-md-4"><div class="card pad">
+        <h6 class="mb-3"><i class="fas fa-clock me-2" style="color:var(--p);"></i>Automatic Backups</h6>
+        <p style="font-size:12.5px;color:var(--tx2);margin-bottom:12px;">A backup runs automatically every day at 2:00 AM (server time). The last 14 daily backups are kept and downloadable below.</p>
+        <button class="btn btn-sm btn-outline-secondary w-100 mb-3" onclick="runBackupNow()" id="bk-now-btn"><i class="fas fa-bolt me-2"></i>Run a Backup Now</button>
+        <div id="bk-history-list" style="max-height:280px;overflow-y:auto;"><div class="text-center py-3" style="color:var(--tx2);font-size:12px;">Loading...</div></div>
+      </div></div>
       <div class="col-md-4"><div class="card pad"><h6 class="mb-3"><i class="fas fa-palette me-2" style="color:var(--p);"></i>App Theme</h6>
         <div class="d-flex gap-2 flex-wrap mb-2">
           <div class="tpd" data-t="blue" style="background:#1565C0;width:30px;height:30px;" onclick="setTh('blue')"></div>
@@ -816,7 +868,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 <div class="modal fade" id="empMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
   <div class="modal-header mh"><h5 class="modal-title" id="em-ttl">Add Employee</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
   <div class="modal-body"><input type="hidden" id="em-id"><div class="row g-3">
-    <div class="col-12"><label class="form-label">Full Name *</label><input id="em-nm" class="form-control"></div>
+    <div class="col-12"><label class="form-label">Full Name *</label><input id="em-nm" class="form-control" oninput="liveDupCheck(this.value)"><div id="em-dup-hint" style="display:none;font-size:11.5px;color:#E65100;margin-top:4px;"><i class="fas fa-exclamation-triangle me-1"></i><span id="em-dup-hint-text"></span></div></div>
     <div class="col-md-6"><label class="form-label">Accommodation *</label><select id="em-acc" class="form-select"><option value="">Select...</option></select></div>
     <div class="col-md-6"><label class="form-label">Shift *</label><select id="em-sh" class="form-select"><option value="shift1">1st Shift (7AM-3PM)</option><option value="shift2">2nd Shift (3PM-11PM)</option><option value="shift3">3rd Shift (11PM-7AM)</option><option value="normal">Normal (9AM-6PM)</option><option value="site">Site Worker</option></select></div>
     <div class="col-md-6"><label class="form-label">Food Preference *</label><select id="em-fp" class="form-select"><option value="">Select...</option></select></div>
@@ -932,7 +984,7 @@ window.addEventListener('resize',()=>{
   if(isMob()){mc.style.marginLeft='';mc.classList.remove('wide');if(!sbO&&bd)bd.style.display='none';}
   else{if(bd)bd.style.display='none';mc.classList.toggle('wide',!sbO);}
 });
-async function API(p,m='GET',b=null){const o={method:m,headers:{'Authorization':`Bearer ${TK}`}};if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}const r=await fetch('/api'+p,o);if(r.status===401){doLogout();return null;}if(!r.ok){const e=await r.json().catch(()=>({detail:'Error'}));throw new Error(e.detail||'Error');}return r.json();}
+async function API(p,m='GET',b=null){const o={method:m,headers:{'Authorization':`Bearer ${TK}`}};if(b){o.headers['Content-Type']='application/json';o.body=JSON.stringify(b);}const r=await fetch('/api'+p,o);if(r.status===401){doLogout();return null;}if(!r.ok){const e=await r.json().catch(()=>({detail:'Error'}));const msg=typeof e.detail==='string'?e.detail:(e.detail?.message||'Error');const err=new Error(msg);err.status=r.status;err.detail=e.detail;throw err;}return r.json();}
 async function dlX(url,fn){try{const r=await fetch(url,{headers:{'Authorization':`Bearer ${TK}`}});if(!r.ok){alert('Export failed');return;}const b=await r.blob();const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;a.click();}catch(e){alert(e.message);}}
 const v=id=>document.getElementById(id)?.value||'';
 const sv=(id,val)=>{const el=document.getElementById(id);if(el)el.value=val??'';};
@@ -1109,7 +1161,8 @@ function rendRpt(data,tid){
   <div class="rpt-wm">Created by Denil Joseph | GH - Meal Management System</div>`;
 }
 async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;document.getElementById('rpt-wa').disabled=false;}
-async function captureRptCanvas(){
+async function captureRptCanvas(scale){
+  scale=scale||2;
   const el=document.getElementById('rpt-preview');
   if(!el||el.style.display==='none'){throw new Error('Generate report first');}
   // ── Fixed 1400px width regardless of screen size ──
@@ -1120,7 +1173,7 @@ async function captureRptCanvas(){
     document.body.style.overflow='visible';
     await new Promise(r=>setTimeout(r,60)); // let layout settle
     const c=await html2canvas(el,{
-      scale:2, // 2x for retina quality → 2800px output
+      scale, // 2x for PNG download (2800px), 3x for WhatsApp (4200px) to survive its compression
       width:TARGET_W,
       windowWidth:TARGET_W+80,
       backgroundColor:'#ffffff',
@@ -1138,7 +1191,7 @@ async function captureRptCanvas(){
 async function dlImg(){
   const btn=document.getElementById('rpt-dl');btn.disabled=true;btn.textContent='Preparing...';
   try{
-    const c=await captureRptCanvas();
+    const c=await captureRptCanvas(2);
     const a=document.createElement('a');
     a.download='GH_MealReport_'+v('rpt-dt')+'.png';
     a.href=c.toDataURL('image/png');
@@ -1150,18 +1203,21 @@ async function sendWhatsApp(){
   const btn=document.getElementById('rpt-wa');
   btn.disabled=true;const origHTML=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';
   try{
-    const c=await captureRptCanvas();
-    const blob=await new Promise(res=>c.toBlob(res,'image/png'));
+    // Higher resolution (3x → ~4200px wide) so WhatsApp's own compression
+    // still leaves the report sharp and legible after it processes the image.
+    const c=await captureRptCanvas(3);
+    const blob=await new Promise(res=>c.toBlob(res,'image/png',1.0));
     const fname='GH_MealReport_'+v('rpt-dt')+'.png';
     const file=new File([blob],fname,{type:'image/png'});
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      // Native share sheet — WhatsApp appears as an option, contact picker shown by WhatsApp itself
-      await navigator.share({files:[file],title:'GH Meal Report',text:'GeometryHome Meal Report — '+fmt(v('rpt-dt'))});
+      // Native share sheet — files only, no title/text, so WhatsApp attaches
+      // just the image with no extra caption message underneath it.
+      await navigator.share({files:[file]});
     }else{
       // Fallback for desktop browsers without Web Share API file support:
       // download the image and open WhatsApp Web so it can be attached manually
       const a=document.createElement('a');a.download=fname;a.href=c.toDataURL('image/png');a.click();
-      alert("Your browser can't attach images directly to WhatsApp.\nThe report image has been downloaded — open WhatsApp and attach it manually.\n\n(This works automatically on mobile devices.)");
+      alert("Your browser can't attach images directly to WhatsApp.\nThe report image has been downloaded — open WhatsApp and attach it manually.\n\nTip: choose \"Document\" instead of \"Photo\" when attaching, so WhatsApp doesn't recompress it.\n\n(This works automatically on mobile devices.)");
       window.open('https://wa.me/','_blank');
     }
   }catch(e){
@@ -1198,10 +1254,115 @@ async function loadEmps(){
   _empData=(await API(url)||[]).sort((a,b)=>a.full_name.localeCompare(b.full_name));
   renderEmps();
 }
-async function showEmpM(emp=null){if(!locs.length)await loadLocs();if(!fps.length)await loadFPs();document.getElementById('em-ttl').textContent=emp?'Edit Employee':'Add Employee';sv('em-id',emp?.id||'');sv('em-nm',emp?.full_name||'');sv('em-dept',emp?.department||'');sv('em-eid',emp?.emp_id||'');sv('em-rem',emp?.remarks||'');sv('em-sh',emp?.shift_type||'normal');document.getElementById('em-sun').checked=!!emp?.no_food_sunday;const aS=document.getElementById('em-acc');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');const fS=document.getElementById('em-fp');fS.innerHTML='<option value="">Select...</option>'+fps.sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(emp?.accommodation_id)aS.value=String(emp.accommodation_id);if(emp?.food_pref_id)fS.value=String(emp.food_pref_id);bsM('empMdl').show();}
+async function showEmpM(emp=null){if(!locs.length)await loadLocs();if(!fps.length)await loadFPs();document.getElementById('em-ttl').textContent=emp?'Edit Employee':'Add Employee';document.getElementById('em-dup-hint').style.display='none';sv('em-id',emp?.id||'');sv('em-nm',emp?.full_name||'');sv('em-dept',emp?.department||'');sv('em-eid',emp?.emp_id||'');sv('em-rem',emp?.remarks||'');sv('em-sh',emp?.shift_type||'normal');document.getElementById('em-sun').checked=!!emp?.no_food_sunday;const aS=document.getElementById('em-acc');aS.innerHTML='<option value="">Select...</option>'+locs.filter(l=>l.loc_type==='accommodation').sort((a,b)=>a.name.localeCompare(b.name)).map(l=>`<option value="${l.id}">${l.name}</option>`).join('');const fS=document.getElementById('em-fp');fS.innerHTML='<option value="">Select...</option>'+fps.sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');if(emp?.accommodation_id)aS.value=String(emp.accommodation_id);if(emp?.food_pref_id)fS.value=String(emp.food_pref_id);bsM('empMdl').show();}
 async function editEmp(id){const e=await API('/employees/'+id);if(e)await showEmpM(e);}
-async function saveEmp(){const id=v('em-id');const d={emp_id:v('em-eid')||null,full_name:v('em-nm'),department:v('em-dept')||null,accommodation_id:parseInt(v('em-acc'))||null,shift_type:v('em-sh'),food_pref_id:parseInt(v('em-fp'))||null,no_food_sunday:document.getElementById('em-sun').checked?1:0,remarks:v('em-rem')};if(!d.full_name){alert('Name required');return;}try{if(id)await API('/employees/'+id,'PUT',d);else await API('/employees','POST',d);bsM('empMdl').hide();loadEmps();}catch(e){alert(e.message);}}
-async function delEmp(id,name){if(!confirm('Delete '+name+'?'))return;try{await API('/employees/'+id,'DELETE');loadEmps();}catch(e){alert('Delete failed: '+e.message);}}
+async function saveEmp(force){
+  const id=v('em-id');
+  const d={emp_id:v('em-eid')||null,full_name:v('em-nm'),department:v('em-dept')||null,accommodation_id:parseInt(v('em-acc'))||null,shift_type:v('em-sh'),food_pref_id:parseInt(v('em-fp'))||null,no_food_sunday:document.getElementById('em-sun').checked?1:0,remarks:v('em-rem'),force_duplicate:!!force};
+  if(!d.full_name){alert('Name required');return;}
+  try{
+    if(id)await API('/employees/'+id,'PUT',d);
+    else await API('/employees','POST',d);
+    bsM('empMdl').hide();loadEmps();
+  }catch(e){
+    if(e.status===409&&e.detail?.matches?.length){
+      showDuplicateWarning(e.detail.matches,d.full_name);
+    }else{
+      alert(e.message);
+    }
+  }
+}
+let _liveDupTimer=null;
+function liveDupCheck(name){
+  clearTimeout(_liveDupTimer);
+  const hint=document.getElementById('em-dup-hint');
+  if(!name||name.trim().length<3){hint.style.display='none';return;}
+  _liveDupTimer=setTimeout(async()=>{
+    try{
+      const excludeId=v('em-id');
+      const url='/employees/check-duplicate?full_name='+encodeURIComponent(name)+(excludeId?'&exclude_id='+excludeId:'');
+      const r=await API(url);
+      if(r?.matches?.length){
+        const m=r.matches[0];
+        hint.style.display='block';
+        document.getElementById('em-dup-hint-text').textContent=
+          m.match_type==='emp_id'
+            ? `Employee ID matches existing: ${m.full_name}`
+            : `Similar to existing employee: ${m.full_name} (${Math.round(m.similarity*100)}% match)`;
+      }else{
+        hint.style.display='none';
+      }
+    }catch(e){/* non-critical, ignore */}
+  },400);
+}
+function showDuplicateWarning(matches,newName){
+  const rows=matches.map(m=>{
+    const pct=Math.round(m.similarity*100);
+    const label=m.match_type==='emp_id'?'Same Employee ID':pct+'% name match';
+    return `<tr><td>${m.full_name}</td><td><code style="font-size:11px;">${m.emp_id}</code></td><td><span class="bs ${m.match_type==='emp_id'?'bs-s':'bs-f'}" style="font-size:10px;">${label}</span></td></tr>`;
+  }).join('');
+  const html=`<div class="modal fade" id="dupWarnMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" style="color:#E65100;"><i class="fas fa-exclamation-triangle me-2"></i>Possible Duplicate</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;">"<strong>${newName}</strong>" looks similar to ${matches.length===1?'an existing employee':'existing employees'} already in the system:</p>
+      <table class="table table-sm"><thead><tr><th>Name</th><th>Emp ID</th><th>Match</th></tr></thead><tbody>${rows}</tbody></table>
+      <p style="font-size:12px;color:var(--tx2);">If this is genuinely a different person, you can proceed anyway.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button class="btn btn-sm btn-danger" onclick="bsM('dupWarnMdl').hide();saveEmp(true);">Save Anyway</button>
+    </div>
+  </div></div></div>`;
+  let host=document.getElementById('dup-warn-host');
+  if(!host){host=document.createElement('div');host.id='dup-warn-host';document.body.appendChild(host);}
+  host.innerHTML=html;
+  bsM('dupWarnMdl').show();
+}
+let _pendingDeletes={};
+function showUndoToast(msg,onUndo,onCommit){
+  let host=document.getElementById('undo-toast-host');
+  if(!host){
+    host=document.createElement('div');
+    host.id='undo-toast-host';
+    host.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:center;';
+    document.body.appendChild(host);
+  }
+  const toast=document.createElement('div');
+  toast.style.cssText='background:#212121;color:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.35);display:flex;align-items:center;gap:14px;font-size:13px;animation:notifIn 220ms ease both;min-width:280px;';
+  let secondsLeft=5;
+  toast.innerHTML=`<span style="flex:1;">${msg}</span><span style="color:#90CAF9;font-weight:700;cursor:pointer;white-space:nowrap;" id="undo-link">UNDO (<span id="undo-secs">5</span>)</span>`;
+  host.appendChild(toast);
+  const interval=setInterval(()=>{
+    secondsLeft--;
+    const el=toast.querySelector('#undo-secs');
+    if(el)el.textContent=secondsLeft;
+    if(secondsLeft<=0)clearInterval(interval);
+  },1000);
+  const timeout=setTimeout(()=>{
+    clearInterval(interval);
+    onCommit();
+    toast.remove();
+  },5000);
+  toast.querySelector('#undo-link').onclick=()=>{
+    clearTimeout(timeout);clearInterval(interval);
+    onUndo();
+    toast.remove();
+  };
+}
+async function delEmp(id,name){
+  if(!confirm('Delete '+name+'?'))return;
+  // Optimistically hide the row immediately
+  _empData=_empData.filter(e=>e.id!==id);
+  renderEmps();
+  showUndoToast(
+    name+' deleted.',
+    ()=>{ loadEmps(); }, // Undo: just reload from server (nothing was actually deleted yet)
+    async()=>{ // Commit: actually call the API now
+      try{ await API('/employees/'+id,'DELETE'); }
+      catch(e){ alert('Delete failed: '+e.message); loadEmps(); }
+    }
+  );
+}
 async function bulkD(entity){const cfg={employees:{cls:'emp-c',url:'/employees/bulk-delete',btn:'emp-bd',rld:loadEmps},suspensions:{cls:'susp-c',url:'/suspensions/bulk-delete',btn:'susp-bd',rld:loadSusps},fasting:{cls:'fast-c',url:'/fasting/bulk-delete',btn:'fast-bd',rld:loadFasts},vacation:{cls:'vac-c',url:'/vacation/bulk-delete',btn:'vac-bd',rld:loadVacs},'meal-exceptions':{cls:'mex-c',url:'/meal-exceptions/bulk-delete',btn:'mex-bd',rld:loadMexs},'temp-overrides':{cls:'ovr-c',url:'/temp-overrides/bulk-delete',btn:'ovr-bd',rld:loadOvrs},'report-history':{cls:'hist-c',url:'/report-history/bulk-delete',btn:'hist-bd',rld:loadHist}}[entity];if(!cfg)return;const ids=getSel(cfg.cls);if(!ids.length){alert('Select items');return;}if(!confirm('Delete '+ids.length+'?'))return;try{await API(cfg.url,'POST',{ids});document.getElementById(cfg.btn).style.display='none';cfg.rld();}catch(e){alert(e.message);}}
 function showImp(){sv('imp-f','');document.getElementById('imp-res').classList.add('d-none');bsM('impMdl').show();}
 async function doImport(){const file=document.getElementById('imp-f').files[0];if(!file){alert('Select file');return;}const fd=new FormData();fd.append('file',file);const r=await fetch('/api/import/employees',{method:'POST',headers:{'Authorization':'Bearer '+TK},body:fd});const d=await r.json();const el=document.getElementById('imp-res');el.classList.remove('d-none');el.className='alert '+(d.errors?.length?'alert-warning':'alert-success');el.innerHTML='Imported: '+d.imported+' | Skipped: '+d.skipped+(d.errors?.length?'<br>'+d.errors.join('; '):'');loadEmps();}
@@ -1383,7 +1544,7 @@ async function saveUsr(){const id=v('usr-id');const d={full_name:v('u-nm'),usern
 async function deacU(id){if(!confirm('Deactivate?'))return;await API('/users/'+id,'DELETE');loadUsrs();}
 let cR={};let cRK=[];
 const PS=['shift1','shift2','shift3','normal','site'];
-async function loadSet(){const s=await API('/lookup/settings').catch(()=>null);if(s)document.getElementById('lk-tog').checked=s.lookup_enabled==='1';cR=await API('/meal-rules').catch(()=>({}))||{};window.__countIftar=cR.count_iftar!==false;cRK=[];rendRules(cR);setTh(localStorage.getItem('th')||'blue');}
+async function loadSet(){const s=await API('/lookup/settings').catch(()=>null);if(s)document.getElementById('lk-tog').checked=s.lookup_enabled==='1';cR=await API('/meal-rules').catch(()=>({}))||{};window.__countIftar=cR.count_iftar!==false;cRK=[];rendRules(cR);setTh(localStorage.getItem('th')||'blue');loadBackupHistory();}
 function rendRules(rules){const all=[...PS,...Object.keys(rules).filter(k=>!PS.includes(k)&&typeof rules[k]==='object'&&rules[k]!==null),...cRK];const un=[...new Set(all)];const lL={shift1:'1st Shift (7-3)',shift2:'2nd Shift (3-11)',shift3:'3rd Shift (11-7)',normal:'Normal (9-6)',site:'Site Worker'};document.getElementById('rules-tb').innerHTML=un.map(k=>{const sr=rules[k]||{bk:true,ln:'accommodation',dn:'accommodation'};const iC=!PS.includes(k);return`<tr><td><strong>${lL[k]||k}</strong>${iC?`<span class="abt text-danger border-danger ms-2" style="width:20px;height:20px;font-size:10px;" onclick="rmRule('${k}')"><i class="fas fa-times"></i></span>`:''}</td><td><input type="checkbox" id="r-bk-${k}" ${sr.bk!==false?'checked':''}> Yes</td><td><select id="r-ln-${k}" class="rules-sel"><option value="accommodation" ${sr.ln==='accommodation'?'selected':''}>accommodation</option><option value="factory" ${sr.ln==='factory'?'selected':''}>factory</option><option value="site" ${sr.ln==='site'?'selected':''}>site</option></select></td><td><select id="r-dn-${k}" class="rules-sel"><option value="accommodation" ${sr.dn==='accommodation'?'selected':''}>accommodation</option><option value="factory" ${sr.dn==='factory'?'selected':''}>factory</option></select></td><td></td></tr>`;}).join('');const sp=[['arabic_bk','Arabic gets Breakfast','cb'],['arabic_dn','Arabic gets Dinner','cb'],['fasting_bk','Fasting gets Breakfast','cb'],['fasting_dn','Fasting gets Dinner','cb'],['absent_ln','Absent Lunch',['accommodation','factory']],['absent_dn','Absent Dinner',['accommodation','factory']]];document.getElementById('sp-rules').innerHTML=sp.map(([k,lbl,type])=>{if(type==='cb')return`<div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="sr-${k}" ${rules[k]?'checked':''}><label class="form-check-label">${lbl}</label></div></div>`;return`<div class="col-md-3"><label class="form-label">${lbl}</label><select id="sr-${k}" class="form-select form-select-sm">${type.map(o=>`<option value="${o}" ${rules[k]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;}).join('');const cr=[['count_bk','Count Breakfast'],['count_ln_acc','Count Lunch (Accom)'],['count_ln_factory','Count Lunch (Factory)'],['count_ln_site','Count Lunch (Site)'],['count_dn_acc','Count Dinner (Accom)'],['count_dn_factory','Count Dinner (Factory)'],['count_iftar','Count Iftar Kit']];document.getElementById('cnt-rules').innerHTML=cr.map(([k,lbl])=>`<div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="cr-${k}" ${rules[k]!==false?'checked':''}><label class="form-check-label">${lbl}</label></div></div>`).join('');}
 function addRule(){const name=prompt('Enter shift name (e.g. Weekend Shift):');if(!name||!name.trim())return;const key=name.trim().toLowerCase().replace(/\s+/g,'_');if(document.getElementById('r-bk-'+key)){alert('Already exists');return;}cR[key]={bk:true,ln:'accommodation',dn:'accommodation'};cRK.push(key);rendRules(cR);}
 function rmRule(k){if(!confirm('Remove?'))return;delete cR[k];cRK=cRK.filter(x=>x!==k);rendRules(cR);}
@@ -1567,6 +1728,40 @@ function initTblSort(tbodyId,data,renderFn){
 
 
 // ── Backup / Restore ──────────────────────────────────────────────────────────
+async function loadBackupHistory(){
+  const list=document.getElementById('bk-history-list');
+  try{
+    const r=await API('/backup/history')||[];
+    if(!r.length){list.innerHTML='<div class="text-center py-3" style="color:var(--tx2);font-size:12px;">No backups yet. One will run tonight at 2 AM, or click "Run a Backup Now".</div>';return;}
+    list.innerHTML=r.map(b=>{
+      const dt=new Date(b.created_at);const dstr=isNaN(dt)?b.created_at:dt.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+      const sizeKb=(b.size_bytes/1024).toFixed(1);
+      const badge=b.trigger_type==='manual'?'<span class="chip chp" style="font-size:9px;">Manual</span>':'<span class="bs bs-a" style="font-size:9px;">Auto</span>';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--bd);">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:600;color:var(--tx);">${dstr} ${badge}</div>
+          <div style="font-size:10.5px;color:var(--tx2);">${sizeKb} KB</div>
+        </div>
+        <a class="abt text-primary border-primary" href="/api/backup/download/${b.id}" title="Download"><i class="fas fa-download"></i></a>
+        <span class="abt text-danger border-danger" onclick="deleteBackupEntry(${b.id})" title="Delete"><i class="fas fa-trash"></i></span>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML='<div class="text-center py-3 text-danger" style="font-size:12px;">Failed to load history</div>';}
+}
+async function runBackupNow(){
+  const btn=document.getElementById('bk-now-btn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>Running...';
+  try{
+    const r=await API('/backup/run-now','POST');
+    btn.innerHTML='<i class="fas fa-check me-2"></i>Done ('+(r.size_bytes/1024).toFixed(1)+' KB)';
+    loadBackupHistory();
+    setTimeout(()=>{btn.innerHTML='<i class="fas fa-bolt me-2"></i>Run a Backup Now';btn.disabled=false;},2500);
+  }catch(e){alert('Backup failed: '+e.message);btn.disabled=false;btn.innerHTML='<i class="fas fa-bolt me-2"></i>Run a Backup Now';}
+}
+async function deleteBackupEntry(id){
+  if(!confirm('Delete this backup entry? This only removes the stored copy, not your live data.'))return;
+  try{await API('/backup/history/'+id,'DELETE');loadBackupHistory();}catch(e){alert(e.message);}
+}
 async function downloadBackup(){
   const btn=document.getElementById('bk-dl-btn');
   btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-2"></i>Preparing backup...';
@@ -1608,6 +1803,161 @@ async function restoreBackup(){
     btn.disabled=false;btn.innerHTML='<i class="fas fa-upload me-2"></i>Restore From Backup';
   }
   fileInput.value='';
+}
+
+// ── Dashboard Stat Detail Modal ─────────────────────────────────────────────
+const SD_COL_LABELS={full_name:'Name',emp_id:'Emp ID',accommodation:'Accommodation',food_pref:'Food Pref',shift_type:'Shift',reason:'Reason',start_date:'Start',end_date:'End'};
+const SD_DESC={
+  active:'Full list of every employee currently in the system, active or not excluded.',
+  meal_count:'Active employees included in today\'s meal count (suspended and on-leave employees are excluded).',
+  absent:'Employees marked absent today, with the reason if provided.',
+  suspended:'Employees whose suspension is currently in effect.',
+  fasting:'Employees currently marked as fasting (Ramadan).',
+  vacation:'Employees currently on vacation or leave.',
+};
+const SD_PAGE={active:'employees',meal_count:'employees',absent:'attendance',suspended:'suspensions',fasting:'fasting',vacation:'vacation'};
+const STL_D={shift1:'1st Shift',shift2:'2nd Shift',shift3:'3rd Shift',normal:'Normal',site:'Site'};
+// ── Global Search ────────────────────────────────────────────────────────────
+let _gsTimer=null,_gsAbort=null;
+function gSearchInput(val){
+  clearTimeout(_gsTimer);
+  const box=document.getElementById('gsearch-results');
+  if(!val||val.trim().length<2){box.style.display='none';box.innerHTML='';return;}
+  _gsTimer=setTimeout(()=>gSearchRun(val.trim()),250);
+}
+async function gSearchRun(q){
+  const box=document.getElementById('gsearch-results');
+  box.style.display='block';
+  box.innerHTML='<div style="padding:12px;text-align:center;color:var(--tx2);font-size:12px;">Searching...</div>';
+  try{
+    const r=await API('/employees?search='+encodeURIComponent(q));
+    if(!r||!r.length){box.innerHTML='<div style="padding:12px;text-align:center;color:var(--tx2);font-size:12px;">No employees found</div>';return;}
+    box.innerHTML=r.slice(0,10).map(e=>`<div onclick="gSearchOpen(${e.id})" style="padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bd);transition:background 150ms;" onmouseover="this.style.background='var(--inp,rgba(0,0,0,.04))'" onmouseout="this.style.background=''">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">${e.full_name.charAt(0)}</div>
+      <div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.full_name}</div><div style="font-size:10.5px;color:var(--tx2);">${e.emp_id} · ${e.accommodation_name||'--'}</div></div>
+      <span class="bs ${e.status==='active'?'bs-a':'bs-s'}" style="font-size:9px;">${e.status}</span>
+    </div>`).join('');
+  }catch(e){box.innerHTML='<div style="padding:12px;color:#B71C1C;font-size:12px;">Search failed</div>';}
+}
+async function gSearchOpen(id){
+  document.getElementById('gsearch-results').style.display='none';
+  document.getElementById('gsearch').value='';
+  const e=await API('/employees/'+id);
+  if(!e)return;
+  document.getElementById('gs-name').textContent=e.full_name;
+  const today=tod();
+  let statusChip='<span class="bs bs-a">Active</span>';
+  if(e.status==='suspended')statusChip='<span class="bs bs-s">Suspended</span>';
+  document.getElementById('gs-body').innerHTML=`
+    <div class="row g-2 mb-2">
+      <div class="col-6"><small style="color:var(--tx2);">Emp ID</small><div style="font-weight:600;">${e.emp_id}</div></div>
+      <div class="col-6"><small style="color:var(--tx2);">Status</small><div>${statusChip}</div></div>
+      <div class="col-6"><small style="color:var(--tx2);">Shift</small><div>${STL[e.shift_type]||e.shift_type}</div></div>
+      <div class="col-6"><small style="color:var(--tx2);">Accommodation</small><div>${e.accommodation_name||'--'}</div></div>
+      <div class="col-6"><small style="color:var(--tx2);">Food Preference</small><div>${e.food_pref_name||'--'}</div></div>
+      <div class="col-6"><small style="color:var(--tx2);">Department</small><div>${e.department||'--'}</div></div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap mt-2">
+      <button class="btn btn-sm btn-outline-danger" onclick="bsM('gsQuickMdl').hide();openQuickAction(${e.id},'${e.full_name.replace(/'/g,"\\'")}','suspend')"><i class="fas fa-ban me-1"></i>Suspend</button>
+      <button class="btn btn-sm btn-outline-warning" onclick="bsM('gsQuickMdl').hide();openQuickAction(${e.id},'${e.full_name.replace(/'/g,"\\'")}','fasting')"><i class="fas fa-moon me-1"></i>Fasting</button>
+      <button class="btn btn-sm btn-outline-primary" onclick="bsM('gsQuickMdl').hide();openQuickAction(${e.id},'${e.full_name.replace(/'/g,"\\'")}','override')"><i class="fas fa-exchange-alt me-1"></i>Override</button>
+    </div>`;
+  document.getElementById('gs-edit-btn').onclick=()=>{bsM('gsQuickMdl').hide();nav('employees');setTimeout(()=>editEmp(id),250);};
+  bsM('gsQuickMdl').show();
+}
+// ── Today at a Glance (print) ────────────────────────────────────────────────
+async function printGlance(){
+  const btn=event?.target?.closest('button');
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';}
+  try{
+    const d=tod();
+    const[fc,att,susp,fast,vac]=await Promise.all([
+      API('/food-count?target_date='+d),
+      API('/attendance?att_date='+d),
+      API('/suspensions'),
+      API('/fasting'),
+      API('/vacation'),
+    ]);
+    const absentList=(att?.records||[]).filter(r=>r.status==='absent');
+    const today=d;
+    const activeSusp=(susp||[]).filter(s=>s.is_active&&s.start_date<=today&&(!s.end_date||s.end_date>=today));
+    const activeFast=(fast||[]).filter(f=>f.is_active&&f.start_date<=today&&(!f.end_date||f.end_date>=today));
+    const activeVac=(vac||[]).filter(v2=>v2.is_active&&v2.start_date<=today&&v2.end_date>=today);
+    const dstr=new Date(d+'T12:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});
+    const foodRows=(cat)=>Object.entries(fc[cat]||{}).filter(([k])=>k!=='TOTAL').map(([k,v2])=>`<tr><td>${k}</td><td>${v2}</td></tr>`).join('');
+    document.getElementById('glance-print').innerHTML=`
+      <div style="text-align:center;margin-bottom:18px;border-bottom:3px solid #1565C0;padding-bottom:10px;">
+        <h2 style="margin:0;color:#1565C0;">GH Meal Management System</h2>
+        <div style="font-size:14px;color:#555;">Today at a Glance — ${dstr}</div>
+      </div>
+      <h3>Food Count Summary</h3>
+      <table><thead><tr><th>Breakfast</th><th>Qty</th></tr></thead><tbody>${foodRows('breakfast')}<tr><td><strong>TOTAL</strong></td><td><strong>${fc.breakfast?.TOTAL||0}</strong></td></tr></tbody></table>
+      <table><thead><tr><th>Lunch</th><th>Qty</th></tr></thead><tbody>${foodRows('lunch')}<tr><td><strong>TOTAL</strong></td><td><strong>${fc.lunch?.TOTAL||0}</strong></td></tr></tbody></table>
+      <table><thead><tr><th>Dinner</th><th>Qty</th></tr></thead><tbody>${foodRows('dinner')}<tr><td><strong>TOTAL</strong></td><td><strong>${fc.dinner?.TOTAL||0}</strong></td></tr></tbody></table>
+      <h3>Absent Today (${absentList.length})</h3>
+      <table><thead><tr><th>Name</th><th>Reason</th></tr></thead><tbody>${absentList.length?absentList.map(a=>`<tr><td>${a.full_name}</td><td>${a.reason||'--'}</td></tr>`).join(''):'<tr><td colspan="2">No one absent</td></tr>'}</tbody></table>
+      <h3>Currently Suspended (${activeSusp.length})</h3>
+      <table><thead><tr><th>Name</th><th>Since</th><th>Until</th></tr></thead><tbody>${activeSusp.length?activeSusp.map(s=>`<tr><td>${s.full_name}</td><td>${fmt(s.start_date)}</td><td>${fmt(s.end_date)||'--'}</td></tr>`).join(''):'<tr><td colspan="3">None</td></tr>'}</tbody></table>
+      <h3>Currently Fasting (${activeFast.length})</h3>
+      <table><thead><tr><th>Name</th></tr></thead><tbody>${activeFast.length?activeFast.map(f=>`<tr><td>${f.full_name}</td></tr>`).join(''):'<tr><td>None</td></tr>'}</tbody></table>
+      <h3>On Leave (${activeVac.length})</h3>
+      <table><thead><tr><th>Name</th><th>Returns</th></tr></thead><tbody>${activeVac.length?activeVac.map(v2=>`<tr><td>${v2.full_name}</td><td>${fmt(v2.end_date)}</td></tr>`).join(''):'<tr><td colspan="2">None</td></tr>'}</tbody></table>
+      <div style="text-align:right;font-size:10px;color:#999;font-style:italic;margin-top:10px;">Generated ${new Date().toLocaleString('en-GB')} — Created by Denil Joseph</div>
+    `;
+    document.body.classList.add('glance-printing');
+    setTimeout(()=>{
+      window.print();
+      setTimeout(()=>document.body.classList.remove('glance-printing'),500);
+    },150);
+  }catch(e){alert('Failed to prepare glance view: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fas fa-print me-1"></i>Today at a Glance (Print)';}}
+}
+
+async function openQuickAction(empId,empName,type){
+  if(type==='suspend'){
+    await showSuspM();
+    document.getElementById('susp-emp').value=empId;
+  }else if(type==='fasting'){
+    await showFastM();
+    document.getElementById('fast-emp').value=empId;
+  }else if(type==='override'){
+    nav('temp-overrides');
+    setTimeout(async()=>{
+      await loadOvrs();
+      const sel=document.getElementById('ovr-emp');
+      if(sel){sel.value=empId;loadOvrC();}
+    },300);
+  }
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#gsearch')&&!e.target.closest('#gsearch-results')){
+    const box=document.getElementById('gsearch-results');if(box)box.style.display='none';
+  }
+});
+
+async function showStatDetail(type){
+  const mdl=bsM('statDetailMdl');
+  document.getElementById('sd-title').textContent='Loading...';
+  document.getElementById('sd-thead').innerHTML='';
+  document.getElementById('sd-tbody').innerHTML='<tr><td class="text-center py-3" style="color:var(--tx2);">Loading...</td></tr>';
+  mdl.show();
+  try{
+    const r=await API('/dashboard/detail/'+type);
+    document.getElementById('sd-title').textContent=r.title+' ('+r.rows.length+')';
+    document.getElementById('sd-desc').textContent=SD_DESC[type]||'';
+    document.getElementById('sd-thead').innerHTML='<tr>'+r.columns.map(c=>`<th>${SD_COL_LABELS[c]||c}</th>`).join('')+'</tr>';
+    document.getElementById('sd-tbody').innerHTML=r.rows.length?r.rows.map(row=>'<tr>'+r.columns.map(c=>{
+      let val=row[c];
+      if(c==='shift_type')val=STL_D[val]||val||'--';
+      if(c==='start_date'||c==='end_date')val=val?fmt(val):'--';
+      return `<td style="font-size:12.5px;">${val==null||val===''?'--':val}</td>`;
+    }).join('')+'</tr>').join(''):'<tr><td colspan="'+r.columns.length+'" class="text-center py-3" style="color:var(--tx2);">No records</td></tr>';
+    const gotoBtn=document.getElementById('sd-goto');
+    gotoBtn.onclick=()=>{mdl.hide();nav(SD_PAGE[type]||'dashboard');};
+  }catch(e){
+    document.getElementById('sd-title').textContent='Error';
+    document.getElementById('sd-tbody').innerHTML='<tr><td class="text-center py-3 text-danger">Failed to load: '+e.message+'</td></tr>';
+  }
 }
 
 async function renderDashAlerts(){

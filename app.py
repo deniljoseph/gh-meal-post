@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """GeometryHome Workforce & Meal Management System v5.2 - Production Ready"""
-import sqlite3,json,os,hashlib,io,base64,hmac as hmac_mod,random
+import sqlite3,json,os,hashlib,io,base64,hmac as hmac_mod,random,difflib,asyncio,smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email.mime.text import MIMEText
+from email import encoders
 from datetime import datetime,date,timedelta
 from typing import Optional,List
 from fastapi import FastAPI,HTTPException,Depends,UploadFile,File
@@ -147,6 +151,7 @@ def init_db():
             """CREATE TABLE IF NOT EXISTS holidays(id SERIAL PRIMARY KEY,date TEXT NOT NULL UNIQUE,name TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT)""",
             """CREATE TABLE IF NOT EXISTS audit_logs(id SERIAL PRIMARY KEY,username TEXT,action TEXT NOT NULL,entity TEXT,entity_id INTEGER,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
+            """CREATE TABLE IF NOT EXISTS backup_history(id SERIAL PRIMARY KEY,filename TEXT NOT NULL,data TEXT NOT NULL,size_bytes INTEGER,trigger_type TEXT DEFAULT 'scheduled',created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
         ]
         for s in stmts: exe(conn,s)
     else:
@@ -166,6 +171,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS holidays(id INTEGER PRIMARY KEY AUTOINCREMENT,date TEXT NOT NULL UNIQUE,name TEXT NOT NULL,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);
         CREATE TABLE IF NOT EXISTS audit_logs(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT,action TEXT NOT NULL,entity TEXT,entity_id INTEGER,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+        CREATE TABLE IF NOT EXISTS backup_history(id INTEGER PRIMARY KEY AUTOINCREMENT,filename TEXT NOT NULL,data TEXT NOT NULL,size_bytes INTEGER,trigger_type TEXT DEFAULT 'scheduled',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         """)
         for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'']:
             try: conn.execute(col); conn.commit()
@@ -350,6 +356,7 @@ class EmpIn(BaseModel):
     emp_id:Optional[str]=None;full_name:str;department:Optional[str]=None
     accommodation_id:Optional[int]=None;shift_type:Optional[str]='normal'
     food_pref_id:Optional[int]=None;no_food_sunday:Optional[int]=0;remarks:Optional[str]=None
+    force_duplicate:Optional[bool]=False
 class BulkDel(BaseModel): ids:List[int]
 class BulkUpdate(BaseModel):
     ids:List[int];shift_type:Optional[str]=None;food_pref_id:Optional[int]=None;accommodation_id:Optional[int]=None
@@ -370,6 +377,11 @@ class HolidayIn(BaseModel): date:str;name:str
 # ── APP ────────────────────────────────────────────────────────────────────────
 app=FastAPI(title='GeometryHome WFMS v5.2')
 app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'],allow_headers=['*'])
+
+@app.on_event('startup')
+async def _start_background_tasks():
+    init_db()
+    asyncio.create_task(backup_scheduler_loop())
 
 @app.get('/api/setup/status')
 def setup_status():
@@ -438,6 +450,42 @@ def trends(_=Depends(get_user)):
     conn=db_conn(); days=[(date.today()-timedelta(days=i)).isoformat() for i in range(6,-1,-1)]
     result=[{'date':d,'absent':q1(conn,'SELECT COUNT(*) c FROM attendance WHERE att_date=? AND status=?',(d,'absent'))['c']} for d in days]
     conn.close(); return result
+
+@app.get('/api/dashboard/detail/{stat_type}')
+def dashboard_detail(stat_type:str,_=Depends(get_user)):
+    conn=db_conn()
+    try:
+        today=date.today().isoformat()
+        if stat_type=='active':
+            rows_=q(conn,"SELECT e.full_name,e.emp_id,l.name accommodation,fp.name food_pref,e.shift_type FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id ORDER BY e.full_name")
+            return{'title':'All Employees','rows':rows_,'columns':['full_name','emp_id','accommodation','food_pref','shift_type']}
+        elif stat_type=='meal_count':
+            susp,vac,absent,fasting,_,_,_=get_excluded(conn,today)
+            excluded_ids=susp|vac
+            rows_=q(conn,"SELECT e.full_name,e.emp_id,l.name accommodation,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.status='active' ORDER BY e.full_name")
+            included=[r for r in rows_ if True]  # meal_count = active - (susp+vac); show all active with a flag
+            for r in included:
+                pass
+            filtered=q(conn,"SELECT e.id,e.full_name,e.emp_id,l.name accommodation,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.status='active' ORDER BY e.full_name")
+            counted=[r for r in filtered if r['id'] not in excluded_ids]
+            for r in counted: r.pop('id',None)
+            return{'title':"Employees Counted in Today's Meals",'rows':counted,'columns':['full_name','emp_id','accommodation','food_pref']}
+        elif stat_type=='absent':
+            rows_=q(conn,"SELECT e.full_name,e.emp_id,a.reason FROM attendance a JOIN employees e ON a.employee_id=e.id WHERE a.att_date=? AND a.status='absent' ORDER BY e.full_name",(today,))
+            return{'title':'Absent Today','rows':rows_,'columns':['full_name','emp_id','reason']}
+        elif stat_type=='suspended':
+            rows_=q(conn,"SELECT e.full_name,e.emp_id,s.start_date,s.end_date,s.reason FROM suspensions s JOIN employees e ON s.employee_id=e.id WHERE s.is_active=1 AND s.start_date<=? AND (s.end_date IS NULL OR s.end_date>=?) ORDER BY e.full_name",(today,today))
+            return{'title':'Currently Suspended','rows':rows_,'columns':['full_name','emp_id','start_date','end_date','reason']}
+        elif stat_type=='fasting':
+            rows_=q(conn,"SELECT e.full_name,e.emp_id,f.start_date,f.end_date FROM fasting_records f JOIN employees e ON f.employee_id=e.id WHERE f.is_active=1 AND f.start_date<=? AND (f.end_date IS NULL OR f.end_date>=?) ORDER BY e.full_name",(today,today))
+            return{'title':'Currently Fasting','rows':rows_,'columns':['full_name','emp_id','start_date','end_date']}
+        elif stat_type=='vacation':
+            rows_=q(conn,"SELECT e.full_name,e.emp_id,v.start_date,v.end_date,v.reason FROM vacation_records v JOIN employees e ON v.employee_id=e.id WHERE v.is_active=1 AND v.start_date<=? AND v.end_date>=? ORDER BY e.full_name",(today,today))
+            return{'title':'Currently On Leave','rows':rows_,'columns':['full_name','emp_id','start_date','end_date','reason']}
+        else:
+            raise HTTPException(404,'Unknown stat type')
+    finally:
+        conn.close()
 
 def compute_food_count(d:str):
     conn=db_conn();rules=get_rules(conn);susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
@@ -559,6 +607,26 @@ def calc_billing(start_date:Optional[str]=None,end_date:Optional[str]=None,targe
 
 EJ='SELECT e.*,l.name accommodation_name,fp.name food_pref_name FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id'
 
+def normalize_name(s):
+    return ' '.join((s or '').lower().split())
+
+def find_similar_employees(conn,full_name,emp_id=None,exclude_id=None,threshold=0.82):
+    """Returns list of {id,full_name,emp_id,similarity,match_type} for likely duplicates."""
+    all_emps=q(conn,'SELECT id,full_name,emp_id FROM employees'+(' WHERE id!=?' if exclude_id else ''),(exclude_id,) if exclude_id else ())
+    matches=[]
+    norm_new=normalize_name(full_name)
+    for e in all_emps:
+        # Exact emp_id collision (only relevant if emp_id was manually specified)
+        if emp_id and e['emp_id'] and e['emp_id'].strip().upper()==emp_id.strip().upper():
+            matches.append({**e,'similarity':1.0,'match_type':'emp_id'})
+            continue
+        # Fuzzy name similarity
+        ratio=difflib.SequenceMatcher(None,norm_new,normalize_name(e['full_name'])).ratio()
+        if ratio>=threshold:
+            matches.append({**e,'similarity':round(ratio,2),'match_type':'name'})
+    matches.sort(key=lambda m:-m['similarity'])
+    return matches[:5]
+
 def next_eid(conn):
     r=q1(conn,'SELECT emp_id FROM employees ORDER BY id DESC LIMIT 1')
     if not r: return 'EMP0001'
@@ -580,13 +648,29 @@ def get_emp(eid:int,_=Depends(get_user)):
     if not r: raise HTTPException(404)
     return r
 
+@app.get('/api/employees/check-duplicate')
+def check_duplicate(full_name:str,emp_id:Optional[str]=None,exclude_id:Optional[int]=None,_=Depends(get_user)):
+    conn=db_conn()
+    try:
+        if not full_name or len(full_name.strip())<3: return{'matches':[]}
+        matches=find_similar_employees(conn,full_name,emp_id,exclude_id)
+        return{'matches':matches}
+    finally:
+        conn.close()
+
 @app.post('/api/employees')
 def create_emp(emp:EmpIn,user=Depends(require('admin','hr'))):
     conn=db_conn(); eid=emp.emp_id or next_eid(conn)
     try:
+        if not emp.force_duplicate:
+            matches=find_similar_employees(conn,emp.full_name,emp.emp_id)
+            if matches:
+                raise HTTPException(409,detail={'message':'Possible duplicate employee detected','matches':matches})
         nid=run(conn,'INSERT INTO employees(emp_id,full_name,department,accommodation_id,shift_type,food_pref_id,no_food_sunday,remarks,status)VALUES(?,?,?,?,?,?,?,?,?)',(eid,emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,'active'))
         log_audit(conn,user['sub'],'create','employee',nid,emp.full_name)
         return{'id':nid,'emp_id':eid}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(400,str(e))
     finally:
@@ -1092,40 +1176,151 @@ def export_csv(section:str,_=Depends(get_user)):
     finally:
         conn.close()
 
+def build_backup_xlsx(conn):
+    """Builds the full backup workbook and returns raw bytes. Shared by manual download and scheduled task."""
+    wb=openpyxl.Workbook(); wb.remove(wb.active)
+    hf=PatternFill('solid',fgColor='003c8f'); hfont=Font(bold=True,color='FFFFFF')
+    for tbl in BACKUP_TABLES:
+        rows_=q(conn,f'SELECT * FROM {tbl}')
+        ws=wb.create_sheet(title=tbl[:31])  # Excel sheet name limit
+        if rows_:
+            cols=list(rows_[0].keys())
+            for i,h in enumerate(cols,1):
+                c=ws.cell(1,i,h); c.fill=hf; c.font=hfont
+            for ri,row in enumerate(rows_,2):
+                for ci,col in enumerate(cols,1):
+                    val=row.get(col)
+                    if isinstance(val,(dict,list)): val=json.dumps(val)
+                    ws.cell(ri,ci,val)
+            for col_cells in ws.columns:
+                ws.column_dimensions[col_cells[0].column_letter].width=18
+        else:
+            ws.cell(1,1,'(empty table)')
+    meta=wb.create_sheet(title='_backup_info',index=0)
+    meta['A1']='GH Meal Management System - Full Backup'; meta['A1'].font=Font(bold=True,size=13)
+    meta['A2']=f'Created: {datetime.utcnow().isoformat()} UTC'
+    meta['A3']=f'Database: {"PostgreSQL" if USE_PG else "SQLite"}'
+    meta['A4']=f'Tables: {len(BACKUP_TABLES)}'
+    meta['A6']='⚠️  Restoring this file will REPLACE ALL current data. Use with caution.'
+    meta['A6'].font=Font(bold=True,color='B71C1C')
+    buf=io.BytesIO(); wb.save(buf); buf.seek(0)
+    return buf.getvalue()
+
 @app.get('/api/backup/export')
 def backup_export(_=Depends(require('admin'))):
     conn=db_conn()
     try:
-        wb=openpyxl.Workbook(); wb.remove(wb.active)
-        hf=PatternFill('solid',fgColor='003c8f'); hfont=Font(bold=True,color='FFFFFF')
-        for tbl in BACKUP_TABLES:
-            rows_=q(conn,f'SELECT * FROM {tbl}')
-            ws=wb.create_sheet(title=tbl[:31])  # Excel sheet name limit
-            if rows_:
-                cols=list(rows_[0].keys())
-                for i,h in enumerate(cols,1):
-                    c=ws.cell(1,i,h); c.fill=hf; c.font=hfont
-                for ri,row in enumerate(rows_,2):
-                    for ci,col in enumerate(cols,1):
-                        val=row.get(col)
-                        # Excel can't store dicts/lists — stringify if needed
-                        if isinstance(val,(dict,list)): val=json.dumps(val)
-                        ws.cell(ri,ci,val)
-                for col_cells in ws.columns:
-                    ws.column_dimensions[col_cells[0].column_letter].width=18
-            else:
-                ws.cell(1,1,'(empty table)')
-        # Metadata sheet
-        meta=wb.create_sheet(title='_backup_info',index=0)
-        meta['A1']='GH Meal Management System - Full Backup'; meta['A1'].font=Font(bold=True,size=13)
-        meta['A2']=f'Created: {datetime.utcnow().isoformat()} UTC'
-        meta['A3']=f'Database: {"PostgreSQL" if USE_PG else "SQLite"}'
-        meta['A4']=f'Tables: {len(BACKUP_TABLES)}'
-        meta['A6']='⚠️  Restoring this file will REPLACE ALL current data. Use with caution.'
-        meta['A6'].font=Font(bold=True,color='B71C1C')
-        buf=io.BytesIO(); wb.save(buf); buf.seek(0)
+        data=build_backup_xlsx(conn)
         fname=f'GH_Backup_{date.today().isoformat()}.xlsx'
-        return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={fname}'})
+        return StreamingResponse(io.BytesIO(data),media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={fname}'})
+    finally:
+        conn.close()
+
+def send_backup_email(data:bytes,fname:str):
+    """Send backup as an email attachment if SMTP env vars are configured. Silent no-op otherwise."""
+    smtp_host=os.environ.get('SMTP_HOST')
+    smtp_user=os.environ.get('SMTP_USER')
+    smtp_pass=os.environ.get('SMTP_PASS')
+    to_addr=os.environ.get('BACKUP_EMAIL_TO')
+    if not (smtp_host and smtp_user and smtp_pass and to_addr):
+        return False
+    try:
+        smtp_port=int(os.environ.get('SMTP_PORT','587'))
+        msg=MIMEMultipart()
+        msg['From']=smtp_user; msg['To']=to_addr
+        msg['Subject']=f'GH Meal System — Daily Backup {date.today().isoformat()}'
+        msg.attach(MIMEText(f'Automatic daily backup attached.\n\nGenerated: {datetime.utcnow().isoformat()} UTC\nDatabase: {"PostgreSQL" if USE_PG else "SQLite"}','plain'))
+        part=MIMEBase('application','octet-stream'); part.set_payload(data)
+        encoders.encode_base64(part)
+        part.add_header('Content-Disposition',f'attachment; filename={fname}')
+        msg.attach(part)
+        with smtplib.SMTP(smtp_host,smtp_port,timeout=20) as server:
+            server.starttls(); server.login(smtp_user,smtp_pass); server.send_message(msg)
+        return True
+    except Exception as ex:
+        print(f'[backup email] failed: {ex}')
+        return False
+
+def run_scheduled_backup():
+    """Generates a backup, stores it in backup_history, optionally emails it, and prunes old entries."""
+    conn=db_conn()
+    try:
+        data=build_backup_xlsx(conn)
+        fname=f'GH_Backup_{date.today().isoformat()}.xlsx'
+        b64=base64.b64encode(data).decode()
+        run(conn,'INSERT INTO backup_history(filename,data,size_bytes,trigger_type)VALUES(?,?,?,?)',(fname,b64,len(data),'scheduled'))
+        # Keep only the most recent 14 scheduled backups
+        old=q(conn,"SELECT id FROM backup_history WHERE trigger_type='scheduled' ORDER BY id DESC")
+        for row in old[14:]:
+            exe(conn,'DELETE FROM backup_history WHERE id=?',(row['id'],),silent=True)
+        emailed=send_backup_email(data,fname)
+        log_audit(conn,'system','scheduled_backup',None,None,f'{len(data)} bytes'+(', emailed' if emailed else ', stored only'))
+        print(f'[scheduled backup] completed: {fname} ({len(data)} bytes){" — emailed" if emailed else ""}')
+    except Exception as ex:
+        print(f'[scheduled backup] FAILED: {ex}')
+    finally:
+        conn.close()
+
+async def backup_scheduler_loop():
+    """Runs once per day at ~02:00 server time. Also does an initial catch-up run 60s after startup
+    if no backup exists yet for today, so restarts on Railway don't cause missed days silently."""
+    await asyncio.sleep(60)  # let the app fully boot first
+    try:
+        conn=db_conn()
+        today=date.today().isoformat()
+        existing=q1(conn,"SELECT id FROM backup_history WHERE created_at LIKE ? ORDER BY id DESC LIMIT 1",(today+'%',))
+        conn.close()
+        if not existing:
+            run_scheduled_backup()
+    except Exception as ex:
+        print(f'[scheduled backup] startup check failed: {ex}')
+    while True:
+        now=datetime.utcnow()
+        next_run=(now+timedelta(days=1)).replace(hour=2,minute=0,second=0,microsecond=0)
+        if next_run<=now: next_run+=timedelta(days=1)
+        await asyncio.sleep(max(60,(next_run-now).total_seconds()))
+        run_scheduled_backup()
+
+@app.get('/api/backup/history')
+def backup_history_list(_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        rows_=q(conn,'SELECT id,filename,size_bytes,trigger_type,created_at FROM backup_history ORDER BY id DESC LIMIT 30')
+        return rows_
+    finally:
+        conn.close()
+
+@app.get('/api/backup/download/{backup_id}')
+def backup_download(backup_id:int,_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        r=q1(conn,'SELECT filename,data FROM backup_history WHERE id=?',(backup_id,))
+        if not r: raise HTTPException(404,'Backup not found')
+        data=base64.b64decode(r['data'])
+        return StreamingResponse(io.BytesIO(data),media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename={r["filename"]}'})
+    finally:
+        conn.close()
+
+@app.delete('/api/backup/history/{backup_id}')
+def backup_history_delete(backup_id:int,_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        exe(conn,'DELETE FROM backup_history WHERE id=?',(backup_id,))
+        return{'ok':True}
+    finally:
+        conn.close()
+
+@app.post('/api/backup/run-now')
+def backup_run_now(user=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        data=build_backup_xlsx(conn)
+        fname=f'GH_Backup_{date.today().isoformat()}_manual.xlsx'
+        b64=base64.b64encode(data).decode()
+        bid=run(conn,'INSERT INTO backup_history(filename,data,size_bytes,trigger_type)VALUES(?,?,?,?)',(fname,b64,len(data),'manual'))
+        emailed=send_backup_email(data,fname)
+        log_audit(conn,user['sub'],'manual_backup',None,bid,f'{len(data)} bytes'+(', emailed' if emailed else ''))
+        return{'id':bid,'filename':fname,'size_bytes':len(data),'emailed':emailed}
     finally:
         conn.close()
 
