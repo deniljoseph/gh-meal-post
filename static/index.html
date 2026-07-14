@@ -992,10 +992,10 @@ const st=(id,val)=>{const el=document.getElementById(id);if(el)el.textContent=va
 const bsM=id=>bootstrap.Modal.getOrCreateInstance(document.getElementById(id));
 // ── Modal safety net ─────────────────────────────────────────────────────────
 // Fixes the "stuck modal, must reload page" bug: if a backdrop is ever left
-// orphaned (e.g. a modal shown again before the previous one fully cleaned up),
-// clicking outside stops working entirely. This forcibly cleans up any stray
-// backdrop / body state whenever a modal finishes hiding, and ensures only one
-// modal is ever open at a time.
+// orphaned, clicking outside stops working. This passively cleans up any stray
+// backdrop / body state once every modal is confirmed fully closed — it never
+// force-closes a modal that's still legitimately open, so it can't race with
+// Bootstrap's own fade animations.
 function cleanupOrphanedModalState(){
   const anyShown=document.querySelector('.modal.show');
   if(!anyShown){
@@ -1003,30 +1003,18 @@ function cleanupOrphanedModalState(){
     document.body.classList.remove('modal-open');
     document.body.style.removeProperty('overflow');
     document.body.style.removeProperty('padding-right');
+  }else{
+    // A modal IS legitimately open — but if more backdrop elements exist than
+    // open modals, remove the extras (keep only the most recent one).
+    const backdrops=document.querySelectorAll('.modal-backdrop');
+    const openCount=document.querySelectorAll('.modal.show').length;
+    if(backdrops.length>openCount){
+      for(let i=0;i<backdrops.length-openCount;i++)backdrops[i].remove();
+    }
   }
 }
 document.addEventListener('hidden.bs.modal',cleanupOrphanedModalState);
-document.addEventListener('shown.bs.modal',e=>{
-  // Close any OTHER open modal so backdrops never stack
-  document.querySelectorAll('.modal.show').forEach(m=>{
-    if(m!==e.target){
-      const inst=bootstrap.Modal.getInstance(m);
-      if(inst)inst.hide();
-    }
-  });
-});
-// Fallback: if Bootstrap's own backdrop listener ever fails to fire (can happen
-// if a stray duplicate backdrop is left in the DOM), clicking any backdrop
-// element directly still force-closes whatever modal is open.
-document.addEventListener('click',e=>{
-  if(e.target.classList?.contains('modal-backdrop')){
-    document.querySelectorAll('.modal.show').forEach(m=>{
-      const inst=bootstrap.Modal.getInstance(m);
-      if(inst)inst.hide();
-    });
-    setTimeout(cleanupOrphanedModalState,350);
-  }
-});
+document.addEventListener('shown.bs.modal',()=>setTimeout(cleanupOrphanedModalState,50));
 const gc=n=>Array.from({length:n},(_,i)=>`hsl(${i*360/n},62%,52%)`);
 function bss(s){const m={active:'bs-a',suspended:'bs-s',absent:'bs-ab',fasting:'bs-f',vacation:'bs-v'};return`<span class="bs ${m[s]||'bs-ab'}">${s}</span>`;}
 function togAll(cls,chk,btn){document.querySelectorAll('.'+cls).forEach(c=>c.checked=chk.checked);updBD(cls,btn);}
