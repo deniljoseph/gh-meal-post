@@ -514,13 +514,13 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
     </div>
   </div>
   <div class="pb">
+  <div id="glance-print" style="display:none;"></div>
 
   <div class="page active" id="page-dashboard">
     <div id="dash-alerts" style="display:none;margin-bottom:14px;"></div>
     <div class="d-flex justify-content-end mb-2">
       <button class="btn btn-sm btn-outline-secondary" onclick="printGlance()"><i class="fas fa-print me-1"></i>Today at a Glance (Print)</button>
     </div>
-    <div id="glance-print" style="display:none;"></div>
     <div class="row g-3 mb-3">
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#1565C0,#1E88E5);cursor:pointer;" onclick="showStatDetail('active')"><i class="fas fa-users"></i><h2 id="d-tot">0</h2><p>Active Employees</p></div></div>
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#2E7D32,#43A047);cursor:pointer;" onclick="showStatDetail('meal_count')"><i class="fas fa-utensils"></i><h2 id="d-ml">0</h2><p>Meal Count</p></div></div>
