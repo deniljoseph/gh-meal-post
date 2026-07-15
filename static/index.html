@@ -521,33 +521,6 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
       <button class="btn btn-sm btn-outline-secondary" onclick="printGlance()"><i class="fas fa-print me-1"></i>Today at a Glance (Print)</button>
     </div>
     <div id="glance-print" style="display:none;"></div>
-    <div class="modal fade" id="statDetailMdl" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="sd-title">Detail</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-      </div>
-      <div class="modal-body">
-        <p id="sd-desc" style="font-size:13px;color:var(--tx2);margin-bottom:14px;"></p>
-        <div style="max-height:440px;overflow-y:auto;">
-          <table class="table table-sm mt mb-0">
-            <thead id="sd-thead"></thead>
-            <tbody id="sd-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-        <button class="btn btn-sm" id="sd-goto" style="background:var(--pd);color:#fff;">Go to page</button>
-      </div>
-    </div></div></div>
-    <div class="modal fade" id="gsQuickMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
-      <div class="modal-header"><h5 class="modal-title" id="gs-name">Employee</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-      <div class="modal-body" id="gs-body"></div>
-      <div class="modal-footer">
-        <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-        <button class="btn btn-sm" style="background:var(--pd);color:#fff;" id="gs-edit-btn">Edit Employee</button>
-      </div>
-    </div></div></div>
     <div class="row g-3 mb-3">
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#1565C0,#1E88E5);cursor:pointer;" onclick="showStatDetail('active')"><i class="fas fa-users"></i><h2 id="d-tot">0</h2><p>Active Employees</p></div></div>
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#2E7D32,#43A047);cursor:pointer;" onclick="showStatDetail('meal_count')"><i class="fas fa-utensils"></i><h2 id="d-ml">0</h2><p>Meal Count</p></div></div>
@@ -865,6 +838,33 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="pg-wm" style="border-top:1px solid var(--bd);">GeometryHome Workforce & Meal System &nbsp;|&nbsp; Created by Denil Joseph</div>
   </div></div></div>
 
+<div class="modal fade" id="statDetailMdl" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content">
+  <div class="modal-header">
+    <h5 class="modal-title" id="sd-title">Detail</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+  </div>
+  <div class="modal-body">
+    <p id="sd-desc" style="font-size:13px;color:var(--tx2);margin-bottom:14px;"></p>
+    <div style="max-height:440px;overflow-y:auto;">
+      <table class="table table-sm mt mb-0">
+        <thead id="sd-thead"></thead>
+        <tbody id="sd-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+    <button class="btn btn-sm" id="sd-goto" style="background:var(--pd);color:#fff;">Go to page</button>
+  </div>
+</div></div></div>
+<div class="modal fade" id="gsQuickMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+  <div class="modal-header"><h5 class="modal-title" id="gs-name">Employee</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+  <div class="modal-body" id="gs-body"></div>
+  <div class="modal-footer">
+    <button class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+    <button class="btn btn-sm" style="background:var(--pd);color:#fff;" id="gs-edit-btn">Edit Employee</button>
+  </div>
+</div></div></div>
 <div class="modal fade" id="empMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
   <div class="modal-header mh"><h5 class="modal-title" id="em-ttl">Add Employee</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
   <div class="modal-body"><input type="hidden" id="em-id"><div class="row g-3">
