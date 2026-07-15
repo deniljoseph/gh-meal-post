@@ -517,7 +517,6 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div id="glance-print" style="display:none;"></div>
 
   <div class="page active" id="page-dashboard">
-    <div id="dash-alerts" style="display:none;margin-bottom:14px;"></div>
     <div class="d-flex justify-content-end mb-2">
       <button class="btn btn-sm btn-outline-secondary" onclick="printGlance()"><i class="fas fa-print me-1"></i>Today at a Glance (Print)</button>
     </div>
@@ -529,6 +528,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#6A1B9A,#8E24AA);cursor:pointer;" onclick="showStatDetail('fasting')"><i class="fas fa-moon"></i><h2 id="d-fa">0</h2><p>Fasting</p></div></div>
       <div class="col-6 col-md-2"><div class="stat-card" style="background:linear-gradient(135deg,#00695C,#00897B);cursor:pointer;" onclick="showStatDetail('vacation')"><i class="fas fa-plane"></i><h2 id="d-va">0</h2><p>On Leave</p></div></div>
     </div>
+    <div id="dash-alerts" style="display:none;margin-bottom:14px;"></div>
     <div class="card pad mb-3"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0"><i class="fas fa-utensils me-2" style="color:var(--ac);"></i>Today's Food Count</h6><small id="dash-fc-note" style="color:var(--tx2);font-size:11px;"></small></div><div id="dash-fc"><small style="color:var(--tx2);">Loading...</small></div></div>
     <div class="row g-3">
       <div class="col-md-6"><div class="card pad"><div class="chdr"><small>By Accommodation</small><select class="form-select form-select-sm" style="width:auto;" id="sc-loc" onchange="chgC('ch-loc',this.value)"><option value="bar">Bar</option><option value="horizontalBar">Horizontal</option><option value="pie">Pie</option><option value="doughnut">Doughnut</option></select></div><canvas id="ch-loc" height="200"></canvas></div></div>
