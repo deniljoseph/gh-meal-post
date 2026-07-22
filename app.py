@@ -1380,42 +1380,59 @@ async def backup_restore(file:UploadFile=File(...),user=Depends(require('admin')
         conn.close()
 
 
+@app.get('/api/lookup/names')
 def lookup_names(q_str:str=''):
     conn=db_conn()
-    if not (q1(conn,'SELECT value FROM settings WHERE key=?',('lookup_enabled',)) or {}).get('value')=='1': conn.close(); raise HTTPException(403,'Disabled')
-    if len(q_str)<1: conn.close(); return[]
-    if USE_PG:
-        r=q(conn,'SELECT id,full_name,department FROM employees WHERE full_name ILIKE ? AND status=? LIMIT 15',(f'%{q_str}%','active'))
-    else:
-        r=q(conn,'SELECT id,full_name,department FROM employees WHERE LOWER(full_name) LIKE ? AND status=? LIMIT 15',(f'%{q_str.lower()}%','active'))
-    conn.close(); return r
+    try:
+        if not (q1(conn,'SELECT value FROM settings WHERE key=?',('lookup_enabled',)) or {}).get('value')=='1':
+            raise HTTPException(403,'Disabled')
+        if len(q_str)<1: return[]
+        if USE_PG:
+            r=q(conn,'SELECT id,full_name,department FROM employees WHERE full_name ILIKE ? AND status=? LIMIT 15',(f'%{q_str}%','active'))
+        else:
+            r=q(conn,'SELECT id,full_name,department FROM employees WHERE LOWER(full_name) LIKE ? AND status=? LIMIT 15',(f'%{q_str.lower()}%','active'))
+        return r
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,f'Lookup failed: {e}')
+    finally:
+        conn.close()
 
 @app.get('/api/lookup/employee/{eid}')
 def lookup_emp(eid:int):
-    conn=db_conn();today=date.today().isoformat()
-    e=q1(conn,'SELECT e.full_name,e.department,e.shift_type,l.name acc_name,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.id=? AND e.status=?',(eid,'active'))
-    if not e: conn.close(); raise HTTPException(404)
-    susp=q1(conn,'SELECT id FROM suspensions WHERE employee_id=? AND is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(eid,today,today))
-    absent=q1(conn,'SELECT id FROM attendance WHERE employee_id=? AND att_date=? AND status=?',(eid,today,'absent'))
-    fasting=q1(conn,'SELECT id FROM fasting_records WHERE employee_id=? AND is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(eid,today,today))
-    vac=q1(conn,'SELECT id FROM vacation_records WHERE employee_id=? AND is_active=1 AND start_date<=? AND end_date>=?',(eid,today,today))
-    rules=get_rules(conn);temp_ovr=get_temp_overrides(conn,today);conn.close()
-    is_ab=bool(absent);is_fa=bool(fasting);fp=e['food_pref'] or ''
-    acc=e['acc_name'] or 'Accommodation';eff_shift=e['shift_type']
-    if eid in temp_ovr:
-        ovr=temp_ovr[eid]
-        if ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
-        if ovr.get('new_acc_name'):acc=ovr['new_acc_name']
-    m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
-    ln_loc=acc if m['ln_to_acc'] else('Site - packed with breakfast at '+acc if m['ln_to_site'] else 'Factory')
-    dn_loc='Factory' if m['dn_to_factory'] else acc
-    if vac:cs='vacation'
-    elif susp:cs='suspended'
-    elif absent:cs='absent'
-    elif fasting:cs='fasting'
-    else:cs='active'
-    et={'shift1':'1st Shift (7AM-3PM)','shift2':'2nd Shift (3PM-11PM)','shift3':'3rd Shift (11PM-7AM)','normal':'Normal (9AM-6PM)','site':'Site Worker'}
-    return{**e,'current_status':cs,'get_bk':m['get_bk'],'get_ln':m['get_ln'],'get_dn':m['get_dn'],'bk_loc':acc,'ln_loc':ln_loc,'dn_loc':dn_loc,'iftar_kit':m['iftar'],'shift_label':et.get(eff_shift,eff_shift)}
+    conn=db_conn()
+    try:
+        today=date.today().isoformat()
+        e=q1(conn,'SELECT e.full_name,e.department,e.shift_type,l.name acc_name,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.id=? AND e.status=?',(eid,'active'))
+        if not e: raise HTTPException(404)
+        susp=q1(conn,'SELECT id FROM suspensions WHERE employee_id=? AND is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(eid,today,today))
+        absent=q1(conn,'SELECT id FROM attendance WHERE employee_id=? AND att_date=? AND status=?',(eid,today,'absent'))
+        fasting=q1(conn,'SELECT id FROM fasting_records WHERE employee_id=? AND is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(eid,today,today))
+        vac=q1(conn,'SELECT id FROM vacation_records WHERE employee_id=? AND is_active=1 AND start_date<=? AND end_date>=?',(eid,today,today))
+        rules=get_rules(conn);temp_ovr=get_temp_overrides(conn,today)
+        is_ab=bool(absent);is_fa=bool(fasting);fp=e['food_pref'] or ''
+        acc=e['acc_name'] or 'Accommodation';eff_shift=e['shift_type']
+        if eid in temp_ovr:
+            ovr=temp_ovr[eid]
+            if ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
+            if ovr.get('new_acc_name'):acc=ovr['new_acc_name']
+        m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
+        ln_loc=acc if m['ln_to_acc'] else('Site - packed with breakfast at '+acc if m['ln_to_site'] else 'Factory')
+        dn_loc='Factory' if m['dn_to_factory'] else acc
+        if vac:cs='vacation'
+        elif susp:cs='suspended'
+        elif absent:cs='absent'
+        elif fasting:cs='fasting'
+        else:cs='active'
+        et={'shift1':'1st Shift (7AM-3PM)','shift2':'2nd Shift (3PM-11PM)','shift3':'3rd Shift (11PM-7AM)','normal':'Normal (9AM-6PM)','site':'Site Worker'}
+        return{**e,'current_status':cs,'get_bk':m['get_bk'],'get_ln':m['get_ln'],'get_dn':m['get_dn'],'bk_loc':acc,'ln_loc':ln_loc,'dn_loc':dn_loc,'iftar_kit':m['iftar'],'shift_label':et.get(eff_shift,eff_shift)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,f'Lookup failed: {e}')
+    finally:
+        conn.close()
 
 @app.get('/api/lookup/settings')
 def lk_settings(_=Depends(require('admin'))):
