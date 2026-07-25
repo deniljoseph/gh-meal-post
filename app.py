@@ -152,6 +152,7 @@ def init_db():
             """CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT)""",
             """CREATE TABLE IF NOT EXISTS audit_logs(id SERIAL PRIMARY KEY,username TEXT,action TEXT NOT NULL,entity TEXT,entity_id INTEGER,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS backup_history(id SERIAL PRIMARY KEY,filename TEXT NOT NULL,data TEXT NOT NULL,size_bytes INTEGER,trigger_type TEXT DEFAULT 'scheduled',created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
+            """CREATE TABLE IF NOT EXISTS meal_change_requests(id SERIAL PRIMARY KEY,employee_id INTEGER,current_food_pref_id INTEGER,requested_food_pref_id INTEGER,reason TEXT,status TEXT DEFAULT 'pending',requested_at TEXT DEFAULT CURRENT_TIMESTAMP,reviewed_at TEXT,reviewed_by TEXT,review_note TEXT)""",
         ]
         for s in stmts: exe(conn,s)
     else:
@@ -172,6 +173,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);
         CREATE TABLE IF NOT EXISTS audit_logs(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT,action TEXT NOT NULL,entity TEXT,entity_id INTEGER,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS backup_history(id INTEGER PRIMARY KEY AUTOINCREMENT,filename TEXT NOT NULL,data TEXT NOT NULL,size_bytes INTEGER,trigger_type TEXT DEFAULT 'scheduled',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+        CREATE TABLE IF NOT EXISTS meal_change_requests(id INTEGER PRIMARY KEY AUTOINCREMENT,employee_id INTEGER,current_food_pref_id INTEGER,requested_food_pref_id INTEGER,reason TEXT,status TEXT DEFAULT 'pending',requested_at TEXT DEFAULT CURRENT_TIMESTAMP,reviewed_at TEXT,reviewed_by TEXT,review_note TEXT);
         """)
         for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'']:
             try: conn.execute(col); conn.commit()
@@ -1045,7 +1047,7 @@ def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
 # export sheet order and restore insert order.
 BACKUP_TABLES=['settings','locations','food_preferences','users','employees',
     'attendance','suspensions','fasting_records','vacation_records',
-    'meal_exceptions','temp_meal_overrides','report_history','meal_prices','holidays','audit_logs']
+    'meal_exceptions','temp_meal_overrides','report_history','meal_prices','holidays','audit_logs','meal_change_requests']
 
 @app.get('/api/audit-log')
 def get_audit_log(limit:int=200,_=Depends(require('admin'))):
@@ -1123,6 +1125,11 @@ def get_alerts(_=Depends(get_user)):
         exp_susp=q(conn,"SELECT s.id,e.full_name,s.end_date FROM suspensions s JOIN employees e ON s.employee_id=e.id WHERE s.is_active=1 AND s.end_date IS NOT NULL AND s.end_date>=? AND s.end_date<=?",(today,soon))
         for r in exp_susp:
             alerts.append({'type':'suspension_expiring','severity':'warning','message':f"{r['full_name']}'s suspension ends {r['end_date']}",'link':'suspensions'})
+        # Pending meal change requests
+        pend_req=q(conn,"SELECT COUNT(*) c FROM meal_change_requests WHERE status='pending'")
+        if pend_req and pend_req[0]['c']>0:
+            n=pend_req[0]['c']
+            alerts.append({'type':'meal_requests_pending','severity':'warning','message':f"{n} pending meal change request(s) awaiting review",'link':'meal-requests'})
         # Temp overrides expiring soon
         exp_ovr=q(conn,"SELECT t.id,e.full_name,t.end_date FROM temp_meal_overrides t JOIN employees e ON t.employee_id=e.id WHERE t.is_active=1 AND t.end_date>=? AND t.end_date<=?",(today,soon))
         for r in exp_ovr:
@@ -1404,7 +1411,7 @@ def lookup_emp(eid:int):
     conn=db_conn()
     try:
         today=date.today().isoformat()
-        e=q1(conn,'SELECT e.full_name,e.department,e.shift_type,l.name acc_name,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.id=? AND e.status=?',(eid,'active'))
+        e=q1(conn,'SELECT e.full_name,e.department,e.shift_type,e.food_pref_id,l.name acc_name,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.id=? AND e.status=?',(eid,'active'))
         if not e: raise HTTPException(404)
         susp=q1(conn,'SELECT id FROM suspensions WHERE employee_id=? AND is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(eid,today,today))
         absent=q1(conn,'SELECT id FROM attendance WHERE employee_id=? AND att_date=? AND status=?',(eid,today,'absent'))
@@ -1431,6 +1438,113 @@ def lookup_emp(eid:int):
         raise
     except Exception as e:
         raise HTTPException(500,f'Lookup failed: {e}')
+    finally:
+        conn.close()
+
+@app.get('/api/lookup/food-preferences')
+def lookup_food_prefs():
+    """Public — needed so the Lookup Portal can show food options without a login."""
+    conn=db_conn()
+    try:
+        lk=q1(conn,'SELECT value FROM settings WHERE key=?',('lookup_enabled',))
+        if not lk or lk.get('value')!='1':
+            raise HTTPException(403,'Disabled')
+        return q(conn,'SELECT id,name FROM food_preferences WHERE is_active=1 ORDER BY name')
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,str(e))
+    finally:
+        conn.close()
+
+class MealReqIn(BaseModel):
+    employee_id:int;requested_food_pref_id:int;reason:Optional[str]=None
+class MealReqReview(BaseModel):
+    review_note:Optional[str]=None
+
+@app.post('/api/lookup/meal-request')
+def submit_meal_request(data:MealReqIn):
+    """Public endpoint — no auth required, same trust level as the lookup portal itself."""
+    conn=db_conn()
+    try:
+        lk=q1(conn,'SELECT value FROM settings WHERE key=?',('lookup_enabled',))
+        if not lk or lk.get('value')!='1':
+            raise HTTPException(403,'Lookup portal is currently disabled')
+        emp=q1(conn,"SELECT id,food_pref_id,status FROM employees WHERE id=?",(data.employee_id,))
+        if not emp or emp['status']!='active':
+            raise HTTPException(404,'Employee not found')
+        fp=q1(conn,'SELECT id FROM food_preferences WHERE id=? AND is_active=1',(data.requested_food_pref_id,))
+        if not fp:
+            raise HTTPException(400,'Invalid food preference selected')
+        if emp['food_pref_id']==data.requested_food_pref_id:
+            raise HTTPException(400,'This is already your current food preference')
+        # Prevent duplicate pending requests for the same employee
+        existing=q1(conn,"SELECT id FROM meal_change_requests WHERE employee_id=? AND status='pending'",(data.employee_id,))
+        if existing:
+            raise HTTPException(409,'You already have a pending request. Please wait for it to be reviewed.')
+        rid=run(conn,'INSERT INTO meal_change_requests(employee_id,current_food_pref_id,requested_food_pref_id,reason,status)VALUES(?,?,?,?,?)',(data.employee_id,emp['food_pref_id'],data.requested_food_pref_id,data.reason,'pending'))
+        return{'id':rid,'ok':True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,f'Request failed: {e}')
+    finally:
+        conn.close()
+
+@app.get('/api/meal-requests')
+def list_meal_requests(status_filter:Optional[str]=None,_=Depends(require('admin','hr','supervisor'))):
+    conn=db_conn()
+    try:
+        sql="SELECT r.*,e.full_name,e.emp_id,cf.name current_food_name,rf.name requested_food_name FROM meal_change_requests r JOIN employees e ON r.employee_id=e.id LEFT JOIN food_preferences cf ON r.current_food_pref_id=cf.id LEFT JOIN food_preferences rf ON r.requested_food_pref_id=rf.id"
+        if status_filter:
+            sql+=" WHERE r.status=?"
+            r=q(conn,sql+" ORDER BY r.requested_at DESC",(status_filter,))
+        else:
+            r=q(conn,sql+" ORDER BY r.requested_at DESC")
+        return r
+    finally:
+        conn.close()
+
+@app.post('/api/meal-requests/{rid}/approve')
+def approve_meal_request(rid:int,data:MealReqReview,user=Depends(require('admin','hr'))):
+    conn=db_conn()
+    try:
+        req=q1(conn,"SELECT * FROM meal_change_requests WHERE id=? AND status='pending'",(rid,))
+        if not req: raise HTTPException(404,'Request not found or already reviewed')
+        exe(conn,'UPDATE employees SET food_pref_id=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',(req['requested_food_pref_id'],req['employee_id']))
+        exe(conn,'UPDATE meal_change_requests SET status=?,reviewed_at=CURRENT_TIMESTAMP,reviewed_by=?,review_note=? WHERE id=?',('approved',user['sub'],data.review_note,rid))
+        emp=q1(conn,'SELECT full_name FROM employees WHERE id=?',(req['employee_id'],))
+        log_audit(conn,user['sub'],'approve_meal_request','employee',req['employee_id'],f"{(emp or {}).get('full_name','')} — food pref changed")
+        return{'ok':True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,f'Approve failed: {e}')
+    finally:
+        conn.close()
+
+@app.post('/api/meal-requests/{rid}/reject')
+def reject_meal_request(rid:int,data:MealReqReview,user=Depends(require('admin','hr'))):
+    conn=db_conn()
+    try:
+        req=q1(conn,"SELECT * FROM meal_change_requests WHERE id=? AND status='pending'",(rid,))
+        if not req: raise HTTPException(404,'Request not found or already reviewed')
+        exe(conn,'UPDATE meal_change_requests SET status=?,reviewed_at=CURRENT_TIMESTAMP,reviewed_by=?,review_note=? WHERE id=?',('rejected',user['sub'],data.review_note,rid))
+        log_audit(conn,user['sub'],'reject_meal_request','employee',req['employee_id'],data.review_note or '')
+        return{'ok':True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,f'Reject failed: {e}')
+    finally:
+        conn.close()
+
+@app.delete('/api/meal-requests/{rid}')
+def delete_meal_request(rid:int,_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        exe(conn,'DELETE FROM meal_change_requests WHERE id=?',(rid,))
+        return{'ok':True}
     finally:
         conn.close()
 

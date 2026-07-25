@@ -408,13 +408,17 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 @media print{
   .rpt-ctrl,.topbar,.sb,#sb-backdrop{display:none!important}
   .main{margin-left:0!important}
+  body.glance-printing{background:#fff!important;}
+  body.glance-printing .main,body.glance-printing .pb{background:#fff!important;}
   body.glance-printing .pb>*:not(#glance-print){display:none!important}
-  body.glance-printing #glance-print{display:block!important;}
-  #glance-print{font-family:'DM Sans',Arial,sans-serif;color:#111;}
+  body.glance-printing #glance-print{display:block!important;background:#fff!important;}
+  #glance-print{font-family:'DM Sans',Arial,sans-serif;color:#111!important;background:#fff!important;}
+  #glance-print *{color:#111;}
   #glance-print table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
-  #glance-print th,#glance-print td{border:1px solid #ccc;padding:5px 8px;text-align:left;}
-  #glance-print th{background:#1565C0;color:#fff;}
-  #glance-print h3{font-size:16px;margin:14px 0 6px;color:#1565C0;}
+  #glance-print th,#glance-print td{border:1px solid #ccc;padding:5px 8px;text-align:left;color:#111!important;}
+  #glance-print th{background:#1565C0!important;color:#fff!important;}
+  #glance-print h3{font-size:16px;margin:14px 0 6px;color:#1565C0!important;}
+  #glance-print h2{color:#1565C0!important;}
 }
 </style></head><body data-theme="blue">
 
@@ -443,6 +447,13 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="input-group mb-1"><span class="input-group-text" ><i class="fas fa-search" style="color:#888;"></i></span><input type="text" id="lk-in" class="form-control form-control-lg" placeholder="Type your name..." oninput="lkSearch(this.value)" ></div>
   <div id="lk-names" style="display:none;border-radius:8px;max-height:280px;overflow-y:auto;margin-top:4px;"></div>
   <div id="lk-detail" style="display:none;margin-top:12px;border-radius:10px;padding:18px;"></div>
+  <div id="lk-req-panel" style="display:none;margin-top:10px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:16px;">
+    <div style="font-size:13px;font-weight:600;color:#42A5F5;margin-bottom:10px;"><i class="fas fa-exchange-alt me-1"></i>Request a Meal Type Change</div>
+    <select id="lk-req-fp" class="form-select form-select-sm mb-2" style="background:#1C1C1C;color:#F0F0F0;border-color:#333;"><option value="">Select new food preference...</option></select>
+    <input type="text" id="lk-req-reason" class="form-control form-control-sm mb-2" placeholder="Reason (optional)" style="background:#1C1C1C;color:#F0F0F0;border-color:#333;">
+    <button class="btn btn-sm w-100" style="background:#1565C0;color:#fff;" onclick="submitMealRequest()" id="lk-req-btn">Submit Request</button>
+    <div id="lk-req-result" style="display:none;margin-top:8px;font-size:12px;"></div>
+  </div>
   <div class="text-center mt-3"><small style="color:#555;"><i class="fas fa-shield-alt me-1"></i>Only meal information displayed.</small></div>
   <div class="text-center mt-2"><a href="/" class="btn btn-sm" style="border:1px solid #333;color:#888;background:transparent;">Admin Login</a></div>
   <div class="auth-wm">Created by Denil Joseph</div>
@@ -465,6 +476,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
     <li><a class="nav-link" href="#" onclick="nav('suspensions')"><i class="fas fa-ban"></i>Suspensions</a></li>
     <li><a class="nav-link" href="#" onclick="nav('fasting')"><i class="fas fa-moon"></i>Fasting (Ramadan)</a></li>
     <li><a class="nav-link" href="#" onclick="nav('meal-exceptions')"><i class="fas fa-minus-circle"></i>Meal Exceptions</a></li>
+    <li><a class="nav-link" href="#" onclick="nav('meal-requests')"><i class="fas fa-exchange-alt"></i>Meal Requests <span id="mreq-badge" style="display:none;background:#E53935;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 4px;margin-left:4px;">0</span></a></li>
     <li><a class="nav-link" href="#" onclick="nav('temp-overrides')"><i class="fas fa-exchange-alt"></i>Temp Overrides</a></li>
     <li><a class="nav-link" href="#" onclick="nav('holidays')"><i class="fas fa-umbrella-beach"></i>Holidays</a></li>
     <li><a class="nav-link" href="#" onclick="nav('bulk-edit')"><i class="fas fa-edit"></i>Bulk Edit</a></li>
@@ -489,7 +501,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="topbar">
     <div class="d-flex align-items-center gap-2">
       <button class="btn btn-sm btn-outline-secondary" onclick="toggleSB()"><i class="fas fa-bars"></i></button>
-      <h6 class="mb-0 fw-bold d-none d-md-block" id="pg-ttl" style="color:var(--tx);">Dashboard</h6>
+      <h6 class="mb-0 fw-bold d-none d-md-block" id="pg-ttl" style="color:#fff;">Dashboard</h6>
     </div>
     <div style="position:relative;flex:1;max-width:380px;margin:0 16px;">
       <input type="text" id="gsearch" class="form-control form-control-sm" placeholder="Search employees..." style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);color:#fff;" oninput="gSearchInput(this.value)" onfocus="if(this.value)gSearchInput(this.value)">
@@ -497,19 +509,22 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
       <div id="gsearch-results" style="display:none;position:absolute;top:32px;left:0;right:0;background:var(--sf);border:1px solid var(--bd);border-radius:var(--md-radius);box-shadow:var(--md-elevation-4);max-height:340px;overflow-y:auto;z-index:1600;"></div>
     </div>
     <div class="d-flex align-items-center gap-2">
-      <span class="chip chp" id="top-dt" style="font-size:11px;"></span>
+      <span id="top-dt" style="font-size:11px;background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.22);padding:4px 10px;border-radius:20px;font-weight:600;"></span>
       <div style="position:relative;">
-        <button class="btn btn-sm" id="bell-btn" onclick="toggleNotif()" title="Notifications" style="width:32px;height:32px;padding:0;border:1px solid var(--bd);background:var(--inp,var(--sf));color:var(--tx);font-size:14px;position:relative;">
+        <button class="btn btn-sm" id="bell-btn" onclick="toggleNotif()" title="Notifications" style="width:32px;height:32px;padding:0;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.14);color:#fff;font-size:14px;position:relative;">
           <i class="fas fa-bell"></i>
           <span id="bell-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#E53935;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;">0</span>
         </button>
         <div id="notif-panel" style="display:none;position:absolute;top:40px;right:0;width:340px;max-height:420px;overflow-y:auto;background:var(--sf);border:1px solid var(--bd);border-radius:var(--md-radius-lg);box-shadow:var(--md-elevation-4);z-index:1500;">
-          <div style="padding:12px 16px;border-bottom:1px solid var(--bd);font-weight:700;font-size:13px;color:var(--tx);">Notifications</div>
+          <div style="padding:10px 14px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-weight:700;font-size:13px;color:var(--tx);">Notifications</span>
+            <span id="notif-mark-read" onclick="markAllNotifsRead()" style="font-size:11px;color:var(--p);cursor:pointer;font-weight:600;">Mark all as read</span>
+          </div>
           <div id="notif-list" style="padding:6px;"></div>
         </div>
       </div>
-      <button class="btn btn-sm" id="dk-btn" onclick="toggleDark()" title="Toggle dark mode" style="width:32px;height:32px;padding:0;border:1px solid var(--bd);background:var(--inp,var(--sf));color:var(--tx);font-size:14px;">🌙</button>
-      <span class="d-none d-lg-block small" id="top-user" style="color:var(--tx2);font-size:12px;"></span>
+      <button class="btn btn-sm" id="dk-btn" onclick="toggleDark()" title="Toggle dark mode" style="width:32px;height:32px;padding:0;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.14);color:#fff;font-size:14px;">🌙</button>
+      <span class="d-none d-lg-block small" id="top-user" style="color:rgba(255,255,255,.85);font-size:12px;"></span>
       <button class="btn btn-sm btn-outline-danger" onclick="doLogout()"><i class="fas fa-sign-out-alt"></i></button>
     </div>
   </div>
@@ -636,6 +651,39 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="page" id="page-suspensions"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Suspensions</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/suspensions" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="susp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('suspensions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-danger" onclick="showSuspM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="susp-all" onchange="togAll('susp-c',this,'susp-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="susp-tb"></tbody></table></div></div></div>
   <div class="page" id="page-fasting"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Fasting Records</h6><small style="color:var(--tx2);">No lunch - Iftar Kit + Dinner at accommodation</small></div><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/fasting" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="fast-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('fasting')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-warning" onclick="showFastM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="fast-all" onchange="togAll('fast-c',this,'fast-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fast-tb"></tbody></table></div></div></div>
   <div class="page" id="page-meal-exceptions"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Meal Exceptions</h6><small style="color:var(--tx2);">Skip specific meals for a date range</small></div><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/meal-exceptions" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="mex-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('meal-exceptions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showMexM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="mex-all" onchange="togAll('mex-c',this,'mex-bd')"></th><th>Name</th><th>Skip Meal</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="mex-tb"></tbody></table></div></div></div>
+
+  <div class="page" id="page-meal-requests">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div><h6 class="mb-0">Meal Change Requests</h6><small style="color:var(--tx2);">Submitted by staff via the public Meal Lookup Portal</small></div>
+      <div class="d-flex gap-2">
+        <select id="mreq-filter" class="form-select form-select-sm" style="width:auto;" onchange="loadMealRequests()">
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="">All</option>
+        </select>
+        <button class="btn btn-sm btn-outline-secondary" onclick="loadMealRequests()"><i class="fas fa-sync-alt"></i></button>
+      </div>
+    </div>
+    <div class="card"><div class="table-responsive"><table class="table mt mb-0">
+      <thead><tr><th>Employee</th><th>Current</th><th>Requested</th><th>Reason</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody id="mreq-tb"></tbody>
+    </table></div></div>
+  </div>
+
+  <div class="modal fade" id="mreqReviewMdl" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="mreq-review-title">Review Request</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+      <p id="mreq-review-desc" style="font-size:13px;color:var(--tx2);"></p>
+      <label class="form-label">Note (optional)</label>
+      <input type="text" class="form-control" id="mreq-review-note" placeholder="Reason for this decision...">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+      <button class="btn btn-sm btn-danger" id="mreq-reject-btn">Reject</button>
+      <button class="btn btn-sm btn-success" id="mreq-approve-btn">Approve</button>
+    </div>
+  </div></div></div>
   <div class="page" id="page-temp-overrides">
     <div class="row g-3 mb-2">
       <div class="col-md-5"><div class="card pad"><h6 class="mb-3"><i class="fas fa-exchange-alt me-2" style="color:var(--p);"></i>Add Temporary Override</h6>
@@ -1050,9 +1098,63 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementB
 function doLogout(){localStorage.removeItem('wt');localStorage.removeItem('wr');localStorage.removeItem('wu');TK='';RL='';UN='';showPg('login-page');}
 async function startApp(cn){showPg('app');document.getElementById('sb-co').textContent='GH - Meal Mgmt';document.getElementById('top-user').textContent=`${UN} (${RL})`;document.getElementById('top-dt').textContent=new Date().toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short'});const t=tod();['rpt-dt','fc-dt','att-dt','r-dt','bill-s','bill-e','ovr-s','ovr-e','hol-dt'].forEach(id=>sv(id,t));const lm=new Date();lm.setDate(lm.getDate()-30);sv('hist-s',lm.toISOString().split('T')[0]);sv('hist-e',t);const _th=localStorage.getItem('th')||'blue';
   if(!DARK_THEMES.includes(_th))lastLight=_th;
-  setTh(_th);initSB();['ch-loc','ch-fp','ch-sh','ch-tr'].forEach(id=>{const saved=CP[id];if(saved){const k=id.split('-')[1];const sel=document.getElementById('sc-'+k);if(sel)sel.value=saved;}});await Promise.all([loadLocs(),loadFPs()]);try{const r=await API('/meal-rules');window.__countIftar=r?(r.count_iftar!==false):true;}catch(e){window.__countIftar=true;}loadDash();loadNotifs();setInterval(loadNotifs,120000);}
-const PT={dashboard:'Dashboard','supplier-report':'Supplier Report','report-history':'Report History','food-calc':'Food Calculator',billing:'Billing',employees:'Employees',attendance:'Attendance',vacation:'Vacation / Leave',suspensions:'Suspensions',fasting:'Fasting (Ramadan)','meal-exceptions':'Meal Exceptions','temp-overrides':'Temporary Overrides',holidays:'Holidays','bulk-edit':'Bulk Edit',locations:'Locations','food-prefs':'Food Preferences',users:'Users',reports:'Reports',settings:'Settings','audit-log':'Audit Log'};
-function nav(n){document.querySelectorAll('.page').forEach(p=>{if(p.classList.contains('active')){p.style.animation='none';p.classList.remove('active');}});const np=document.getElementById('page-'+n);if(np){np.style.animation='';np.classList.add('active');}document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.getAttribute('onclick')?.includes("'"+n+"'")));document.getElementById('pg-ttl').textContent=PT[n]||n;if(isMob()&&sbO)toggleSB();({dashboard:loadDash,'supplier-report':()=>{},'report-history':loadHist,'food-calc':loadFC,billing:loadBill,employees:()=>loadEmps(),attendance:loadAtt,vacation:loadVacs,suspensions:loadSusps,fasting:loadFasts,'meal-exceptions':loadMexs,'temp-overrides':loadOvrs,holidays:loadHol,'bulk-edit':loadBE,locations:loadLocs,'food-prefs':loadFPs,users:loadUsrs,settings:loadSet,'audit-log':loadAuditLog})[n]?.();}
+  setTh(_th);initSB();['ch-loc','ch-fp','ch-sh','ch-tr'].forEach(id=>{const saved=CP[id];if(saved){const k=id.split('-')[1];const sel=document.getElementById('sc-'+k);if(sel)sel.value=saved;}});await Promise.all([loadLocs(),loadFPs()]);try{const r=await API('/meal-rules');window.__countIftar=r?(r.count_iftar!==false):true;}catch(e){window.__countIftar=true;}loadDash();loadNotifs();updateMealRequestBadge();setInterval(loadNotifs,120000);setInterval(updateMealRequestBadge,120000);}
+const PT={dashboard:'Dashboard','supplier-report':'Supplier Report','report-history':'Report History','food-calc':'Food Calculator',billing:'Billing',employees:'Employees',attendance:'Attendance',vacation:'Vacation / Leave',suspensions:'Suspensions',fasting:'Fasting (Ramadan)','meal-exceptions':'Meal Exceptions','meal-requests':'Meal Requests','temp-overrides':'Temporary Overrides',holidays:'Holidays','bulk-edit':'Bulk Edit',locations:'Locations','food-prefs':'Food Preferences',users:'Users',reports:'Reports',settings:'Settings','audit-log':'Audit Log'};
+function nav(n){document.querySelectorAll('.page').forEach(p=>{if(p.classList.contains('active')){p.style.animation='none';p.classList.remove('active');}});const np=document.getElementById('page-'+n);if(np){np.style.animation='';np.classList.add('active');}document.querySelectorAll('.nav-link').forEach(l=>l.classList.toggle('active',l.getAttribute('onclick')?.includes("'"+n+"'")));document.getElementById('pg-ttl').textContent=PT[n]||n;if(isMob()&&sbO)toggleSB();({dashboard:loadDash,'supplier-report':()=>{},'report-history':loadHist,'food-calc':loadFC,billing:loadBill,employees:()=>loadEmps(),attendance:loadAtt,vacation:loadVacs,suspensions:loadSusps,fasting:loadFasts,'meal-exceptions':loadMexs,'meal-requests':loadMealRequests,'temp-overrides':loadOvrs,holidays:loadHol,'bulk-edit':loadBE,locations:loadLocs,'food-prefs':loadFPs,users:loadUsrs,settings:loadSet,'audit-log':loadAuditLog})[n]?.();}
+// ── Meal Change Requests (admin review) ─────────────────────────────────────
+async function loadMealRequests(){
+  const filter=v('mreq-filter');
+  const url=filter?'/meal-requests?status_filter='+filter:'/meal-requests';
+  const data=await API(url)||[];
+  const STATUS_BADGE={pending:'<span class="bs bs-f" style="font-size:10px;">Pending</span>',approved:'<span class="bs bs-a" style="font-size:10px;">Approved</span>',rejected:'<span class="bs bs-s" style="font-size:10px;">Rejected</span>'};
+  document.getElementById('mreq-tb').innerHTML=data.map(r=>{
+    const dt=new Date(r.requested_at);const dstr=isNaN(dt)?r.requested_at:dt.toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    const actions=r.status==='pending'
+      ?`<button class="btn btn-sm btn-outline-primary" onclick="openMreqReview(${r.id},'${r.full_name.replace(/'/g,"\\'")}','${(r.current_food_name||'--').replace(/'/g,"\\'")}','${(r.requested_food_name||'--').replace(/'/g,"\\'")}')">Review</button>`
+      :`<small style="color:var(--tx2);">${r.reviewed_by||''} ${r.review_note?'— '+r.review_note:''}</small>`;
+    return `<tr>
+      <td>${r.full_name}<br><code style="font-size:10px;">${r.emp_id}</code></td>
+      <td style="font-size:12px;">${r.current_food_name||'--'}</td>
+      <td style="font-size:12px;font-weight:600;color:var(--p);">${r.requested_food_name||'--'}</td>
+      <td style="font-size:12px;color:var(--tx2);">${r.reason||'--'}</td>
+      <td style="font-size:11.5px;color:var(--tx2);">${dstr}</td>
+      <td>${STATUS_BADGE[r.status]||r.status}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="7" class="text-center py-4" style="color:var(--tx2);">No requests found</td></tr>';
+  updateMealRequestBadge();
+}
+let _mreqActiveId=null;
+function openMreqReview(id,name,current,requested){
+  _mreqActiveId=id;
+  document.getElementById('mreq-review-title').textContent='Review Request — '+name;
+  document.getElementById('mreq-review-desc').innerHTML=`Change food preference from <strong>${current}</strong> to <strong>${requested}</strong>?`;
+  document.getElementById('mreq-review-note').value='';
+  bsM('mreqReviewMdl').show();
+}
+document.getElementById('mreq-approve-btn')?.addEventListener('click',async()=>{
+  if(!_mreqActiveId)return;
+  try{
+    await API('/meal-requests/'+_mreqActiveId+'/approve','POST',{review_note:v('mreq-review-note')});
+    bsM('mreqReviewMdl').hide();loadMealRequests();
+  }catch(e){alert(e.message);}
+});
+document.getElementById('mreq-reject-btn')?.addEventListener('click',async()=>{
+  if(!_mreqActiveId)return;
+  try{
+    await API('/meal-requests/'+_mreqActiveId+'/reject','POST',{review_note:v('mreq-review-note')});
+    bsM('mreqReviewMdl').hide();loadMealRequests();
+  }catch(e){alert(e.message);}
+});
+async function updateMealRequestBadge(){
+  try{
+    const pending=await API('/meal-requests?status_filter=pending')||[];
+    const badge=document.getElementById('mreq-badge');
+    if(!badge)return;
+    if(pending.length>0){badge.style.display='inline-block';badge.textContent=pending.length>9?'9+':pending.length;}
+    else{badge.style.display='none';}
+  }catch(e){/* non-critical */}
+}
 async function loadAuditLog(){
   const data=await API('/audit-log')||[];
   const ACT_ICON={create:'fa-plus-circle',update:'fa-edit',delete:'fa-trash',suspend:'fa-ban',bulk_update:'fa-layer-group',bulk_suspend:'fa-ban',bulk_vacation:'fa-plane',bulk_fasting:'fa-moon',mark_absent:'fa-user-times',mark_present:'fa-user-check',restore:'fa-database'};
@@ -1579,7 +1681,41 @@ async function runMaint(){const r=await API('/maintenance/expire','POST');alert(
 function initLK(){['app','login-page','setup-page'].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display='none';});document.getElementById('lookup-page').style.display='flex';document.getElementById('lk-in').focus();}
 let lkT;
 function lkSearch(q){clearTimeout(lkT);const nn=document.getElementById('lk-names');const dt=document.getElementById('lk-detail');dt.style.display='none';if(q.length<2){nn.style.display='none';return;}lkT=setTimeout(async()=>{try{const data=await fetch('/api/lookup/names?q_str='+encodeURIComponent(q)).then(r=>r.json());if(!data.length){nn.innerHTML='<div style="padding:14px;text-align:center;color:#555;font-size:13px;">No employee found</div>';nn.style.display='block';return;}nn.style.display='block';nn.innerHTML=data.map(e=>`<div class="lk-item" onclick="showLkD(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><div class="lk-av">${e.full_name.charAt(0)}</div><div><div style="font-weight:600;color:#E8E8E8;">${e.full_name}</div><div style="font-size:11px;color:#888;">${e.department||''}</div></div></div>`).join('');}catch(e){nn.innerHTML='<div style="padding:14px;color:#EF9A9A;font-size:13px;">Lookup unavailable</div>';nn.style.display='block';}},300);}
-async function showLkD(id,name){document.getElementById('lk-names').style.display='none';document.getElementById('lk-in').value=name;const dt=document.getElementById('lk-detail');dt.style.display='block';dt.innerHTML='<div class="text-center py-2"><i class="fas fa-spinner fa-spin" style="color:#1565C0;"></i></div>';try{const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());const sC={active:'#2E7D32',fasting:'#E65100',suspended:'#C62828',absent:'#757575',vacation:'#1565C0'};const sL={active:'Active',fasting:'Fasting (Ramadan)',suspended:'Suspended',absent:'Absent Today',vacation:'On Leave'};dt.innerHTML=`<div class="d-flex justify-content-between align-items-start mb-3"><div><h5 class="mb-0" style="color:#E8E8E8;">${e.full_name}</h5><small style="color:#888;">${e.department||''}</small></div><span style="background:${sC[e.current_status]||'#555'};color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;">${sL[e.current_status]||e.current_status}</span></div><div class="row g-2 mb-3"><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Accommodation</strong><br><span style="color:#42A5F5;">${e.acc_name||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Shift</strong><br><span style="color:#42A5F5;">${e.shift_label||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Food</strong><br><span style="color:#42A5F5;">${e.food_pref||'--'}</span></div></div><div style="background:#222;border-radius:8px;padding:14px;border:1px solid #333;"><div style="font-weight:600;color:#42A5F5;margin-bottom:8px;font-size:13px;">Meal Allocation Today</div>${e.get_bk?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Breakfast</span><strong style="color:#42A5F5;">${e.bk_loc}</strong></div>`:'<div style="padding:7px 0;border-bottom:1px solid #333;color:#555;">No Breakfast</div>'}${e.get_ln&&!e.iftar_kit?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Lunch</span><strong style="color:#42A5F5;">${e.ln_loc}</strong></div>`:''}${e.iftar_kit?`<div style="padding:7px 0;border-bottom:1px solid #333;color:#FFA726;font-weight:600;font-size:13px;">Iftar Kit + Dinner at ${e.bk_loc}</div>`:''}${e.get_dn?`<div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="color:#aaa;">Dinner</span><strong style="color:#42A5F5;">${e.dn_loc}</strong></div>`:'<div style="padding:7px 0;color:#555;">No Dinner</div>'}</div>`;}catch(e){dt.innerHTML='<div style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:10px;font-size:13px;">Not found or lookup disabled</div>';}}
+async function showLkD(id,name){document.getElementById('lk-names').style.display='none';document.getElementById('lk-in').value=name;const dt=document.getElementById('lk-detail');dt.style.display='block';dt.innerHTML='<div class="text-center py-2"><i class="fas fa-spinner fa-spin" style="color:#1565C0;"></i></div>';document.getElementById('lk-req-panel').style.display='none';try{const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());_lkCurrentEmpId=id;_lkCurrentFpId=e.food_pref_id;const sC={active:'#2E7D32',fasting:'#E65100',suspended:'#C62828',absent:'#757575',vacation:'#1565C0'};const sL={active:'Active',fasting:'Fasting (Ramadan)',suspended:'Suspended',absent:'Absent Today',vacation:'On Leave'};dt.innerHTML=`<div class="d-flex justify-content-between align-items-start mb-3"><div><h5 class="mb-0" style="color:#E8E8E8;">${e.full_name}</h5><small style="color:#888;">${e.department||''}</small></div><span style="background:${sC[e.current_status]||'#555'};color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;">${sL[e.current_status]||e.current_status}</span></div><div class="row g-2 mb-3"><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Accommodation</strong><br><span style="color:#42A5F5;">${e.acc_name||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Shift</strong><br><span style="color:#42A5F5;">${e.shift_label||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Food</strong><br><span style="color:#42A5F5;">${e.food_pref||'--'}</span></div></div><div style="background:#222;border-radius:8px;padding:14px;border:1px solid #333;"><div style="font-weight:600;color:#42A5F5;margin-bottom:8px;font-size:13px;">Meal Allocation Today</div>${e.get_bk?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Breakfast</span><strong style="color:#42A5F5;">${e.bk_loc}</strong></div>`:'<div style="padding:7px 0;border-bottom:1px solid #333;color:#555;">No Breakfast</div>'}${e.get_ln&&!e.iftar_kit?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Lunch</span><strong style="color:#42A5F5;">${e.ln_loc}</strong></div>`:''}${e.iftar_kit?`<div style="padding:7px 0;border-bottom:1px solid #333;color:#FFA726;font-weight:600;font-size:13px;">Iftar Kit + Dinner at ${e.bk_loc}</div>`:''}${e.get_dn?`<div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="color:#aaa;">Dinner</span><strong style="color:#42A5F5;">${e.dn_loc}</strong></div>`:'<div style="padding:7px 0;color:#555;">No Dinner</div>'}</div><button class="btn btn-sm w-100 mt-3" style="border:1px solid #333;color:#90CAF9;background:transparent;" onclick="openMealRequestPanel()"><i class="fas fa-exchange-alt me-1"></i>Request Meal Type Change</button>`;}catch(e){dt.innerHTML='<div style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:10px;font-size:13px;">Not found or lookup disabled</div>';}}
+let _lkCurrentEmpId=null,_lkCurrentFpId=null,_lkFpList=null;
+async function openMealRequestPanel(){
+  const panel=document.getElementById('lk-req-panel');
+  const sel=document.getElementById('lk-req-fp');
+  document.getElementById('lk-req-result').style.display='none';
+  document.getElementById('lk-req-reason').value='';
+  if(!_lkFpList){
+    try{ _lkFpList=await fetch('/api/lookup/food-preferences').then(r=>r.json()); }
+    catch(e){ _lkFpList=[]; }
+  }
+  sel.innerHTML='<option value="">Select new food preference...</option>'+(_lkFpList||[]).filter(f=>f.id!==_lkCurrentFpId).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+async function submitMealRequest(){
+  const fpId=parseInt(document.getElementById('lk-req-fp').value);
+  const reason=document.getElementById('lk-req-reason').value;
+  const resEl=document.getElementById('lk-req-result');
+  if(!fpId){resEl.style.display='block';resEl.style.color='#EF9A9A';resEl.textContent='Please select a food preference.';return;}
+  const btn=document.getElementById('lk-req-btn');
+  btn.disabled=true;btn.textContent='Submitting...';
+  try{
+    const r=await fetch('/api/lookup/meal-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employee_id:_lkCurrentEmpId,requested_food_pref_id:fpId,reason})});
+    const data=await r.json();
+    if(!r.ok)throw new Error(data.detail||'Request failed');
+    resEl.style.display='block';resEl.style.color='#A5D6A7';
+    resEl.innerHTML='<i class="fas fa-check-circle me-1"></i>Request submitted. An admin will review it shortly.';
+    btn.textContent='Submitted';
+    setTimeout(()=>{document.getElementById('lk-req-panel').style.display='none';btn.disabled=false;btn.textContent='Submit Request';},2500);
+  }catch(e){
+    resEl.style.display='block';resEl.style.color='#EF9A9A';resEl.textContent=e.message;
+    btn.disabled=false;btn.textContent='Submit Request';
+  }
+}
 // === BULK EDIT ===
 let beEmps=[], beFiltered=[], beSelected=new Set();
 async function loadBE(){
@@ -2041,23 +2177,48 @@ async function confirmBulkStatus(){
 let _notifOpen=false;
 const SEV_ICON={warning:'fa-exclamation-triangle',info:'fa-info-circle',danger:'fa-exclamation-circle'};
 const SEV_COLOR={warning:'#E65100',info:'#1565C0',danger:'#B71C1C'};
+let _currentAlerts=[];
+function notifSig(a){return a.type+'|'+a.message;}
+function getReadNotifs(){try{return new Set(JSON.parse(localStorage.getItem('notif_read')||'[]'));}catch(e){return new Set();}}
+function saveReadNotifs(set){
+  // Keep the stored set from growing forever — cap at the last 200 signatures
+  const arr=[...set];localStorage.setItem('notif_read',JSON.stringify(arr.slice(-200)));
+}
 async function loadNotifs(){
   try{
     const r=await API('/alerts');
     if(!r)return;
+    _currentAlerts=r.alerts||[];
+    const readSet=getReadNotifs();
+    const unread=_currentAlerts.filter(a=>!readSet.has(notifSig(a)));
     const badge=document.getElementById('bell-badge');
-    if(r.count>0){badge.style.display='flex';badge.textContent=r.count>9?'9+':r.count;}
+    if(unread.length>0){badge.style.display='flex';badge.textContent=unread.length>9?'9+':unread.length;}
     else{badge.style.display='none';}
-    const list=document.getElementById('notif-list');
-    if(!r.alerts.length){
-      list.innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--tx2);font-size:12.5px;"><i class="fas fa-check-circle mb-2" style="font-size:22px;color:#2E7D32;display:block;"></i>All clear — no alerts</div>';
-      return;
-    }
-    list.innerHTML=r.alerts.map(a=>`<div onclick="nav('${a.link}');toggleNotif(false)" style="padding:10px 12px;border-radius:var(--md-radius-sm);cursor:pointer;display:flex;gap:10px;align-items:flex-start;transition:background 150ms;" onmouseover="this.style.background='var(--inp,rgba(0,0,0,.04))'" onmouseout="this.style.background=''">
-      <i class="fas ${SEV_ICON[a.severity]||'fa-bell'}" style="color:${SEV_COLOR[a.severity]||'#666'};margin-top:2px;font-size:13px;"></i>
-      <span style="font-size:12.5px;color:var(--tx);line-height:1.4;">${a.message}</span>
-    </div>`).join('');
+    renderNotifList();
   }catch(e){/* fail silently, non-critical */}
+}
+function renderNotifList(){
+  const list=document.getElementById('notif-list');
+  const readSet=getReadNotifs();
+  if(!_currentAlerts.length){
+    list.innerHTML='<div style="padding:24px 16px;text-align:center;color:var(--tx2);font-size:12.5px;"><i class="fas fa-check-circle mb-2" style="font-size:22px;color:#2E7D32;display:block;"></i>All clear — no alerts</div>';
+    return;
+  }
+  list.innerHTML=_currentAlerts.map(a=>{
+    const isRead=readSet.has(notifSig(a));
+    return `<div onclick="nav('${a.link}');toggleNotif(false)" style="padding:10px 12px;border-radius:var(--md-radius-sm);cursor:pointer;display:flex;gap:10px;align-items:flex-start;transition:background 150ms;opacity:${isRead?'.55':'1'};" onmouseover="this.style.background='var(--inp,rgba(0,0,0,.04))'" onmouseout="this.style.background=''">
+      <i class="fas ${SEV_ICON[a.severity]||'fa-bell'}" style="color:${SEV_COLOR[a.severity]||'#666'};margin-top:2px;font-size:13px;"></i>
+      <span style="font-size:12.5px;color:var(--tx);line-height:1.4;flex:1;">${a.message}</span>
+      ${!isRead?'<span style="width:7px;height:7px;border-radius:50%;background:#1565C0;margin-top:5px;flex-shrink:0;"></span>':''}
+    </div>`;
+  }).join('');
+}
+function markAllNotifsRead(){
+  const readSet=getReadNotifs();
+  _currentAlerts.forEach(a=>readSet.add(notifSig(a)));
+  saveReadNotifs(readSet);
+  document.getElementById('bell-badge').style.display='none';
+  renderNotifList();
 }
 function toggleNotif(force){
   const panel=document.getElementById('notif-panel');
