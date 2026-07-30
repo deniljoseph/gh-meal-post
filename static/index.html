@@ -449,13 +449,28 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="input-group mb-1"><span class="input-group-text" ><i class="fas fa-search" style="color:#888;"></i></span><input type="text" id="lk-in" class="form-control form-control-lg" placeholder="Type your name..." oninput="lkSearch(this.value)" ></div>
   <div id="lk-names" style="display:none;border-radius:8px;max-height:280px;overflow-y:auto;margin-top:4px;"></div>
   <div id="lk-detail" style="display:none;margin-top:12px;border-radius:10px;padding:18px;"></div>
-  <div id="lk-req-panel" style="display:none;margin-top:10px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:16px;">
-    <div style="font-size:13px;font-weight:600;color:#42A5F5;margin-bottom:10px;"><i class="fas fa-exchange-alt me-1"></i>Request a Meal Type Change</div>
-    <select id="lk-req-fp" class="form-select form-select-sm mb-2" style="background:#1C1C1C;color:#F0F0F0;border-color:#333;"><option value="">Select new food preference...</option></select>
-    <input type="text" id="lk-req-reason" class="form-control form-control-sm mb-2" placeholder="Reason (optional)" style="background:#1C1C1C;color:#F0F0F0;border-color:#333;">
-    <button class="btn btn-sm w-100" style="background:#1565C0;color:#fff;" onclick="submitMealRequest()" id="lk-req-btn">Submit Request</button>
-    <div id="lk-req-result" style="display:none;margin-top:8px;font-size:12px;"></div>
+  <div class="text-center mt-3"><a href="/meal-request" style="color:#90CAF9;font-size:12.5px;text-decoration:none;"><i class="fas fa-exchange-alt me-1"></i>Need a different meal type? Request a change</a></div>
+  <div class="text-center mt-3"><small style="color:#555;"><i class="fas fa-shield-alt me-1"></i>Only meal information displayed.</small></div>
+  <div class="text-center mt-2"><a href="/" class="btn btn-sm" style="border:1px solid #333;color:#888;background:transparent;">Admin Login</a></div>
+  <div class="auth-wm">Created by Denil Joseph</div>
+</div></div>
+
+<div id="mealreq-page" style="display:none"><div class="lk-card" style="position:relative;">
+  <div class="text-center mb-4"><div class="rpt-logo mx-auto mb-2"><span>GH</span><small>GeometryHome</small></div><h4 style="color:#42A5F5;font-weight:700;">Meal Change Request</h4><p class="text-muted small">Type your name to request a different meal type</p></div>
+  <div class="input-group mb-1"><span class="input-group-text"><i class="fas fa-search" style="color:#888;"></i></span><input type="text" id="mr-in" class="form-control form-control-lg" placeholder="Type your name..." oninput="mrSearch(this.value)"></div>
+  <div id="mr-names" style="display:none;border-radius:8px;max-height:280px;overflow-y:auto;margin-top:4px;"></div>
+  <div id="mr-panel" style="display:none;margin-top:14px;background:#1A1A1A;border:1px solid #2A2A2A;border-radius:10px;padding:18px;">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+      <div><h5 class="mb-0" style="color:#E8E8E8;" id="mr-name"></h5><small style="color:#888;" id="mr-dept"></small></div>
+    </div>
+    <div class="mb-3"><strong style="color:#90CAF9;font-size:12px;">Current Food Preference</strong><br><span style="color:#42A5F5;font-size:15px;" id="mr-current"></span></div>
+    <label class="form-label" style="color:#ccc;font-size:12.5px;">Request Change To</label>
+    <select id="mr-fp" class="form-select form-select-sm mb-2" style="background:#1C1C1C;color:#F0F0F0;border-color:#333;"><option value="">Select new food preference...</option></select>
+    <input type="text" id="mr-reason" class="form-control form-control-sm mb-3" placeholder="Reason (optional)" style="background:#1C1C1C;color:#F0F0F0;border-color:#333;">
+    <button class="btn btn-sm w-100" style="background:#1565C0;color:#fff;" onclick="submitMealRequestStandalone()" id="mr-btn">Submit Request</button>
+    <div id="mr-result" style="display:none;margin-top:10px;font-size:12.5px;"></div>
   </div>
+  <div class="text-center mt-3"><a href="/lookup" style="color:#90CAF9;font-size:12.5px;text-decoration:none;"><i class="fas fa-utensils me-1"></i>Check today's meal instead</a></div>
   <div class="text-center mt-3"><small style="color:#555;"><i class="fas fa-shield-alt me-1"></i>Only meal information displayed.</small></div>
   <div class="text-center mt-2"><a href="/" class="btn btn-sm" style="border:1px solid #333;color:#888;background:transparent;">Admin Login</a></div>
   <div class="auth-wm">Created by Denil Joseph</div>
@@ -980,6 +995,7 @@ const tod=()=>new Date().toISOString().split('T')[0];
 const fmt=d=>d?new Date(d+'T12:00').toLocaleDateString('en-GB'):'--';
 const STL={shift1:'1st Shift',shift2:'2nd Shift',shift3:'3rd Shift',normal:'Normal',site:'Site'};
 const isLK=window.location.pathname==='/lookup';
+const isMR=window.location.pathname==='/meal-request';
 const CP=JSON.parse(localStorage.getItem('cprefs')||'{}');
 function sCP(id,t){CP[id]=t;localStorage.setItem('cprefs',JSON.stringify(CP));}
 function gCP(id,d){return CP[id]||d;}
@@ -1087,6 +1103,7 @@ function toggleDark(){
 }
 (async function boot(){
   if(isLK){initLK();return;}
+  if(isMR){initMR();return;}
   const s=await fetch('/api/setup/status').then(r=>r.json()).catch(()=>null);if(!s){showPg('login-page');return;}
   if(s.company_name)document.getElementById('lc-nm').textContent='GH - Meal Management System';
   if(!s.setup_done){showPg('setup-page');return;}
@@ -1680,39 +1697,67 @@ function rmRule(k){if(!confirm('Remove?'))return;delete cR[k];cRK=cRK.filter(x=>
 async function saveRules(){const all=[...PS,...cRK,...Object.keys(cR).filter(k=>!PS.includes(k)&&typeof cR[k]==='object')];const un=[...new Set(all)];const upd={};un.forEach(k=>{const bk=document.getElementById('r-bk-'+k);const ln=document.getElementById('r-ln-'+k);const dn=document.getElementById('r-dn-'+k);if(ln)upd[k]={bk:bk?.checked!==false,ln:ln.value||'accommodation',dn:dn?.value||'accommodation'};});['arabic_bk','arabic_dn','fasting_bk','fasting_dn'].forEach(k=>{upd[k]=document.getElementById('sr-'+k)?.checked||false;});['absent_ln','absent_dn'].forEach(k=>{upd[k]=document.getElementById('sr-'+k)?.value||'accommodation';});['count_bk','count_ln_acc','count_ln_factory','count_ln_site','count_dn_acc','count_dn_factory','count_iftar'].forEach(k=>{upd[k]=document.getElementById('cr-'+k)?.checked!==false;});try{await API('/meal-rules','POST',upd);alert('Rules saved!');cR={...cR,...upd};window.__countIftar=cR.count_iftar!==false;}catch(e){alert(e.message);}}
 async function saveLk(){await API('/lookup/settings','POST',{lookup_enabled:document.getElementById('lk-tog').checked?'1':'0'});}
 async function runMaint(){const r=await API('/maintenance/expire','POST');alert('Expired '+r.expired_suspensions+' suspension(s).\n'+'Fixed '+r.orphaned_fixed+' employee(s) stuck with a stale suspended status.');loadSusps?.();loadEmps?.();}
-function initLK(){['app','login-page','setup-page'].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display='none';});document.getElementById('lookup-page').style.display='flex';document.getElementById('lk-in').focus();}
+function initLK(){['app','login-page','setup-page','mealreq-page'].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display='none';});document.getElementById('lookup-page').style.display='flex';document.getElementById('lk-in').focus();}
+function initMR(){['app','login-page','setup-page','lookup-page'].forEach(i=>{const el=document.getElementById(i);if(el)el.style.display='none';});document.getElementById('mealreq-page').style.display='flex';document.getElementById('mr-in').focus();}
 let lkT;
 function lkSearch(q){clearTimeout(lkT);const nn=document.getElementById('lk-names');const dt=document.getElementById('lk-detail');dt.style.display='none';if(q.length<2){nn.style.display='none';return;}lkT=setTimeout(async()=>{try{const data=await fetch('/api/lookup/names?q_str='+encodeURIComponent(q)).then(r=>r.json());if(!data.length){nn.innerHTML='<div style="padding:14px;text-align:center;color:#555;font-size:13px;">No employee found</div>';nn.style.display='block';return;}nn.style.display='block';nn.innerHTML=data.map(e=>`<div class="lk-item" onclick="showLkD(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><div class="lk-av">${e.full_name.charAt(0)}</div><div><div style="font-weight:600;color:#E8E8E8;">${e.full_name}</div><div style="font-size:11px;color:#888;">${e.department||''}</div></div></div>`).join('');}catch(e){nn.innerHTML='<div style="padding:14px;color:#EF9A9A;font-size:13px;">Lookup unavailable</div>';nn.style.display='block';}},300);}
-async function showLkD(id,name){document.getElementById('lk-names').style.display='none';document.getElementById('lk-in').value=name;const dt=document.getElementById('lk-detail');dt.style.display='block';dt.innerHTML='<div class="text-center py-2"><i class="fas fa-spinner fa-spin" style="color:#1565C0;"></i></div>';document.getElementById('lk-req-panel').style.display='none';try{const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());_lkCurrentEmpId=id;_lkCurrentFpId=e.food_pref_id;const sC={active:'#2E7D32',fasting:'#E65100',suspended:'#C62828',absent:'#757575',vacation:'#1565C0'};const sL={active:'Active',fasting:'Fasting (Ramadan)',suspended:'Suspended',absent:'Absent Today',vacation:'On Leave'};dt.innerHTML=`<div class="d-flex justify-content-between align-items-start mb-3"><div><h5 class="mb-0" style="color:#E8E8E8;">${e.full_name}</h5><small style="color:#888;">${e.department||''}</small></div><span style="background:${sC[e.current_status]||'#555'};color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;">${sL[e.current_status]||e.current_status}</span></div><div class="row g-2 mb-3"><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Accommodation</strong><br><span style="color:#42A5F5;">${e.acc_name||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Shift</strong><br><span style="color:#42A5F5;">${e.shift_label||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Food</strong><br><span style="color:#42A5F5;">${e.food_pref||'--'}</span></div></div><div style="background:#222;border-radius:8px;padding:14px;border:1px solid #333;"><div style="font-weight:600;color:#42A5F5;margin-bottom:8px;font-size:13px;">Meal Allocation Today</div>${e.get_bk?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Breakfast</span><strong style="color:#42A5F5;">${e.bk_loc}</strong></div>`:'<div style="padding:7px 0;border-bottom:1px solid #333;color:#555;">No Breakfast</div>'}${e.get_ln&&!e.iftar_kit?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Lunch</span><strong style="color:#42A5F5;">${e.ln_loc}</strong></div>`:''}${e.iftar_kit?`<div style="padding:7px 0;border-bottom:1px solid #333;color:#FFA726;font-weight:600;font-size:13px;">Iftar Kit + Dinner at ${e.bk_loc}</div>`:''}${e.get_dn?`<div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="color:#aaa;">Dinner</span><strong style="color:#42A5F5;">${e.dn_loc}</strong></div>`:'<div style="padding:7px 0;color:#555;">No Dinner</div>'}</div><button class="btn btn-sm w-100 mt-3" style="border:1px solid #333;color:#90CAF9;background:transparent;" onclick="openMealRequestPanel()"><i class="fas fa-exchange-alt me-1"></i>Request Meal Type Change</button>`;}catch(e){dt.innerHTML='<div style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:10px;font-size:13px;">Not found or lookup disabled</div>';}}
-let _lkCurrentEmpId=null,_lkCurrentFpId=null,_lkFpList=null;
-async function openMealRequestPanel(){
-  const panel=document.getElementById('lk-req-panel');
-  const sel=document.getElementById('lk-req-fp');
-  document.getElementById('lk-req-result').style.display='none';
-  document.getElementById('lk-req-reason').value='';
-  if(!_lkFpList){
-    try{ _lkFpList=await fetch('/api/lookup/food-preferences').then(r=>r.json()); }
-    catch(e){ _lkFpList=[]; }
-  }
-  sel.innerHTML='<option value="">Select new food preference...</option>'+(_lkFpList||[]).filter(f=>f.id!==_lkCurrentFpId).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
-  panel.style.display='block';
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+async function showLkD(id,name){document.getElementById('lk-names').style.display='none';document.getElementById('lk-in').value=name;const dt=document.getElementById('lk-detail');dt.style.display='block';dt.innerHTML='<div class="text-center py-2"><i class="fas fa-spinner fa-spin" style="color:#1565C0;"></i></div>';try{const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());const sC={active:'#2E7D32',fasting:'#E65100',suspended:'#C62828',absent:'#757575',vacation:'#1565C0'};const sL={active:'Active',fasting:'Fasting (Ramadan)',suspended:'Suspended',absent:'Absent Today',vacation:'On Leave'};dt.innerHTML=`<div class="d-flex justify-content-between align-items-start mb-3"><div><h5 class="mb-0" style="color:#E8E8E8;">${e.full_name}</h5><small style="color:#888;">${e.department||''}</small></div><span style="background:${sC[e.current_status]||'#555'};color:#fff;padding:3px 10px;border-radius:20px;font-size:12px;">${sL[e.current_status]||e.current_status}</span></div><div class="row g-2 mb-3"><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Accommodation</strong><br><span style="color:#42A5F5;">${e.acc_name||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Shift</strong><br><span style="color:#42A5F5;">${e.shift_label||'--'}</span></div><div class="col-6"><strong style="color:#90CAF9;font-size:12px;">Food</strong><br><span style="color:#42A5F5;">${e.food_pref||'--'}</span></div></div><div style="background:#222;border-radius:8px;padding:14px;border:1px solid #333;"><div style="font-weight:600;color:#42A5F5;margin-bottom:8px;font-size:13px;">Meal Allocation Today</div>${e.get_bk?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Breakfast</span><strong style="color:#42A5F5;">${e.bk_loc}</strong></div>`:'<div style="padding:7px 0;border-bottom:1px solid #333;color:#555;">No Breakfast</div>'}${e.get_ln&&!e.iftar_kit?`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #333;"><span style="color:#aaa;">Lunch</span><strong style="color:#42A5F5;">${e.ln_loc}</strong></div>`:''}${e.iftar_kit?`<div style="padding:7px 0;border-bottom:1px solid #333;color:#FFA726;font-weight:600;font-size:13px;">Iftar Kit + Dinner at ${e.bk_loc}</div>`:''}${e.get_dn?`<div style="display:flex;justify-content:space-between;padding:7px 0;"><span style="color:#aaa;">Dinner</span><strong style="color:#42A5F5;">${e.dn_loc}</strong></div>`:'<div style="padding:7px 0;color:#555;">No Dinner</div>'}</div>`;}catch(e){dt.innerHTML='<div style="background:#3B0000;color:#EF9A9A;border:1px solid #7B0000;border-radius:6px;padding:10px;font-size:13px;">Not found or lookup disabled</div>';}}
+
+// ── Standalone Meal Change Request page (/meal-request) ─────────────────────
+let mrT=null,_mrCurrentEmpId=null,_mrCurrentFpId=null,_mrFpList=null;
+function mrSearch(q){
+  clearTimeout(mrT);
+  const nn=document.getElementById('mr-names');
+  document.getElementById('mr-panel').style.display='none';
+  if(q.length<2){nn.style.display='none';return;}
+  mrT=setTimeout(async()=>{
+    try{
+      const data=await fetch('/api/lookup/names?q_str='+encodeURIComponent(q)).then(r=>r.json());
+      if(!data.length){nn.innerHTML='<div style="padding:14px;text-align:center;color:#555;font-size:13px;">No employee found</div>';nn.style.display='block';return;}
+      nn.style.display='block';
+      nn.innerHTML=data.map(e=>`<div class="lk-item" onclick="mrShowPanel(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><div class="lk-av">${e.full_name.charAt(0)}</div><div><div style="font-weight:600;color:#E8E8E8;">${e.full_name}</div><div style="font-size:11px;color:#888;">${e.department||''}</div></div></div>`).join('');
+    }catch(e){nn.innerHTML='<div style="padding:14px;color:#EF9A9A;font-size:13px;">Lookup unavailable</div>';nn.style.display='block';}
+  },300);
 }
-async function submitMealRequest(){
-  const fpId=parseInt(document.getElementById('lk-req-fp').value);
-  const reason=document.getElementById('lk-req-reason').value;
-  const resEl=document.getElementById('lk-req-result');
+async function mrShowPanel(id,name){
+  document.getElementById('mr-names').style.display='none';
+  document.getElementById('mr-in').value=name;
+  const panel=document.getElementById('mr-panel');
+  panel.style.display='block';
+  document.getElementById('mr-name').textContent='Loading...';
+  document.getElementById('mr-result').style.display='none';
+  document.getElementById('mr-reason').value='';
+  try{
+    const e=await fetch('/api/lookup/employee/'+id).then(r=>r.json());
+    _mrCurrentEmpId=id;_mrCurrentFpId=e.food_pref_id;
+    document.getElementById('mr-name').textContent=e.full_name;
+    document.getElementById('mr-dept').textContent=e.department||'';
+    document.getElementById('mr-current').textContent=e.food_pref||'--';
+    if(!_mrFpList){
+      try{ _mrFpList=await fetch('/api/lookup/food-preferences').then(r=>r.json()); }
+      catch(er){ _mrFpList=[]; }
+    }
+    const sel=document.getElementById('mr-fp');
+    sel.innerHTML='<option value="">Select new food preference...</option>'+(_mrFpList||[]).filter(f=>f.id!==_mrCurrentFpId).map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+    panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }catch(e){
+    document.getElementById('mr-name').textContent='Error loading employee';
+  }
+}
+async function submitMealRequestStandalone(){
+  const fpId=parseInt(document.getElementById('mr-fp').value);
+  const reason=document.getElementById('mr-reason').value;
+  const resEl=document.getElementById('mr-result');
   if(!fpId){resEl.style.display='block';resEl.style.color='#EF9A9A';resEl.textContent='Please select a food preference.';return;}
-  const btn=document.getElementById('lk-req-btn');
+  const btn=document.getElementById('mr-btn');
   btn.disabled=true;btn.textContent='Submitting...';
   try{
-    const r=await fetch('/api/lookup/meal-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employee_id:_lkCurrentEmpId,requested_food_pref_id:fpId,reason})});
+    const r=await fetch('/api/lookup/meal-request',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employee_id:_mrCurrentEmpId,requested_food_pref_id:fpId,reason})});
     const data=await r.json();
     if(!r.ok)throw new Error(data.detail||'Request failed');
     resEl.style.display='block';resEl.style.color='#A5D6A7';
     resEl.innerHTML='<i class="fas fa-check-circle me-1"></i>Request submitted. An admin will review it shortly.';
     btn.textContent='Submitted';
-    setTimeout(()=>{document.getElementById('lk-req-panel').style.display='none';btn.disabled=false;btn.textContent='Submit Request';},2500);
   }catch(e){
     resEl.style.display='block';resEl.style.color='#EF9A9A';resEl.textContent=e.message;
     btn.disabled=false;btn.textContent='Submit Request';
