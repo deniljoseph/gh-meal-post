@@ -104,8 +104,8 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
 .fr{background:var(--sf);padding:10px 14px;border-radius:8px;border:1px solid var(--bd);margin-bottom:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
 .tp{display:flex;gap:5px;align-items:center;}.tpd{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .15s;}.tpd:hover,.tpd.on{transform:scale(1.2);border-color:rgba(255,255,255,.9);}
 .chdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}.chdr small{font-weight:600;color:var(--tx);font-size:12px;}
-#setup-page,#login-page,#lookup-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;}
-#setup-page,#login-page,#lookup-page{background:#000000;}
+#setup-page,#login-page,#lookup-page,#mealreq-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;}
+#setup-page,#login-page,#lookup-page,#mealreq-page{background:#000000;}
 /* AMOLED auth card */
 .auth-card{background:#111111;border:1px solid #222;border-radius:16px;padding:36px;width:400px;box-shadow:0 20px 60px rgba(0,0,0,.9);position:relative;}
 .auth-card h5,.auth-card label{color:#E8E8E8!important;}
@@ -126,7 +126,7 @@ table.mt tbody td{padding:6px 8px;vertical-align:middle;border-color:var(--bd);f
 .lk-card a{color:#42A5F5!important;}
 .lk-card .btn-outline-secondary{color:#888!important;border-color:#444!important;}
 .lk-card .btn-outline-secondary:hover{background:#222!important;color:#fff!important;}
-#lk-names{background:#1A1A1A!important;border-color:#333!important;}
+#lk-names,#mr-names{background:#1A1A1A!important;border-color:#333!important;}
 .lk-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #252525!important;display:flex;align-items:center;gap:10px;}
 .lk-item:hover{background:#1F2A3A!important;}
 .lk-item div div:first-child{color:#E8E8E8!important;font-weight:600;}
@@ -325,7 +325,7 @@ p,span,label,td,th,li,input,select,textarea{font-family:'DM Sans',system-ui,sans
 .rpt-wm{text-align:right;font-size:9px;color:#aaa;margin-top:8px;font-style:italic;}
 
 /* ── Auth/lookup pages ── */
-#setup-page,#login-page,#lookup-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;background:#000;}
+#setup-page,#login-page,#lookup-page,#mealreq-page{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:9999;background:#000;}
 .auth-card{background:#111;border:1px solid #222;border-radius:var(--md-radius-xl);padding:36px;width:400px;box-shadow:0 24px 64px rgba(0,0,0,.9);position:relative;
   animation:slideUp 350ms var(--md-transition) both;}
 .lk-card{background:#111;border:1px solid #222;border-radius:var(--md-radius-xl);padding:34px;max-width:560px;width:100%;box-shadow:0 24px 64px rgba(0,0,0,.9);color:#E8E8E8;
@@ -341,7 +341,7 @@ p,span,label,td,th,li,input,select,textarea{font-family:'DM Sans',system-ui,sans
 .lk-card .form-control{background:#1C1C1C!important;color:#F0F0F0!important;border-color:#333!important;}
 .lk-card .form-control:focus{background:#222!important;border-color:#1565C0!important;}
 .lk-card .input-group-text{background:#1C1C1C!important;border-color:#333!important;color:#555!important;}
-#lk-names{background:#1A1A1A!important;border-color:#333!important;}
+#lk-names,#mr-names{background:#1A1A1A!important;border-color:#333!important;}
 .lk-item{padding:10px 12px;cursor:pointer;border-bottom:1px solid #252525;display:flex;align-items:center;gap:10px;transition:background 150ms;}
 .lk-item:hover{background:#1F2A3A!important;}
 .lk-av{width:36px;height:36px;border-radius:50%;background:#1565C0;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
@@ -1740,7 +1740,7 @@ function showFpM(rec=null){document.getElementById('fp-ttl').textContent=rec?'Ed
 async function editFp(id){const f=fps.find(x=>x.id===id);if(f)showFpM(f);}
 async function saveFp(){const id=v('fp-id');const d={name:v('fp-nm'),category:v('fp-ct')};try{if(id)await API('/food-preferences/'+id,'PUT',d);else await API('/food-preferences','POST',d);bsM('fpMdl').hide();loadFPs();}catch(e){alert(e.message);}}
 async function delFp(id){if(!confirm('Delete?'))return;await API('/food-preferences/'+id,'DELETE');loadFPs();}
-async function loadUsrs(){const data=await API('/users')||[];document.getElementById('user-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(u=>`<tr><td><code>${u.username}</code></td><td>${u.full_name}</td><td><span class="chip chp">${u.role}</span></td><td>${bss(u.is_active?'active':'suspended')}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editUsr(${u.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="deacU(${u.id})"><i class="fas fa-user-slash"></i></span></td></tr>`).join('');}
+async function loadUsrs(){const data=await API('/users')||[];document.getElementById('user-tb').innerHTML=[...data].sort((a,b)=>(a.full_name||'').localeCompare(b.full_name||'')).map(u=>`<tr><td><code>${u.username}</code></td><td>${u.full_name}</td><td><span class="chip chp">${u.role}</span></td><td>${bss(u.is_active?'active':'suspended')}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editUsr(${u.id})" title="Edit"><i class="fas fa-edit"></i></span><span class="abt text-warning border-warning" onclick="deacU(${u.id})" title="Deactivate"><i class="fas fa-user-slash"></i></span><span class="abt text-danger border-danger" onclick="delUsrPermanent(${u.id},'${(u.full_name||u.username).replace(/'/g,"\\'")}')" title="Delete permanently"><i class="fas fa-trash"></i></span></td></tr>`).join('');}
 const PAGE_PERM_GROUPS=[
   {label:'Main',pages:[['dashboard','Dashboard'],['supplier-report','Supplier Report'],['report-history','Report History'],['food-calc','Food Calculator'],['billing','Billing']]},
   {label:'Workforce',pages:[['employees','Employees'],['attendance','Attendance'],['vacation','Vacation / Leave'],['suspensions','Suspensions'],['fasting','Fasting (Ramadan)'],['meal-exceptions','Meal Exceptions'],['meal-requests','Meal Requests'],['temp-overrides','Temp Overrides'],['holidays','Holidays'],['bulk-edit','Bulk Edit']]},
@@ -1790,6 +1790,13 @@ async function saveUsr(){
 async function editUsr(id){if(!ucC.length)ucC=await API('/users')||[];const u=ucC.find(x=>x.id===id);if(u)showUsrM(u);ucC=[];}
 
 async function deacU(id){if(!confirm('Deactivate?'))return;await API('/users/'+id,'DELETE');loadUsrs();}
+async function delUsrPermanent(id,name){
+  if(!confirm(`Permanently delete "${name}"? This removes their account entirely and cannot be undone.`))return;
+  try{
+    await API('/users/'+id+'/permanent','DELETE');
+    loadUsrs();
+  }catch(e){alert(e.message);}
+}
 let cR={};let cRK=[];
 const PS=['shift1','shift2','shift3','normal','site'];
 async function loadSet(){const s=await API('/lookup/settings').catch(()=>null);if(s)document.getElementById('lk-tog').checked=s.lookup_enabled==='1';cR=await API('/meal-rules').catch(()=>({}))||{};window.__countIftar=cR.count_iftar!==false;cRK=[];rendRules(cR);setTh(localStorage.getItem('th')||'blue');loadBackupHistory();}

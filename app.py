@@ -920,19 +920,21 @@ def list_overrides(_=Depends(get_user)):
     conn=db_conn(); r=q(conn,'SELECT t.*,e.full_name,e.emp_id,ln.name new_acc_name FROM temp_meal_overrides t JOIN employees e ON t.employee_id=e.id LEFT JOIN locations ln ON t.override_accommodation_id=ln.id ORDER BY t.created_at DESC'); conn.close(); return r
 
 @app.post('/api/temp-overrides')
-def add_override(data:TempOvrIn,user=Depends(require('admin','hr'))):
+def add_override(data:TempOvrIn,user=Depends(require('admin','hr','supervisor'))):
     conn=db_conn(); uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
     oid=run(conn,'INSERT INTO temp_meal_overrides(employee_id,override_shift_type,override_accommodation_id,orig_shift_type,orig_accommodation_id,orig_acc_name,start_date,end_date,reason,created_by)VALUES(?,?,?,?,?,?,?,?,?,?)',(data.employee_id,data.override_shift_type,data.override_accommodation_id,data.orig_shift_type,data.orig_accommodation_id,data.orig_acc_name,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
+    log_audit(conn,user['sub'],'create_override','employee',data.employee_id,data.reason or '')
     conn.close(); return{'id':oid}
 
 @app.delete('/api/temp-overrides/{oid}')
-def del_override(oid:int,_=Depends(require('admin','hr'))):
-    conn=db_conn(); exe(conn,'DELETE FROM temp_meal_overrides WHERE id=?',(oid,)); conn.close(); return{'ok':True}
+def del_override(oid:int,user=Depends(require('admin','hr','supervisor'))):
+    conn=db_conn(); exe(conn,'DELETE FROM temp_meal_overrides WHERE id=?',(oid,)); log_audit(conn,user['sub'],'delete_override','temp_meal_overrides',oid,''); conn.close(); return{'ok':True}
 
 @app.post('/api/temp-overrides/bulk-delete')
-def bulk_del_overrides(data:BulkDel,_=Depends(require('admin','hr'))):
+def bulk_del_overrides(data:BulkDel,user=Depends(require('admin','hr','supervisor'))):
     conn=db_conn()
     for i in data.ids: exe(conn,'DELETE FROM temp_meal_overrides WHERE id=?',(i,))
+    log_audit(conn,user['sub'],'bulk_delete_override','temp_meal_overrides',None,f'{len(data.ids)} override(s)')
     conn.close(); return{'deleted':len(data.ids)}
 
 @app.get('/api/locations')
@@ -993,8 +995,37 @@ def update_user(uid:int,data:dict,_=Depends(require('admin'))):
     conn.close(); return{'ok':True}
 
 @app.delete('/api/users/{uid}')
-def del_user(uid:int,_=Depends(require('admin'))):
-    conn=db_conn(); exe(conn,'UPDATE users SET is_active=0 WHERE id=?',(uid,)); conn.close(); return{'ok':True}
+def del_user(uid:int,user=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        exe(conn,'UPDATE users SET is_active=0 WHERE id=?',(uid,))
+        target=q1(conn,'SELECT username FROM users WHERE id=?',(uid,))
+        log_audit(conn,user['sub'],'deactivate_user','user',uid,(target or {}).get('username',''))
+        return{'ok':True}
+    finally:
+        conn.close()
+
+@app.delete('/api/users/{uid}/permanent')
+def delete_user_permanent(uid:int,user=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        target=q1(conn,'SELECT username,role FROM users WHERE id=?',(uid,))
+        if not target: raise HTTPException(404,'User not found')
+        if target['username']==user['sub']:
+            raise HTTPException(400,'You cannot delete your own account')
+        if target['role']=='admin':
+            admin_count=q1(conn,"SELECT COUNT(*) c FROM users WHERE role='admin' AND is_active=1")
+            if admin_count and admin_count['c']<=1:
+                raise HTTPException(400,'Cannot delete the last remaining admin account')
+        exe(conn,'DELETE FROM users WHERE id=?',(uid,))
+        log_audit(conn,user['sub'],'delete_user','user',uid,target['username'])
+        return{'ok':True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500,f'Delete failed: {e}')
+    finally:
+        conn.close()
 
 @app.post('/api/import/employees')
 async def import_emp(file:UploadFile=File(...),user=Depends(require('admin','hr'))):
