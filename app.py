@@ -136,7 +136,7 @@ def init_db():
     conn = db_conn()
     if USE_PG:
         stmts = [
-            """CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'viewer',full_name TEXT,is_active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
+            """CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'viewer',full_name TEXT,is_active INTEGER DEFAULT 1,allowed_pages TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS locations(id SERIAL PRIMARY KEY,name TEXT UNIQUE NOT NULL,description TEXT,loc_type TEXT DEFAULT 'accommodation',is_active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS food_preferences(id SERIAL PRIMARY KEY,name TEXT UNIQUE NOT NULL,category TEXT,is_active INTEGER DEFAULT 1)""",
             """CREATE TABLE IF NOT EXISTS employees(id SERIAL PRIMARY KEY,emp_id TEXT UNIQUE NOT NULL,full_name TEXT NOT NULL,department TEXT,accommodation_id INTEGER REFERENCES locations(id),shift_type TEXT DEFAULT 'normal',food_pref_id INTEGER REFERENCES food_preferences(id),no_food_sunday INTEGER DEFAULT 0,remarks TEXT,status TEXT DEFAULT 'active',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
@@ -157,7 +157,7 @@ def init_db():
         for s in stmts: exe(conn,s)
     else:
         conn.executescript("""
-        CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'viewer',full_name TEXT,is_active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+        CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'viewer',full_name TEXT,is_active INTEGER DEFAULT 1,allowed_pages TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS locations(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT,loc_type TEXT DEFAULT 'accommodation',is_active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS food_preferences(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,category TEXT,is_active INTEGER DEFAULT 1);
         CREATE TABLE IF NOT EXISTS employees(id INTEGER PRIMARY KEY AUTOINCREMENT,emp_id TEXT UNIQUE NOT NULL,full_name TEXT NOT NULL,department TEXT,accommodation_id INTEGER REFERENCES locations(id),shift_type TEXT DEFAULT 'normal',food_pref_id INTEGER REFERENCES food_preferences(id),no_food_sunday INTEGER DEFAULT 0,remarks TEXT,status TEXT DEFAULT 'active',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
@@ -175,9 +175,13 @@ def init_db():
         CREATE TABLE IF NOT EXISTS backup_history(id INTEGER PRIMARY KEY AUTOINCREMENT,filename TEXT NOT NULL,data TEXT NOT NULL,size_bytes INTEGER,trigger_type TEXT DEFAULT 'scheduled',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS meal_change_requests(id INTEGER PRIMARY KEY AUTOINCREMENT,employee_id INTEGER,current_food_pref_id INTEGER,requested_food_pref_id INTEGER,reason TEXT,status TEXT DEFAULT 'pending',requested_at TEXT DEFAULT CURRENT_TIMESTAMP,reviewed_at TEXT,reviewed_by TEXT,review_note TEXT);
         """)
-        for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'']:
+        for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'','ALTER TABLE users ADD COLUMN allowed_pages TEXT']:
             try: conn.execute(col); conn.commit()
             except: pass
+    if USE_PG:
+        try:
+            exe(conn,'ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_pages TEXT',silent=True)
+        except Exception: pass
 
     h = lambda p: hashlib.sha256(p.encode()).hexdigest()
     if not q1(conn,'SELECT value FROM settings WHERE key=?',('setup_done',)):
@@ -405,7 +409,25 @@ def login(form:OAuth2PasswordRequestForm=Depends()):
     conn=db_conn(); h=hashlib.sha256(form.password.encode()).hexdigest()
     u=q1(conn,'SELECT * FROM users WHERE username=? AND password_hash=? AND is_active=1',(form.username,h)); conn.close()
     if not u: raise HTTPException(401,'Invalid credentials')
-    return{'access_token':make_token(u['username'],u['role']),'token_type':'bearer','role':u['role'],'full_name':u['full_name']}
+    allowed=None
+    if u.get('allowed_pages'):
+        try: allowed=json.loads(u['allowed_pages'])
+        except Exception: allowed=None
+    return{'access_token':make_token(u['username'],u['role']),'token_type':'bearer','role':u['role'],'full_name':u['full_name'],'allowed_pages':allowed}
+
+@app.get('/api/auth/me')
+def auth_me(u=Depends(get_user)):
+    conn=db_conn()
+    try:
+        row=q1(conn,'SELECT username,role,full_name,allowed_pages,is_active FROM users WHERE username=?',(u['sub'],))
+        if not row or not row.get('is_active'): raise HTTPException(401,'Account disabled')
+        allowed=None
+        if row.get('allowed_pages'):
+            try: allowed=json.loads(row['allowed_pages'])
+            except Exception: allowed=None
+        return{'username':row['username'],'role':row['role'],'full_name':row['full_name'],'allowed_pages':allowed}
+    finally:
+        conn.close()
 
 @app.get('/api/meal-rules')
 def get_meal_rules(_=Depends(get_user)):
@@ -947,18 +969,27 @@ def del_fp(fid:int,_=Depends(require('admin'))):
 
 @app.get('/api/users')
 def list_users(_=Depends(require('admin'))):
-    conn=db_conn(); r=q(conn,'SELECT id,username,role,full_name,is_active,created_at FROM users ORDER BY full_name'); conn.close(); return r
+    conn=db_conn(); r=q(conn,'SELECT id,username,role,full_name,is_active,allowed_pages,created_at FROM users ORDER BY full_name')
+    for u in r:
+        if u.get('allowed_pages'):
+            try: u['allowed_pages']=json.loads(u['allowed_pages'])
+            except Exception: u['allowed_pages']=None
+    conn.close(); return r
 
 @app.post('/api/users')
 def add_user(data:dict,_=Depends(require('admin'))):
     conn=db_conn(); h=hashlib.sha256(data['password'].encode()).hexdigest()
-    uid=run(conn,'INSERT INTO users(username,password_hash,role,full_name)VALUES(?,?,?,?)',(data['username'],h,data['role'],data['full_name'])); conn.close(); return{'id':uid}
+    allowed=data.get('allowed_pages')
+    allowed_json=json.dumps(allowed) if allowed else None
+    uid=run(conn,'INSERT INTO users(username,password_hash,role,full_name,allowed_pages)VALUES(?,?,?,?,?)',(data['username'],h,data['role'],data['full_name'],allowed_json)); conn.close(); return{'id':uid}
 
 @app.put('/api/users/{uid}')
 def update_user(uid:int,data:dict,_=Depends(require('admin'))):
     conn=db_conn()
-    if data.get('password'): h=hashlib.sha256(data['password'].encode()).hexdigest();exe(conn,'UPDATE users SET role=?,full_name=?,password_hash=? WHERE id=?',(data['role'],data['full_name'],h,uid))
-    else: exe(conn,'UPDATE users SET role=?,full_name=? WHERE id=?',(data['role'],data['full_name'],uid))
+    allowed=data.get('allowed_pages')
+    allowed_json=json.dumps(allowed) if allowed else None
+    if data.get('password'): h=hashlib.sha256(data['password'].encode()).hexdigest();exe(conn,'UPDATE users SET role=?,full_name=?,password_hash=?,allowed_pages=? WHERE id=?',(data['role'],data['full_name'],h,allowed_json,uid))
+    else: exe(conn,'UPDATE users SET role=?,full_name=?,allowed_pages=? WHERE id=?',(data['role'],data['full_name'],allowed_json,uid))
     conn.close(); return{'ok':True}
 
 @app.delete('/api/users/{uid}')
