@@ -655,7 +655,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
 </tr></thead><tbody id="emp-tb"></tbody></table></div></div>
   </div>
   <div class="page" id="page-attendance">
-    <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div><div class="col-auto ms-auto"><a class="btn btn-outline-secondary" href="/api/export/csv/attendance" target="_blank" title="Export CSV"><i class="fas fa-file-csv me-1"></i>Export</a></div></div></div>
+    <div class="card pad mb-3"><div class="row g-2 align-items-center"><div class="col-md-3"><label class="form-label">Date</label><input type="date" id="att-dt" class="form-control"></div><div class="col-auto"><button class="btn" style="background:var(--pd);color:#fff;" onclick="loadAtt()"><i class="fas fa-search me-1"></i>Load</button></div><div class="col-auto ms-auto"><button class="btn btn-outline-secondary" onclick="downloadFile('/api/export/csv/attendance','attendance.csv')" title="Export CSV"><i class="fas fa-file-csv me-1"></i>Export</button></div></div></div>
     <div class="row g-3">
       <div class="col-md-7"><div class="card pad"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Present <span id="att-cnt" class="badge bg-secondary">0</span></h6><div class="d-flex gap-2 align-items-center"><input class="form-control form-control-sm" style="width:140px;" placeholder="Filter..." oninput="filtA(this.value)"><span class="chip" style="background:rgba(183,28,28,.1);color:#B71C1C;font-size:11px;">Selected: <span id="att-sel-cnt">0</span></span><button class="btn btn-sm btn-danger" onclick="markAbs()"><i class="fas fa-times me-1"></i>Mark Absent</button></div></div><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th><input type="checkbox" id="att-all" onchange="togAllA(this)"></th>
 <th id="att-th-full_name" onclick="sortAtt('full_name')" style="cursor:pointer;user-select:none;">Name</th>
@@ -665,10 +665,10 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
       <div class="col-md-5"><div class="card pad"><h6>Absent <span class="badge bg-danger" id="abs-cnt">0</span></h6><div style="max-height:400px;overflow-y:auto;"><table class="table table-sm mt mb-0"><thead><tr><th>Name</th><th>Reason</th><th></th></tr></thead><tbody id="abs-list"></tbody></table></div></div></div>
     </div>
   </div>
-  <div class="page" id="page-vacation"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Vacation / Leave</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/vacation" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="vac-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('vacation')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showVacM()"><i class="fas fa-plus me-1"></i>Add Leave</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="vac-all" onchange="togAll('vac-c',this,'vac-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="vac-tb"></tbody></table></div></div></div>
-  <div class="page" id="page-suspensions"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Suspensions</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/suspensions" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="susp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('suspensions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-danger" onclick="showSuspM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="susp-all" onchange="togAll('susp-c',this,'susp-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="susp-tb"></tbody></table></div></div></div>
-  <div class="page" id="page-fasting"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Fasting Records</h6><small style="color:var(--tx2);">No lunch - Iftar Kit + Dinner at accommodation</small></div><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/fasting" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="fast-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('fasting')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-warning" onclick="showFastM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="fast-all" onchange="togAll('fast-c',this,'fast-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fast-tb"></tbody></table></div></div></div>
-  <div class="page" id="page-meal-exceptions"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Meal Exceptions</h6><small style="color:var(--tx2);">Skip specific meals for a date range</small></div><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/meal-exceptions" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="mex-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('meal-exceptions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showMexM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="mex-all" onchange="togAll('mex-c',this,'mex-bd')"></th><th>Name</th><th>Skip Meal</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="mex-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-vacation"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Vacation / Leave</h6><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="downloadFile('/api/export/csv/vacation','vacation.csv')" title="Export CSV"><i class="fas fa-file-csv"></i></button><button id="vac-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('vacation')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showVacM()"><i class="fas fa-plus me-1"></i>Add Leave</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="vac-all" onchange="togAll('vac-c',this,'vac-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="vac-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-suspensions"><div class="d-flex justify-content-between align-items-center mb-2"><h6>Suspensions</h6><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="downloadFile('/api/export/csv/suspensions','suspensions.csv')" title="Export CSV"><i class="fas fa-file-csv"></i></button><button id="susp-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('suspensions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-danger" onclick="showSuspM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="susp-all" onchange="togAll('susp-c',this,'susp-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="susp-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-fasting"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Fasting Records</h6><small style="color:var(--tx2);">No lunch - Iftar Kit + Dinner at accommodation</small></div><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="downloadFile('/api/export/csv/fasting','fasting.csv')" title="Export CSV"><i class="fas fa-file-csv"></i></button><button id="fast-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('fasting')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm btn-warning" onclick="showFastM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="fast-all" onchange="togAll('fast-c',this,'fast-bd')"></th><th>Name</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead><tbody id="fast-tb"></tbody></table></div></div></div>
+  <div class="page" id="page-meal-exceptions"><div class="d-flex justify-content-between align-items-center mb-2"><div><h6 class="mb-0">Meal Exceptions</h6><small style="color:var(--tx2);">Skip specific meals for a date range</small></div><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="downloadFile('/api/export/csv/meal-exceptions','meal-exceptions.csv')" title="Export CSV"><i class="fas fa-file-csv"></i></button><button id="mex-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('meal-exceptions')"><i class="fas fa-trash me-1"></i>Delete</button><button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="showMexM()"><i class="fas fa-plus me-1"></i>Add</button></div></div><div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="mex-all" onchange="togAll('mex-c',this,'mex-bd')"></th><th>Name</th><th>Skip Meal</th><th>From</th><th>To</th><th>Reason</th><th>Actions</th></tr></thead><tbody id="mex-tb"></tbody></table></div></div></div>
 
   <div class="page" id="page-meal-requests">
     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -714,7 +714,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
         <div class="mb-3"><label class="form-label">Reason</label><input id="ovr-r" class="form-control" placeholder="e.g. Temporary transfer..."></div>
         <button class="btn w-100" style="background:var(--pd);color:#fff;" onclick="saveOvr()"><i class="fas fa-save me-1"></i>Save Override</button>
       </div></div>
-      <div class="col-md-7"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Active &amp; Past Overrides</h6><div class="d-flex gap-2"><a class="btn btn-sm btn-outline-secondary" href="/api/export/csv/temp-overrides" target="_blank" title="Export CSV"><i class="fas fa-file-csv"></i></a><button id="ovr-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('temp-overrides')"><i class="fas fa-trash me-1"></i>Delete</button></div></div>
+      <div class="col-md-7"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="mb-0">Active &amp; Past Overrides</h6><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-secondary" onclick="downloadFile('/api/export/csv/temp-overrides','temp-overrides.csv')" title="Export CSV"><i class="fas fa-file-csv"></i></button><button id="ovr-bd" class="btn btn-sm btn-outline-danger" style="display:none;" onclick="bulkD('temp-overrides')"><i class="fas fa-trash me-1"></i>Delete</button></div></div>
         <div class="card"><div class="table-responsive"><table class="table mt mb-0"><thead><tr><th><input type="checkbox" id="ovr-all" onchange="togAll('ovr-c',this,'ovr-bd')"></th><th>Employee</th><th>Override</th><th>From</th><th>To</th><th>Status</th><th></th></tr></thead><tbody id="ovr-tb"></tbody></table></div></div>
         <small style="color:var(--tx2);font-size:11px;"><i class="fas fa-info-circle me-1"></i>Automatically reverts after end date.</small>
       </div>
@@ -743,7 +743,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
         <h6 class="mb-0"><i class="fas fa-history me-2" style="color:var(--p);"></i>Audit Log <span style="font-size:11px;color:var(--tx2);font-weight:400;">— last 200 actions</span></h6>
         <div class="d-flex gap-2">
           <button class="btn btn-sm btn-outline-secondary" onclick="loadAuditLog()"><i class="fas fa-sync-alt"></i></button>
-          <a class="btn btn-sm" style="background:var(--pd);color:#fff;" href="/api/export/csv/audit-log" target="_blank"><i class="fas fa-file-csv me-1"></i>Export CSV</a>
+          <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="downloadFile('/api/export/csv/audit-log','audit-log.csv')"><i class="fas fa-file-csv me-1"></i>Export CSV</button>
         </div>
       </div>
       <div style="overflow-y:auto;max-height:640px;">
@@ -2059,7 +2059,7 @@ async function loadBackupHistory(){
           <div style="font-size:12px;font-weight:600;color:var(--tx);">${dstr} ${badge}</div>
           <div style="font-size:10.5px;color:var(--tx2);">${sizeKb} KB</div>
         </div>
-        <a class="abt text-primary border-primary" href="/api/backup/download/${b.id}" title="Download"><i class="fas fa-download"></i></a>
+        <span class="abt text-primary border-primary" onclick="downloadBackupEntry(${b.id},'${(b.filename||'backup.xlsx').replace(/'/g,"\\'")}')" title="Download"><i class="fas fa-download"></i></span>
         <span class="abt text-danger border-danger" onclick="deleteBackupEntry(${b.id})" title="Delete"><i class="fas fa-trash"></i></span>
       </div>`;
     }).join('');
@@ -2092,6 +2092,31 @@ async function downloadBackup(){
     URL.revokeObjectURL(url);
   }catch(e){alert('Backup failed: '+e.message);}
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-download me-2"></i>Download Full Backup';}
+}
+async function downloadFile(url,fallbackName){
+  try{
+    const res=await fetch(url,{headers:{'Authorization':`Bearer ${TK}`}});
+    if(!res.ok)throw new Error('Download failed ('+res.status+')');
+    const cd=res.headers.get('Content-Disposition')||'';
+    const m=cd.match(/filename="?([^";]+)"?/);
+    const filename=m?m[1]:(fallbackName||'download');
+    const blob=await res.blob();
+    const objUrl=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=objUrl;a.download=filename;a.click();
+    URL.revokeObjectURL(objUrl);
+  }catch(e){alert('Download failed: '+e.message);}
+}
+async function downloadBackupEntry(id,filename){
+  try{
+    const res=await fetch('/api/backup/download/'+id,{headers:{'Authorization':`Bearer ${TK}`}});
+    if(!res.ok)throw new Error('Download failed ('+res.status+')');
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename||('GH_Backup_'+id+'.xlsx');a.click();
+    URL.revokeObjectURL(url);
+  }catch(e){alert('Download failed: '+e.message);}
 }
 async function restoreBackup(){
   const fileInput=document.getElementById('bk-file');
