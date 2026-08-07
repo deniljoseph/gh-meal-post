@@ -573,7 +573,6 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <div class="page" id="page-supplier-report">
     <div class="card pad mb-3"><div class="row g-2 align-items-end">
       <div class="col-md-3"><label class="form-label">Report Date</label><input type="date" id="rpt-dt" class="form-control"></div>
-      <div class="col-auto d-flex align-items-end"><div class="form-check ms-2 mb-1"><input class="form-check-input" type="checkbox" id="rpt-sun"><label class="form-check-label small">Show Next Sunday Schedule</label></div></div>
       <div class="col-auto d-flex gap-2 align-items-end">
         <button class="btn" style="background:var(--pd);color:#fff;" onclick="genRpt()"><i class="fas fa-sync me-1"></i>Generate & Save</button>
         <button class="btn btn-success" id="rpt-dl" onclick="dlImg()" disabled><i class="fas fa-image me-1"></i>Download PNG</button>
@@ -590,6 +589,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
         <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-d2f" checked onchange="togSec('rpt-s-d2f',this.checked)"><label class="form-check-label small ms-1">Dinner to Factory</label></div>
         <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-l2s" checked onchange="togSec('rpt-s-l2s',this.checked)"><label class="form-check-label small ms-1">Lunch to Site</label></div>
         <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-fasting" checked onchange="togSec('rpt-s-fasting',this.checked)"><label class="form-check-label small ms-1">Fasting — Suhoor &amp; Iftar</label></div>
+        <div class="form-check mb-0"><input type="checkbox" class="form-check-input" id="chk-sunday" onchange="togSec('rpt-s-sunday',this.checked)"><label class="form-check-label small ms-1"><i class="fas fa-sun me-1" style="color:#E65100;"></i>Next Sunday Schedule</label></div>
         <div class="ms-auto d-flex gap-2 flex-wrap">
           <button class="btn btn-sm btn-outline-secondary" onclick="togAllSecs(false)">Clear All</button>
           <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="togAllSecs(true)">Show All</button>
@@ -1323,13 +1323,13 @@ function bFastingSec(faSummary,accs,fps2){
 }
 
 function togSec(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'':'none';}
-function togAllSecs(show){['gt','l2a','d2f','l2s','fasting'].forEach(k=>{const c=document.getElementById('chk-'+k);if(c){c.checked=show;togSec('rpt-s-'+k,show);}});}
+function togAllSecs(show){['gt','l2a','d2f','l2s','fasting','sunday'].forEach(k=>{const c=document.getElementById('chk-'+k);if(c){c.checked=show;togSec('rpt-s-'+k,show);}});}
 function bSec(title,tbl,accs,fps2,bg,secId){
   const aw=accs.filter(a=>fps2.some(f=>(tbl[a]?.[f]||0)>0));if(!aw.length)return'';
   const rs=a=>fps2.reduce((s,f)=>s+(tbl[a]?.[f]||0),0);
   const fs=f=>aw.reduce((s,a)=>s+(tbl[a]?.[f]||0),0);
   const g=aw.reduce((s,a)=>s+rs(a),0);
-  let h=`<tr><th style="text-align:left;background:#555;color:#fff;min-width:110px;">Food</th>`;
+  let h=`<tr><th style="text-align:left;background:#555;color:#fff;white-space:nowrap;padding-left:8px;padding-right:8px;">Food</th>`;
   aw.forEach(a=>h+=`<th class="ah">${a}</th>`);h+=`<th class="gh">Total</th></tr>`;
   let b='';fps2.forEach(f=>{const t=fs(f);if(!t)return;b+=`<tr><td>${f}</td>${aw.map(a=>`<td>${tbl[a]?.[f]||0}</td>`).join('')}<td>${t}</td></tr>`;});
   b+=`<tr><td>Total</td>${aw.map(a=>`<td>${rs(a)}</td>`).join('')}<td>${g}</td></tr>`;
@@ -1349,7 +1349,8 @@ function rendRpt(data,tid){
   let sunSec='';
   if(data.sunday_schedule){
     const ss=data.sunday_schedule;const sds=new Date(data.sunday_date+'T12:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long'});
-    sunSec=`<div style="margin-top:16px;border-top:3px solid #E65100;padding-top:12px;"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px;">Sunday Schedule Preview -- ${sds}</div>${bAccGT(ss.acc_summary,ss.accommodations,ss.food_prefs,ss.grand_total,true,countIftar)}${ss.fasting_summary?bFastingSec(ss.fasting_summary,ss.accommodations,ss.food_prefs):''}</div>`;
+    const sunChecked=document.getElementById('chk-sunday')?.checked;
+    sunSec=`<div id="rpt-s-sunday" class="rpt-sec" style="margin-top:16px;border-top:3px solid #E65100;padding-top:12px;${sunChecked?'':'display:none;'}"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px;">Sunday Schedule Preview -- ${sds}</div>${bAccGT(ss.acc_summary,ss.accommodations,ss.food_prefs,ss.grand_total,true,countIftar)}${ss.fasting_summary?bFastingSec(ss.fasting_summary,ss.accommodations,ss.food_prefs):''}</div>`;
   }
   const el=document.getElementById(tid);if(!el)return;el.style.display='block';
   // Show the section toggle panel (supplier report page only)
@@ -1363,22 +1364,21 @@ function rendRpt(data,tid){
   ${sunSec}
   <div class="rpt-wm">Created by Denil Joseph | GH - Meal Management System</div>`;
 }
-async function genRpt(){const d=v('rpt-dt')||tod();const sun=document.getElementById('rpt-sun').checked;const data=await API('/supplier-report?target_date='+d+'&show_sunday='+sun+'&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;document.getElementById('rpt-wa').disabled=false;}
+async function genRpt(){const d=v('rpt-dt')||tod();const data=await API('/supplier-report?target_date='+d+'&show_sunday=true&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;document.getElementById('rpt-wa').disabled=false;}
 async function captureRptCanvas(scale){
   scale=scale||2;
   const el=document.getElementById('rpt-preview');
   if(!el||el.style.display==='none'){throw new Error('Generate report first');}
-  // ── Fixed 1400px width regardless of screen size ──
-  const TARGET_W=1400;
-  const origW=el.style.width;const origMW=el.style.minWidth;const origOverflow=document.body.style.overflow;
+  // ── Capture at the element's natural content width (CSS min-width:900px, grows
+  //    with more accommodation columns) instead of forcing a fixed wide canvas.
+  //    This avoids wasted blank space around narrower tables, so the same
+  //    WhatsApp compression has more useful pixels-per-character to work with. ──
+  const origOverflow=document.body.style.overflow;
   try{
-    el.style.width=TARGET_W+'px';el.style.minWidth=TARGET_W+'px';
     document.body.style.overflow='visible';
     await new Promise(r=>setTimeout(r,60)); // let layout settle
     const c=await html2canvas(el,{
-      scale, // 2x for PNG download (2800px), 3x for WhatsApp (4200px) to survive its compression
-      width:TARGET_W,
-      windowWidth:TARGET_W+80,
+      scale, // 2x for PNG download, 4x for WhatsApp — higher headroom now that canvas isn't padded with blank space
       backgroundColor:'#ffffff',
       useCORS:true,
       logging:false,
@@ -1387,7 +1387,6 @@ async function captureRptCanvas(scale){
     });
     return c;
   }finally{
-    el.style.width=origW;el.style.minWidth=origMW;
     document.body.style.overflow=origOverflow;
   }
 }
@@ -1406,9 +1405,9 @@ async function sendWhatsApp(){
   const btn=document.getElementById('rpt-wa');
   btn.disabled=true;const origHTML=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';
   try{
-    // Higher resolution (3x → ~4200px wide) so WhatsApp's own compression
+    // Higher resolution (4x, natural content width) so WhatsApp's own compression
     // still leaves the report sharp and legible after it processes the image.
-    const c=await captureRptCanvas(3);
+    const c=await captureRptCanvas(4);
     const blob=await new Promise(res=>c.toBlob(res,'image/png',1.0));
     const fname='GH_MealReport_'+v('rpt-dt')+'.png';
     const file=new File([blob],fname,{type:'image/png'});
