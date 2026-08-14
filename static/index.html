@@ -2176,7 +2176,7 @@ async function gSearchRun(q){
     if(!r||!r.length){box.innerHTML='<div style="padding:12px;text-align:center;color:var(--tx2);font-size:12px;">No employees found</div>';return;}
     box.innerHTML=r.slice(0,10).map(e=>`<div onclick="gSearchOpen(${e.id})" style="padding:9px 14px;cursor:pointer;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--bd);transition:background 150ms;" onmouseover="this.style.background='var(--inp,rgba(0,0,0,.04))'" onmouseout="this.style.background=''">
       <div style="width:30px;height:30px;border-radius:50%;background:var(--p);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;">${e.full_name.charAt(0)}</div>
-      <div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.full_name}</div><div style="font-size:10.5px;color:var(--tx2);">${e.emp_id} · ${e.accommodation_name||'--'}</div></div>
+      <div style="flex:1;min-width:0;"><div style="font-size:12.5px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.full_name}</div><div style="font-size:10.5px;color:var(--tx2);">${e.emp_id} · ${STL[e.shift_type]||e.shift_type||'--'} · ${e.accommodation_name||'--'}</div></div>
       <span class="bs ${e.status==='active'?'bs-a':'bs-s'}" style="font-size:9px;">${e.status}</span>
     </div>`).join('');
   }catch(e){box.innerHTML='<div style="padding:12px;color:#B71C1C;font-size:12px;">Search failed</div>';}
