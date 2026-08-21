@@ -269,7 +269,7 @@ def get_temp_overrides(conn,d):
 def build_report(conn,d,sunday_mode=False):
     rules=get_rules(conn); susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
     temp_ovr=get_temp_overrides(conn,d)
-    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref,l.name acc FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id LEFT JOIN locations l ON e.accommodation_id=l.id WHERE e.status=?',('active',))
+    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref,l.name acc FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id LEFT JOIN locations l ON e.accommodation_id=l.id')
     accs_raw=q(conn,'SELECT name FROM locations WHERE loc_type=? AND is_active=1 ORDER BY name',('accommodation',))
     accs=[a['name'] for a in accs_raw]; fps=['Arabic','North Indian','North Indian Veg','South Indian','South Indian Veg']
     def mk(): return{a:{f:0 for f in fps} for a in accs}
@@ -388,6 +388,7 @@ app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'],allow_
 async def _start_background_tasks():
     init_db()
     asyncio.create_task(backup_scheduler_loop())
+    asyncio.create_task(suspension_sync_loop())
 
 @app.get('/api/setup/status')
 def setup_status():
@@ -513,7 +514,7 @@ def dashboard_detail(stat_type:str,_=Depends(get_user)):
 
 def compute_food_count(d:str):
     conn=db_conn();rules=get_rules(conn);susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
-    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.status=?',('active',))
+    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id')
     temp_ovr=get_temp_overrides(conn,d)
     is_sun=date.fromisoformat(d).weekday()==6 or is_holiday(conn,d);conn.close()
     bk={};ln={};dn={};iftar={};bkt=lnt=dnt=iftt=0
@@ -797,8 +798,10 @@ def add_susp(data:SuspIn,user=Depends(require('admin','hr'))):
     try:
         uid=q1(conn,'SELECT id FROM users WHERE username=?',(user['sub'],))
         sid=run(conn,'INSERT INTO suspensions(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(data.employee_id,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
-        exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(data.employee_id,))
-        log_audit(conn,user['sub'],'suspend','employee',data.employee_id,data.reason)
+        today=date.today().isoformat()
+        if data.start_date<=today:
+            exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(data.employee_id,))
+        log_audit(conn,user['sub'],'suspend','employee',data.employee_id,data.reason+(' (starts '+data.start_date+')' if data.start_date>today else ''))
         return{'id':sid}
     except Exception as e:
         raise HTTPException(500,f'Suspension failed: {e}')
@@ -810,6 +813,7 @@ def update_susp(sid:int,data:SuspIn,_=Depends(require('admin','hr'))):
     conn=db_conn()
     try:
         exe(conn,'UPDATE suspensions SET employee_id=?,start_date=?,end_date=?,reason=? WHERE id=?',(data.employee_id,data.start_date,data.end_date,data.reason,sid))
+        sync_suspension_statuses(conn)
         return{'ok':True}
     except Exception as e:
         raise HTTPException(500,f'Update failed: {e}')
@@ -1135,8 +1139,8 @@ def bulk_add_susp(data:BulkSuspIn,user=Depends(require('admin','hr'))):
         n=0
         for eid in data.employee_ids:
             run(conn,'INSERT INTO suspensions(employee_id,start_date,end_date,reason,is_active,created_by)VALUES(?,?,?,?,1,?)',(eid,data.start_date,data.end_date,data.reason,uid['id'] if uid else None))
-            exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(eid,))
             n+=1
+        sync_suspension_statuses(conn)
         log_audit(conn,user['sub'],'bulk_suspend','employee',None,f'{n} employee(s)')
         return{'created':n}
     except Exception as e:
@@ -1329,6 +1333,24 @@ def run_scheduled_backup():
         print(f'[scheduled backup] FAILED: {ex}')
     finally:
         conn.close()
+
+async def suspension_sync_loop():
+    """Runs sync_suspension_statuses() shortly after startup and then every hour.
+    This is what makes future-dated suspensions actually kick in on their start date,
+    and expired ones revert to active, without anyone needing to click 'Expire Suspensions'."""
+    await asyncio.sleep(20)
+    while True:
+        try:
+            conn=db_conn()
+            try:
+                r=sync_suspension_statuses(conn)
+                if r['newly_activated'] or r['reverted_to_active'] or r['expired_suspensions']:
+                    print(f'[suspension sync] activated={r["newly_activated"]} reverted={r["reverted_to_active"]} expired={r["expired_suspensions"]}')
+            finally:
+                conn.close()
+        except Exception as ex:
+            print(f'[suspension sync] failed: {ex}')
+        await asyncio.sleep(3600)
 
 async def backup_scheduler_loop():
     """Runs once per day at ~02:00 server time. Also does an initial catch-up run 60s after startup
@@ -1618,17 +1640,42 @@ def lk_settings(_=Depends(require('admin'))):
 def upd_lk(data:dict,_=Depends(require('admin'))):
     conn=db_conn();upsert_setting(conn,'lookup_enabled',data.get('lookup_enabled','1'));conn.close();return{'ok':True}
 
-@app.post('/api/maintenance/expire')
-def expire_all(_=Depends(require('admin'))):
-    conn=db_conn();today=date.today().isoformat()
+def sync_suspension_statuses(conn):
+    """Keeps employees.status in lockstep with the suspensions table based on today's date.
+    - Suspensions that have ended get deactivated, employee reverts to active (if no other active suspension covers today).
+    - Suspensions whose start_date has arrived get applied now (employee flips to suspended).
+    - Future-dated suspensions (start_date > today) are left alone — the employee stays active until that date arrives.
+    Returns a dict summary of what changed."""
+    today=date.today().isoformat()
     expired=q(conn,'SELECT id,employee_id FROM suspensions WHERE is_active=1 AND end_date IS NOT NULL AND end_date < ?',(today,))
     for s in expired:
         exe(conn,'UPDATE suspensions SET is_active=0 WHERE id=?',(s['id'],))
-        if q1(conn,'SELECT COUNT(*) c FROM suspensions WHERE employee_id=? AND is_active=1',(s['employee_id'],))['c']==0:
-            exe(conn,"UPDATE employees SET status='active' WHERE id=? AND status='suspended'",(s['employee_id'],))
-    orphaned=q(conn,"SELECT id FROM employees WHERE status='suspended' AND id NOT IN (SELECT employee_id FROM suspensions WHERE is_active=1)")
-    for o in orphaned: exe(conn,"UPDATE employees SET status='active' WHERE id=?",(o['id'],))
-    conn.close();return{'expired_suspensions':len(expired),'orphaned_fixed':len(orphaned)}
+    # Employees who should be suspended right now (an active suspension whose window includes today)
+    should_be_suspended=set(r['employee_id'] for r in q(conn,'SELECT DISTINCT employee_id FROM suspensions WHERE is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(today,today)))
+    activated=0
+    if should_be_suspended:
+        placeholders=','.join(['?']*len(should_be_suspended))
+        activated_rows=q(conn,f"SELECT id FROM employees WHERE id IN ({placeholders}) AND status!='suspended'",tuple(should_be_suspended))
+        for r in activated_rows:
+            exe(conn,"UPDATE employees SET status='suspended' WHERE id=?",(r['id'],))
+        activated=len(activated_rows)
+    # Employees currently marked suspended but shouldn't be (expired, future-only, or orphaned)
+    currently_suspended=q(conn,"SELECT id FROM employees WHERE status='suspended'")
+    reverted=0
+    for r in currently_suspended:
+        if r['id'] not in should_be_suspended:
+            exe(conn,"UPDATE employees SET status='active' WHERE id=?",(r['id'],))
+            reverted+=1
+    return{'expired_suspensions':len(expired),'newly_activated':activated,'reverted_to_active':reverted}
+
+@app.post('/api/maintenance/expire')
+def expire_all(_=Depends(require('admin'))):
+    conn=db_conn()
+    try:
+        r=sync_suspension_statuses(conn)
+        return{'expired_suspensions':r['expired_suspensions'],'orphaned_fixed':r['reverted_to_active'],'newly_activated':r['newly_activated']}
+    finally:
+        conn.close()
 
 @app.get('/api/health')
 def health():
