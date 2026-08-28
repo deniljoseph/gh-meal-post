@@ -282,13 +282,17 @@ def build_report(conn,d,sunday_mode=False):
         tbl[acc][fp]=tbl[acc].get(fp,0)+1
     for e in emps:
         if e['id'] in susp or e['id'] in vac:continue
-        if sunday_mode and e['no_food_sunday']:continue
+        ovr=temp_ovr.get(e['id'])
+        # An active temporary override takes priority over the Sunday/Holiday
+        # "all meals to accommodation" rule for this employee.
+        ovr_active=bool(ovr and (ovr.get('override_shift_type') or ovr.get('override_accommodation_id')))
+        emp_sunday_mode=sunday_mode and not ovr_active
+        if emp_sunday_mode and e['no_food_sunday']:continue
         acc=e['acc'] or 'Unknown';fp=e['food_pref'] or 'Unknown'
         if fp not in fps:continue
         is_ab=e['id'] in absent;is_fa=e['id'] in fasting
         eff_shift=e['shift_type'];eff_acc=acc
-        if e['id'] in temp_ovr:
-            ovr=temp_ovr[e['id']]
+        if ovr:
             if ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
             if ovr.get('override_accommodation_id') and ovr.get('new_acc_name'):eff_acc=ovr['new_acc_name']
         m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
@@ -305,7 +309,7 @@ def build_report(conn,d,sunday_mode=False):
                 gt_if[fp]=gt_if.get(fp,0)+1; add(i2a,eff_acc,fp)
                 fa_sum[eff_acc][fp]['iftar']+=1
         elif m['get_ln'] and e['id'] not in ln_ex:
-            if sunday_mode:
+            if emp_sunday_mode:
                 add(l2a,eff_acc,fp)
                 if rules.get('count_ln_acc',True):
                     gt_ln[fp]=gt_ln.get(fp,0)+1
@@ -317,7 +321,7 @@ def build_report(conn,d,sunday_mode=False):
                     gt_ln[fp]=gt_ln.get(fp,0)+1
                     if in_ac: acc_sum[eff_acc][fp]['ln']+=1
         if m['get_dn'] and e['id'] not in dn_ex:
-            if sunday_mode:
+            if emp_sunday_mode:
                 if rules.get('count_dn_acc',True):
                     gt_dn[fp]=gt_dn.get(fp,0)+1
                     if is_fa: fa_sum[eff_acc][fp]['dn']+=1
@@ -521,20 +525,25 @@ def compute_food_count(d:str):
     excl_susp=len(susp);excl_ab=len(absent);excl_fa=len(fasting);excl_vac=len(vac)
     for e in emps:
         if e['id'] in susp or e['id'] in vac:continue
-        if is_sun and e['no_food_sunday']:continue
+        ovr=temp_ovr.get(e['id'])
+        # An active temporary override takes priority over the Sunday/Holiday
+        # "all meals to accommodation" rule for this employee.
+        ovr_active=bool(ovr and (ovr.get('override_shift_type') or ovr.get('override_accommodation_id')))
+        emp_is_sun=is_sun and not ovr_active
+        if emp_is_sun and e['no_food_sunday']:continue
         fp=e['food_pref'] or 'Unknown';is_ab=e['id'] in absent;is_fa=e['id'] in fasting
         eff_shift=e['shift_type']
-        if e['id'] in temp_ovr and temp_ovr[e['id']].get('override_shift_type'):eff_shift=temp_ovr[e['id']]['override_shift_type']
+        if ovr and ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
         m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
         if m['get_bk'] and e['id'] not in bk_ex and rules.get('count_bk',True): bk[fp]=bk.get(fp,0)+1;bkt+=1
         if is_fa and rules.get('count_iftar',True): iftar[fp]=iftar.get(fp,0)+1;iftt+=1
         elif m['get_ln'] and e['id'] not in ln_ex:
-            if is_sun:
+            if emp_is_sun:
                 if rules.get('count_ln_acc',True): ln[fp]=ln.get(fp,0)+1;lnt+=1
             elif (m['ln_to_acc'] and rules.get('count_ln_acc',True)) or (m['ln_to_factory'] and rules.get('count_ln_factory',True)) or (m['ln_to_site'] and rules.get('count_ln_site',True)):
                 ln[fp]=ln.get(fp,0)+1;lnt+=1
         if m['get_dn'] and e['id'] not in dn_ex:
-            if is_sun:
+            if emp_is_sun:
                 if rules.get('count_dn_acc',True): dn[fp]=dn.get(fp,0)+1;dnt+=1
             elif (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
                 dn[fp]=dn.get(fp,0)+1;dnt+=1
