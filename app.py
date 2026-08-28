@@ -283,11 +283,10 @@ def build_report(conn,d,sunday_mode=False):
     for e in emps:
         if e['id'] in susp or e['id'] in vac:continue
         ovr=temp_ovr.get(e['id'])
-        # An active temporary override takes priority over the Sunday/Holiday
-        # "all meals to accommodation" rule for this employee.
+        # On a Sunday/Holiday, only employees with an active temporary override
+        # for that date are included at all. Everyone else is skipped entirely.
         ovr_active=bool(ovr and (ovr.get('override_shift_type') or ovr.get('override_accommodation_id')))
-        emp_sunday_mode=sunday_mode and not ovr_active
-        if emp_sunday_mode and e['no_food_sunday']:continue
+        if sunday_mode and not ovr_active:continue
         acc=e['acc'] or 'Unknown';fp=e['food_pref'] or 'Unknown'
         if fp not in fps:continue
         is_ab=e['id'] in absent;is_fa=e['id'] in fasting
@@ -309,29 +308,17 @@ def build_report(conn,d,sunday_mode=False):
                 gt_if[fp]=gt_if.get(fp,0)+1; add(i2a,eff_acc,fp)
                 fa_sum[eff_acc][fp]['iftar']+=1
         elif m['get_ln'] and e['id'] not in ln_ex:
-            if emp_sunday_mode:
-                add(l2a,eff_acc,fp)
-                if rules.get('count_ln_acc',True):
-                    gt_ln[fp]=gt_ln.get(fp,0)+1
-                    if in_ac: acc_sum[eff_acc][fp]['ln']+=1
-            else:
-                if m['ln_to_acc']:add(l2a,eff_acc,fp)
-                elif m['ln_to_site']:add(l2s,eff_acc,fp)
-                if (m['ln_to_acc'] and rules.get('count_ln_acc',True)) or (m['ln_to_factory'] and rules.get('count_ln_factory',True)) or (m['ln_to_site'] and rules.get('count_ln_site',True)):
-                    gt_ln[fp]=gt_ln.get(fp,0)+1
-                    if in_ac: acc_sum[eff_acc][fp]['ln']+=1
+            if m['ln_to_acc']:add(l2a,eff_acc,fp)
+            elif m['ln_to_site']:add(l2s,eff_acc,fp)
+            if (m['ln_to_acc'] and rules.get('count_ln_acc',True)) or (m['ln_to_factory'] and rules.get('count_ln_factory',True)) or (m['ln_to_site'] and rules.get('count_ln_site',True)):
+                gt_ln[fp]=gt_ln.get(fp,0)+1
+                if in_ac: acc_sum[eff_acc][fp]['ln']+=1
         if m['get_dn'] and e['id'] not in dn_ex:
-            if emp_sunday_mode:
-                if rules.get('count_dn_acc',True):
-                    gt_dn[fp]=gt_dn.get(fp,0)+1
-                    if is_fa: fa_sum[eff_acc][fp]['dn']+=1
-                    elif in_ac: acc_sum[eff_acc][fp]['dn']+=1
-            else:
-                if m['dn_to_factory']:add(d2f,eff_acc,fp)
-                if (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
-                    gt_dn[fp]=gt_dn.get(fp,0)+1
-                    if is_fa: fa_sum[eff_acc][fp]['dn']+=1
-                    elif in_ac: acc_sum[eff_acc][fp]['dn']+=1
+            if m['dn_to_factory']:add(d2f,eff_acc,fp)
+            if (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
+                gt_dn[fp]=gt_dn.get(fp,0)+1
+                if is_fa: fa_sum[eff_acc][fp]['dn']+=1
+                elif in_ac: acc_sum[eff_acc][fp]['dn']+=1
     return{'lunch_to_accommodation':l2a,'dinner_to_factory':d2f,'lunch_to_site':l2s,'iftar_to_accommodation':i2a,'accommodations':accs,'food_prefs':fps,'acc_summary':acc_sum,'fasting_summary':fa_sum,'grand_total':{'breakfast':gt_bk,'lunch':gt_ln,'dinner':gt_dn,'iftar_kit':gt_if},'is_sunday_mode':sunday_mode}
 
 # ── AUTH ───────────────────────────────────────────────────────────────────────
@@ -526,11 +513,10 @@ def compute_food_count(d:str):
     for e in emps:
         if e['id'] in susp or e['id'] in vac:continue
         ovr=temp_ovr.get(e['id'])
-        # An active temporary override takes priority over the Sunday/Holiday
-        # "all meals to accommodation" rule for this employee.
+        # On a Sunday/Holiday, only employees with an active temporary override
+        # for that date are included at all. Everyone else is skipped entirely.
         ovr_active=bool(ovr and (ovr.get('override_shift_type') or ovr.get('override_accommodation_id')))
-        emp_is_sun=is_sun and not ovr_active
-        if emp_is_sun and e['no_food_sunday']:continue
+        if is_sun and not ovr_active:continue
         fp=e['food_pref'] or 'Unknown';is_ab=e['id'] in absent;is_fa=e['id'] in fasting
         eff_shift=e['shift_type']
         if ovr and ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
@@ -538,14 +524,10 @@ def compute_food_count(d:str):
         if m['get_bk'] and e['id'] not in bk_ex and rules.get('count_bk',True): bk[fp]=bk.get(fp,0)+1;bkt+=1
         if is_fa and rules.get('count_iftar',True): iftar[fp]=iftar.get(fp,0)+1;iftt+=1
         elif m['get_ln'] and e['id'] not in ln_ex:
-            if emp_is_sun:
-                if rules.get('count_ln_acc',True): ln[fp]=ln.get(fp,0)+1;lnt+=1
-            elif (m['ln_to_acc'] and rules.get('count_ln_acc',True)) or (m['ln_to_factory'] and rules.get('count_ln_factory',True)) or (m['ln_to_site'] and rules.get('count_ln_site',True)):
+            if (m['ln_to_acc'] and rules.get('count_ln_acc',True)) or (m['ln_to_factory'] and rules.get('count_ln_factory',True)) or (m['ln_to_site'] and rules.get('count_ln_site',True)):
                 ln[fp]=ln.get(fp,0)+1;lnt+=1
         if m['get_dn'] and e['id'] not in dn_ex:
-            if emp_is_sun:
-                if rules.get('count_dn_acc',True): dn[fp]=dn.get(fp,0)+1;dnt+=1
-            elif (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
+            if (not m['dn_to_factory'] and rules.get('count_dn_acc',True)) or (m['dn_to_factory'] and rules.get('count_dn_factory',True)):
                 dn[fp]=dn.get(fp,0)+1;dnt+=1
     bk['TOTAL']=bkt;ln['TOTAL']=lnt;dn['TOTAL']=dnt;iftar['TOTAL']=iftt
     return{'date':d,'breakfast':bk,'lunch':ln,'dinner':dn,'iftar_kit':iftar,'excluded_suspended':excl_susp,'excluded_absent':excl_ab,'excluded_fasting':excl_fa,'excluded_vacation':excl_vac}
