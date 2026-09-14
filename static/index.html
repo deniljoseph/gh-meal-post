@@ -651,7 +651,7 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
   <th onclick="sortEmp('shift_type')" style="cursor:pointer;user-select:none;">Shift <span id="srt-shift_type"></span></th>
   <th onclick="sortEmp('accommodation_name')" style="cursor:pointer;user-select:none;">Accommodation <span id="srt-accommodation_name"></span></th>
   <th onclick="sortEmp('food_pref_name')" style="cursor:pointer;user-select:none;">Food Pref <span id="srt-food_pref_name"></span></th>
-  <th>Sun</th><th>Actions</th>
+  <th>Sun</th><th>Status</th><th>Actions</th>
 </tr></thead><tbody id="emp-tb"></tbody></table></div></div>
   </div>
   <div class="page" id="page-attendance">
@@ -1448,7 +1448,7 @@ function sortEmp(col){
 function renderEmps(){
   let data=[..._empData];
   if(_empSort.col){data.sort((a,b)=>{const av=(a[_empSort.col]||'').toString().toLowerCase();const bv=(b[_empSort.col]||'').toString().toLowerCase();return av.localeCompare(bv)*_empSort.dir;});}
-  document.getElementById('emp-tb').innerHTML=data.map(e=>`<tr><td><input type="checkbox" class="emp-c" value="${e.id}" onchange="updBD('emp-c','emp-bd')"></td><td><code style="font-size:11px;">${e.emp_id}</code></td><td><strong>${e.full_name}</strong>${e.department?'<br><small style="color:var(--tx2);">'+e.department+'</small>':''}</td><td><span class="chip chp" style="font-size:11px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td><td>${e.food_pref_name||'--'}</td><td>${e.no_food_sunday?'<span class="bs bs-f" style="font-size:10px;">No Sun</span>':'--'}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editEmp(${e.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delEmp(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="8" class="text-center py-4" style="color:var(--tx2);">No employees found</td></tr>';
+  document.getElementById('emp-tb').innerHTML=data.map(e=>`<tr><td><input type="checkbox" class="emp-c" value="${e.id}" onchange="updBD('emp-c','emp-bd')"></td><td><code style="font-size:11px;">${e.emp_id}</code></td><td><strong>${e.full_name}</strong>${e.department?'<br><small style="color:var(--tx2);">'+e.department+'</small>':''}</td><td><span class="chip chp" style="font-size:11px;">${STL[e.shift_type]||e.shift_type}</span></td><td>${e.accommodation_name||'--'}</td><td>${e.food_pref_name||'--'}</td><td>${e.no_food_sunday?'<span class="bs bs-f" style="font-size:10px;">No Sun</span>':'--'}</td><td>${bss(e.status||'active')}</td><td class="d-flex gap-1"><span class="abt text-primary border-primary" onclick="editEmp(${e.id})"><i class="fas fa-edit"></i></span><span class="abt text-danger border-danger" onclick="delEmp(${e.id},'${e.full_name.replace(/'/g,"\\'")}')"><i class="fas fa-trash"></i></span></td></tr>`).join('')||'<tr><td colspan="9" class="text-center py-4" style="color:var(--tx2);">No employees found</td></tr>';
 }
 async function loadEmps(){
   let url='/employees?_=1';const s=v('emp-srch'),sh=v('f-sh'),fp=v('f-fp');
