@@ -139,7 +139,7 @@ def init_db():
             """CREATE TABLE IF NOT EXISTS users(id SERIAL PRIMARY KEY,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'viewer',full_name TEXT,is_active INTEGER DEFAULT 1,allowed_pages TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS locations(id SERIAL PRIMARY KEY,name TEXT UNIQUE NOT NULL,description TEXT,loc_type TEXT DEFAULT 'accommodation',is_active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS food_preferences(id SERIAL PRIMARY KEY,name TEXT UNIQUE NOT NULL,category TEXT,is_active INTEGER DEFAULT 1)""",
-            """CREATE TABLE IF NOT EXISTS employees(id SERIAL PRIMARY KEY,emp_id TEXT UNIQUE NOT NULL,full_name TEXT NOT NULL,department TEXT,accommodation_id INTEGER REFERENCES locations(id),shift_type TEXT DEFAULT 'normal',food_pref_id INTEGER REFERENCES food_preferences(id),no_food_sunday INTEGER DEFAULT 0,remarks TEXT,status TEXT DEFAULT 'active',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
+            """CREATE TABLE IF NOT EXISTS employees(id SERIAL PRIMARY KEY,emp_id TEXT UNIQUE NOT NULL,full_name TEXT NOT NULL,department TEXT,accommodation_id INTEGER REFERENCES locations(id),shift_type TEXT DEFAULT 'normal',food_pref_id INTEGER REFERENCES food_preferences(id),no_food_sunday INTEGER DEFAULT 0,no_breakfast INTEGER DEFAULT 0,no_lunch INTEGER DEFAULT 0,no_dinner INTEGER DEFAULT 0,remarks TEXT,status TEXT DEFAULT 'active',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS attendance(id SERIAL PRIMARY KEY,employee_id INTEGER REFERENCES employees(id),att_date TEXT NOT NULL,status TEXT DEFAULT 'absent',reason TEXT,marked_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP,UNIQUE(employee_id,att_date))""",
             """CREATE TABLE IF NOT EXISTS suspensions(id SERIAL PRIMARY KEY,employee_id INTEGER REFERENCES employees(id),start_date TEXT NOT NULL,end_date TEXT,reason TEXT,is_active INTEGER DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
             """CREATE TABLE IF NOT EXISTS fasting_records(id SERIAL PRIMARY KEY,employee_id INTEGER REFERENCES employees(id),start_date TEXT NOT NULL,end_date TEXT,reason TEXT,is_active INTEGER DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP)""",
@@ -160,7 +160,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY AUTOINCREMENT,username TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL DEFAULT 'viewer',full_name TEXT,is_active INTEGER DEFAULT 1,allowed_pages TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS locations(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,description TEXT,loc_type TEXT DEFAULT 'accommodation',is_active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS food_preferences(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT UNIQUE NOT NULL,category TEXT,is_active INTEGER DEFAULT 1);
-        CREATE TABLE IF NOT EXISTS employees(id INTEGER PRIMARY KEY AUTOINCREMENT,emp_id TEXT UNIQUE NOT NULL,full_name TEXT NOT NULL,department TEXT,accommodation_id INTEGER REFERENCES locations(id),shift_type TEXT DEFAULT 'normal',food_pref_id INTEGER REFERENCES food_preferences(id),no_food_sunday INTEGER DEFAULT 0,remarks TEXT,status TEXT DEFAULT 'active',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
+        CREATE TABLE IF NOT EXISTS employees(id INTEGER PRIMARY KEY AUTOINCREMENT,emp_id TEXT UNIQUE NOT NULL,full_name TEXT NOT NULL,department TEXT,accommodation_id INTEGER REFERENCES locations(id),shift_type TEXT DEFAULT 'normal',food_pref_id INTEGER REFERENCES food_preferences(id),no_food_sunday INTEGER DEFAULT 0,no_breakfast INTEGER DEFAULT 0,no_lunch INTEGER DEFAULT 0,no_dinner INTEGER DEFAULT 0,remarks TEXT,status TEXT DEFAULT 'active',created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS attendance(id INTEGER PRIMARY KEY AUTOINCREMENT,employee_id INTEGER REFERENCES employees(id),att_date TEXT NOT NULL,status TEXT DEFAULT 'absent',reason TEXT,marked_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP,UNIQUE(employee_id,att_date));
         CREATE TABLE IF NOT EXISTS suspensions(id INTEGER PRIMARY KEY AUTOINCREMENT,employee_id INTEGER REFERENCES employees(id),start_date TEXT NOT NULL,end_date TEXT,reason TEXT,is_active INTEGER DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS fasting_records(id INTEGER PRIMARY KEY AUTOINCREMENT,employee_id INTEGER REFERENCES employees(id),start_date TEXT NOT NULL,end_date TEXT,reason TEXT,is_active INTEGER DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
@@ -175,13 +175,16 @@ def init_db():
         CREATE TABLE IF NOT EXISTS backup_history(id INTEGER PRIMARY KEY AUTOINCREMENT,filename TEXT NOT NULL,data TEXT NOT NULL,size_bytes INTEGER,trigger_type TEXT DEFAULT 'scheduled',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
         CREATE TABLE IF NOT EXISTS meal_change_requests(id INTEGER PRIMARY KEY AUTOINCREMENT,employee_id INTEGER,current_food_pref_id INTEGER,requested_food_pref_id INTEGER,reason TEXT,status TEXT DEFAULT 'pending',requested_at TEXT DEFAULT CURRENT_TIMESTAMP,reviewed_at TEXT,reviewed_by TEXT,review_note TEXT);
         """)
-        for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'','ALTER TABLE users ADD COLUMN allowed_pages TEXT']:
+        for col in ['ALTER TABLE employees ADD COLUMN accommodation_id INTEGER','ALTER TABLE employees ADD COLUMN shift_type TEXT DEFAULT \'normal\'','ALTER TABLE employees ADD COLUMN no_food_sunday INTEGER DEFAULT 0','ALTER TABLE employees ADD COLUMN no_breakfast INTEGER DEFAULT 0','ALTER TABLE employees ADD COLUMN no_lunch INTEGER DEFAULT 0','ALTER TABLE employees ADD COLUMN no_dinner INTEGER DEFAULT 0','ALTER TABLE locations ADD COLUMN loc_type TEXT DEFAULT \'accommodation\'','ALTER TABLE users ADD COLUMN allowed_pages TEXT']:
             try: conn.execute(col); conn.commit()
             except: pass
     if USE_PG:
         try:
             exe(conn,'ALTER TABLE users ADD COLUMN IF NOT EXISTS allowed_pages TEXT',silent=True)
         except Exception: pass
+        for col in ['ALTER TABLE employees ADD COLUMN IF NOT EXISTS no_breakfast INTEGER DEFAULT 0','ALTER TABLE employees ADD COLUMN IF NOT EXISTS no_lunch INTEGER DEFAULT 0','ALTER TABLE employees ADD COLUMN IF NOT EXISTS no_dinner INTEGER DEFAULT 0']:
+            try: exe(conn,col,silent=True)
+            except Exception: pass
 
     h = lambda p: hashlib.sha256(p.encode()).hexdigest()
     if not q1(conn,'SELECT value FROM settings WHERE key=?',('setup_done',)):
@@ -269,7 +272,7 @@ def get_temp_overrides(conn,d):
 def build_report(conn,d,sunday_mode=False):
     rules=get_rules(conn); susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
     temp_ovr=get_temp_overrides(conn,d)
-    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref,l.name acc FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id LEFT JOIN locations l ON e.accommodation_id=l.id')
+    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,e.no_breakfast,e.no_lunch,e.no_dinner,fp.name food_pref,l.name acc FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id LEFT JOIN locations l ON e.accommodation_id=l.id')
     accs_raw=q(conn,'SELECT name FROM locations WHERE loc_type=? AND is_active=1 ORDER BY name',('accommodation',))
     accs=[a['name'] for a in accs_raw]; fps=['Arabic','North Indian','North Indian Veg','South Indian','South Indian Veg']
     def mk(): return{a:{f:0 for f in fps} for a in accs}
@@ -296,6 +299,9 @@ def build_report(conn,d,sunday_mode=False):
             if ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
             if ovr.get('override_accommodation_id') and ovr.get('new_acc_name'):eff_acc=ovr['new_acc_name']
         m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
+        if e['no_breakfast']:m['get_bk']=False
+        if e['no_lunch']:m['get_ln']=False
+        if e['no_dinner']:m['get_dn']=False
         in_ac=eff_acc in acc_sum and fp in acc_sum[eff_acc]
         # Auto-create fa_sum entry for any acc/fp combination
         if eff_acc not in fa_sum: fa_sum[eff_acc]={}
@@ -365,7 +371,9 @@ def require(*roles):
 class EmpIn(BaseModel):
     emp_id:Optional[str]=None;full_name:str;department:Optional[str]=None
     accommodation_id:Optional[int]=None;shift_type:Optional[str]='normal'
-    food_pref_id:Optional[int]=None;no_food_sunday:Optional[int]=0;remarks:Optional[str]=None
+    food_pref_id:Optional[int]=None;no_food_sunday:Optional[int]=0
+    no_breakfast:Optional[int]=0;no_lunch:Optional[int]=0;no_dinner:Optional[int]=0
+    remarks:Optional[str]=None
     force_duplicate:Optional[bool]=False
 class BulkDel(BaseModel): ids:List[int]
 class BulkUpdate(BaseModel):
@@ -518,7 +526,7 @@ def dashboard_detail(stat_type:str,_=Depends(get_user)):
 
 def compute_food_count(d:str):
     conn=db_conn();rules=get_rules(conn);susp,vac,absent,fasting,bk_ex,ln_ex,dn_ex=get_excluded(conn,d)
-    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,fp.name food_pref FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id')
+    emps=q(conn,'SELECT e.id,e.shift_type,e.no_food_sunday,e.no_breakfast,e.no_lunch,e.no_dinner,fp.name food_pref FROM employees e LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id')
     temp_ovr=get_temp_overrides(conn,d)
     is_sun=date.fromisoformat(d).weekday()==6 or is_holiday(conn,d);conn.close()
     bk={};ln={};dn={};iftar={};bkt=lnt=dnt=iftt=0
@@ -535,6 +543,9 @@ def compute_food_count(d:str):
         eff_shift=e['shift_type']
         if ovr and ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
         m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
+        if e['no_breakfast']:m['get_bk']=False
+        if e['no_lunch']:m['get_ln']=False
+        if e['no_dinner']:m['get_dn']=False
         if m['get_bk'] and e['id'] not in bk_ex and rules.get('count_bk',True): bk[fp]=bk.get(fp,0)+1;bkt+=1
         if is_fa and rules.get('count_iftar',True): iftar[fp]=iftar.get(fp,0)+1;iftt+=1
         elif m['get_ln'] and e['id'] not in ln_ex:
@@ -700,7 +711,7 @@ def create_emp(emp:EmpIn,user=Depends(require('admin','hr'))):
             matches=find_similar_employees(conn,emp.full_name,emp.emp_id)
             if matches:
                 raise HTTPException(409,detail={'message':'Possible duplicate employee detected','matches':matches})
-        nid=run(conn,'INSERT INTO employees(emp_id,full_name,department,accommodation_id,shift_type,food_pref_id,no_food_sunday,remarks,status)VALUES(?,?,?,?,?,?,?,?,?)',(eid,emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,'active'))
+        nid=run(conn,'INSERT INTO employees(emp_id,full_name,department,accommodation_id,shift_type,food_pref_id,no_food_sunday,no_breakfast,no_lunch,no_dinner,remarks,status)VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',(eid,emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.no_breakfast,emp.no_lunch,emp.no_dinner,emp.remarks,'active'))
         log_audit(conn,user['sub'],'create','employee',nid,emp.full_name)
         return{'id':nid,'emp_id':eid}
     except HTTPException:
@@ -714,7 +725,7 @@ def create_emp(emp:EmpIn,user=Depends(require('admin','hr'))):
 def update_emp(eid:int,emp:EmpIn,user=Depends(require('admin','hr'))):
     conn=db_conn()
     try:
-        exe(conn,'UPDATE employees SET full_name=?,department=?,accommodation_id=?,shift_type=?,food_pref_id=?,no_food_sunday=?,remarks=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',(emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.remarks,eid))
+        exe(conn,'UPDATE employees SET full_name=?,department=?,accommodation_id=?,shift_type=?,food_pref_id=?,no_food_sunday=?,no_breakfast=?,no_lunch=?,no_dinner=?,remarks=?,updated_at=CURRENT_TIMESTAMP WHERE id=?',(emp.full_name,emp.department,emp.accommodation_id,emp.shift_type,emp.food_pref_id,emp.no_food_sunday,emp.no_breakfast,emp.no_lunch,emp.no_dinner,emp.remarks,eid))
         log_audit(conn,user['sub'],'update','employee',eid,emp.full_name)
         return{'ok':True}
     except Exception as e:
@@ -1504,7 +1515,7 @@ def lookup_emp(eid:int):
     conn=db_conn()
     try:
         today=date.today().isoformat()
-        e=q1(conn,'SELECT e.full_name,e.department,e.shift_type,e.food_pref_id,l.name acc_name,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.id=? AND e.status=?',(eid,'active'))
+        e=q1(conn,'SELECT e.full_name,e.department,e.shift_type,e.food_pref_id,e.no_breakfast,e.no_lunch,e.no_dinner,l.name acc_name,fp.name food_pref FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id WHERE e.id=? AND e.status=?',(eid,'active'))
         if not e: raise HTTPException(404)
         susp=q1(conn,'SELECT id FROM suspensions WHERE employee_id=? AND is_active=1 AND start_date<=? AND (end_date IS NULL OR end_date>=?)',(eid,today,today))
         absent=q1(conn,'SELECT id FROM attendance WHERE employee_id=? AND att_date=? AND status=?',(eid,today,'absent'))
@@ -1518,6 +1529,9 @@ def lookup_emp(eid:int):
             if ovr.get('override_shift_type'):eff_shift=ovr['override_shift_type']
             if ovr.get('new_acc_name'):acc=ovr['new_acc_name']
         m=meal_delivery(eff_shift,rules,is_ab,is_fa,fp)
+        if e['no_breakfast']:m['get_bk']=False
+        if e['no_lunch']:m['get_ln']=False
+        if e['no_dinner']:m['get_dn']=False
         ln_loc=acc if m['ln_to_acc'] else('Site - packed with breakfast at '+acc if m['ln_to_site'] else 'Factory')
         dn_loc='Factory' if m['dn_to_factory'] else acc
         if vac:cs='vacation'
