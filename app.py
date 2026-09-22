@@ -1110,6 +1110,188 @@ def export_emp(_=Depends(get_user)):
     buf=io.BytesIO();wb.save(buf);buf.seek(0)
     return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':'attachment; filename=employees.xlsx'})
 
+SHIFT_LABELS={'shift1':'1st Shift','shift2':'2nd Shift','shift3':'3rd Shift','normal':'Normal','site':'Site'}
+STATUS_FILL={'active':'C8E6C9','suspended':'FFCDD2','on_leave':'FFE0B2','inactive':'E0E0E0'}
+GROUP_DIMENSIONS={
+    'shift':   {'key':'shift_label',   'label':'Shift'},
+    'food':    {'key':'food_preference','label':'Food Preference'},
+    'accommodation':{'key':'accommodation','label':'Accommodation'},
+    'department':{'key':'department',  'label':'Department'},
+    'status':  {'key':'effective_status_label','label':'Status'},
+}
+
+def _sheet_title(name,used):
+    """Excel sheet names: max 31 chars, no []:*?/\\, must be unique."""
+    base=(name or 'Unassigned')
+    for ch in '[]:*?/\\': base=base.replace(ch,'-')
+    base=base[:28] if len(base)>28 else base
+    title=base or 'Unassigned'; n=2
+    while title in used:
+        suffix=f' ({n})'; title=(base[:28-len(suffix)]+suffix); n+=1
+    used.add(title); return title
+
+@app.get('/api/export/workforce-report')
+def export_workforce_report(
+    group_by:str='shift',           # shift | food | accommodation | department | status
+    shift_type:Optional[str]=None,
+    accommodation_id:Optional[int]=None,
+    food_pref_id:Optional[int]=None,
+    department:Optional[str]=None,
+    status:Optional[str]=None,      # active | suspended | on_leave | inactive
+    _=Depends(get_user)):
+    """Multi-sheet workforce report. group_by picks how employees are split across
+    sheets (by shift, food preference, accommodation, department, or status); the
+    other params filter which employees are included first. Every sheet still shows
+    each employee's status (active/suspended/on leave), regardless of grouping.
+    Separate from the plain employee list export."""
+    if group_by not in GROUP_DIMENSIONS: group_by='shift'
+    conn=db_conn()
+    try:
+        today=date.today().isoformat()
+        conds=[]; params=[]
+        if shift_type: conds.append('e.shift_type=?'); params.append(shift_type)
+        if accommodation_id: conds.append('e.accommodation_id=?'); params.append(accommodation_id)
+        if food_pref_id: conds.append('e.food_pref_id=?'); params.append(food_pref_id)
+        if department: conds.append('e.department=?'); params.append(department)
+        where=(' WHERE '+' AND '.join(conds)) if conds else ''
+        emps=q(conn,f"""SELECT e.id,e.emp_id,e.full_name,e.department,e.shift_type,e.status,
+                       l.name accommodation,fp.name food_preference,e.remarks
+                FROM employees e
+                LEFT JOIN locations l ON e.accommodation_id=l.id
+                LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id
+                {where}
+                ORDER BY e.shift_type,e.full_name""",tuple(params))
+        susp=q(conn,"""SELECT s.employee_id,s.start_date,s.end_date,s.reason
+                FROM suspensions s WHERE s.is_active=1
+                AND (s.end_date IS NULL OR s.end_date>=?) ORDER BY s.start_date DESC""",(today,))
+        susp_by_emp={}
+        for s in susp: susp_by_emp.setdefault(s['employee_id'],s)
+        vac=q(conn,"""SELECT v.employee_id,v.start_date,v.end_date,v.reason
+                FROM vacation_records v WHERE v.is_active=1
+                AND v.start_date<=? AND v.end_date>=?""",(today,today))
+        vac_by_emp={v['employee_id']:v for v in vac}
+
+        for e in emps:
+            if e['id'] in vac_by_emp and e['status']=='active':
+                e['effective_status']='on_leave'
+            else:
+                e['effective_status']=e['status'] or 'active'
+            e['effective_status_label']=e['effective_status'].replace('_',' ').title()
+            e['shift_label']=SHIFT_LABELS.get(e['shift_type'],e['shift_type'] or 'Normal')
+
+        if status: emps=[e for e in emps if e['effective_status']==status]
+
+        wb=openpyxl.Workbook(); wb.remove(wb.active)
+        hf=PatternFill('solid',fgColor='003c8f'); hfont=Font(bold=True,color='FFFFFF')
+        titlef=Font(bold=True,size=14)
+
+        def style_header(ws,row,hdrs):
+            for i,h in enumerate(hdrs,1):
+                c=ws.cell(row,i,h); c.fill=hf; c.font=hfont; c.alignment=Alignment(horizontal='center')
+
+        def autosize(ws):
+            # Iterate by column index rather than ws.columns: merged title cells
+            # (e.g. A1:H1) turn the other cells in that row into MergedCell objects,
+            # which have no .column_letter and would crash a ws.columns loop.
+            from openpyxl.utils import get_column_letter
+            for i in range(1,ws.max_column+1):
+                ws.column_dimensions[get_column_letter(i)].width=20
+
+        def status_cell(ws,r,c,status_val):
+            cell=ws.cell(r,c,status_val.replace('_',' ').title())
+            fill=STATUS_FILL.get(status_val)
+            if fill: cell.fill=PatternFill('solid',fgColor=fill)
+            return cell
+
+        gdim=GROUP_DIMENSIONS[group_by]
+        def gval(e): return e.get(gdim['key']) or 'Unassigned'
+        group_order=[]
+        for e in emps:
+            v=gval(e)
+            if v not in group_order: group_order.append(v)
+        group_order.sort()
+
+        # ── Sheet 1: Summary (group dimension x status matrix) ─────────────────
+        ws=wb.create_sheet('Summary')
+        filt_bits=[]
+        if shift_type: filt_bits.append(f'Shift={SHIFT_LABELS.get(shift_type,shift_type)}')
+        if accommodation_id: filt_bits.append('Accommodation filter applied')
+        if food_pref_id: filt_bits.append('Food Pref filter applied')
+        if department: filt_bits.append(f'Dept={department}')
+        if status: filt_bits.append(f'Status={status}')
+        subtitle=f' ({", ".join(filt_bits)})' if filt_bits else ''
+        ws['A1']=f'Workforce Report by {gdim["label"]} - Generated {today}{subtitle}'; ws['A1'].font=titlef
+        ws.merge_cells('A1:F1')
+        statuses=['active','suspended','on_leave','inactive']
+        hdrs=[gdim['label']]+[s.replace('_',' ').title() for s in statuses]+['Total']
+        style_header(ws,3,hdrs)
+        row=4; grand=[0]*len(statuses)
+        for gv in group_order:
+            counts=[sum(1 for e in emps if gval(e)==gv and e['effective_status']==st) for st in statuses]
+            ws.cell(row,1,gv)
+            for i,cnt in enumerate(counts):
+                ws.cell(row,2+i,cnt); grand[i]+=cnt
+            ws.cell(row,2+len(statuses),sum(counts))
+            row+=1
+        ws.cell(row,1,'TOTAL').font=Font(bold=True)
+        for i,g in enumerate(grand): ws.cell(row,2+i,g).font=Font(bold=True)
+        ws.cell(row,2+len(statuses),sum(grand)).font=Font(bold=True)
+        autosize(ws)
+
+        # ── One sheet per group value, each employee with status ───────────────
+        hdrs2=['Emp ID','Full Name','Department','Shift','Status','Accommodation','Food Preference','Notes']
+        used_titles={'Summary'}
+        for gv in group_order:
+            ws=wb.create_sheet(_sheet_title(str(gv),used_titles))
+            ws['A1']=f'{gdim["label"]}: {gv} — {today}'; ws['A1'].font=titlef
+            ws.merge_cells('A1:H1')
+            style_header(ws,3,hdrs2)
+            r=4
+            for e in [x for x in emps if gval(x)==gv]:
+                note=''
+                if e['effective_status']=='suspended':
+                    s=susp_by_emp.get(e['id'])
+                    if s: note=f"Since {s['start_date']}"+(f" to {s['end_date']}" if s['end_date'] else '')+(f" - {s['reason']}" if s['reason'] else '')
+                elif e['effective_status']=='on_leave':
+                    v=vac_by_emp.get(e['id'])
+                    if v: note=f"{v['start_date']} to {v['end_date']}"+(f" - {v['reason']}" if v['reason'] else '')
+                ws.cell(r,1,e['emp_id']); ws.cell(r,2,e['full_name']); ws.cell(r,3,e['department'] or '')
+                ws.cell(r,4,e['shift_label']); status_cell(ws,r,5,e['effective_status'])
+                ws.cell(r,6,e['accommodation'] or ''); ws.cell(r,7,e['food_preference'] or ''); ws.cell(r,8,note)
+                r+=1
+            autosize(ws)
+
+        # ── Suspended employees detail sheet ───────────────────────────────────
+        ws=wb.create_sheet(_sheet_title('Suspended',used_titles))
+        ws['A1']=f'Currently Suspended — {today}'; ws['A1'].font=titlef; ws.merge_cells('A1:F1')
+        hdrs3=['Emp ID','Full Name','Shift','Suspended Since','Until','Reason']
+        style_header(ws,3,hdrs3)
+        r=4
+        for e in [x for x in emps if x['effective_status']=='suspended']:
+            s=susp_by_emp.get(e['id'],{})
+            ws.cell(r,1,e['emp_id']); ws.cell(r,2,e['full_name']); ws.cell(r,3,e['shift_label'])
+            ws.cell(r,4,s.get('start_date','')); ws.cell(r,5,s.get('end_date') or 'Indefinite'); ws.cell(r,6,s.get('reason') or '')
+            r+=1
+        autosize(ws)
+
+        # ── All-employees master sheet (status + shift + food + accommodation) ─
+        ws=wb.create_sheet(_sheet_title('All Employees',used_titles))
+        hdrs4=['Emp ID','Full Name','Department','Shift','Status','Accommodation','Food Preference']
+        style_header(ws,1,hdrs4)
+        for ri,e in enumerate(emps,2):
+            ws.cell(ri,1,e['emp_id']); ws.cell(ri,2,e['full_name']); ws.cell(ri,3,e['department'] or '')
+            ws.cell(ri,4,e['shift_label']); status_cell(ws,ri,5,e['effective_status'])
+            ws.cell(ri,6,e['accommodation'] or ''); ws.cell(ri,7,e['food_preference'] or '')
+        autosize(ws)
+
+        wb.move_sheet('Summary',offset=-len(wb.sheetnames))
+        buf=io.BytesIO(); wb.save(buf); buf.seek(0)
+        fname=f'workforce_report_{group_by}_{today}.xlsx'
+        return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition':f'attachment; filename={fname}'})
+    finally:
+        conn.close()
+
 @app.get('/api/export/food-report')
 def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
     d=target_date or date.today().isoformat()
@@ -1124,7 +1306,8 @@ def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
         for cat,cnt in data[meal].items():
             if cat=='TOTAL':continue
             ws.cell(row,1,meal.capitalize());ws.cell(row,2,cat);ws.cell(row,3,cnt);ws.cell(row,4,d);row+=1
-    for col in ws.columns: ws.column_dimensions[col[0].column_letter].width=20
+    from openpyxl.utils import get_column_letter
+    for i in range(1,ws.max_column+1): ws.column_dimensions[get_column_letter(i)].width=20
     buf=io.BytesIO();wb.save(buf);buf.seek(0)
     return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename=food_report_{d}.xlsx'})
 
