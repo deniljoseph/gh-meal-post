@@ -889,6 +889,25 @@ th[data-sort="desc"]::after{content:' ▼'!important;opacity:.95!important;}
         <button class="btn btn-sm btn-outline-secondary w-100 mb-3" onclick="runBackupNow()" id="bk-now-btn"><i class="fas fa-bolt me-2"></i>Run a Backup Now</button>
         <div id="bk-history-list" style="max-height:280px;overflow-y:auto;"><div class="text-center py-3" style="color:var(--tx2);font-size:12px;">Loading...</div></div>
       </div></div>
+      <div class="col-md-4"><div class="card pad">
+        <h6 class="mb-3"><i class="fas fa-cloud-upload-alt me-2" style="color:var(--p);"></i>Daily Backup to Google Drive</h6>
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" id="gd-enabled">
+          <label class="form-check-label" for="gd-enabled" style="font-size:12.5px;">Upload a full backup every day at 11:00 PM (Dubai time)</label>
+        </div>
+        <label class="form-label" style="font-size:12px;">Apps Script Web app URL</label>
+        <input type="text" class="form-control mb-2" id="gd-url" placeholder="https://script.google.com/macros/s/.../exec">
+        <label class="form-label" style="font-size:12px;">Keep the last N backups in Drive (0 = keep all)</label>
+        <input type="number" class="form-control mb-3" id="gd-keep" style="max-width:120px;" min="0" value="30">
+        <div class="d-flex gap-2 flex-wrap mb-2">
+          <button class="btn btn-sm" style="background:var(--pd);color:#fff;" onclick="saveDriveSettings()" id="gd-save-btn"><i class="fas fa-save me-1"></i>Save</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="testDriveBackup()" id="gd-test-btn"><i class="fas fa-cloud-upload-alt me-1"></i>Upload a test backup now</button>
+        </div>
+        <div id="gd-token-warn" class="alert alert-warning py-2 mb-2" style="display:none;font-size:12px;">Backup token is not set on the server yet. Add the <code>GDRIVE_WEBAPP_TOKEN</code> environment variable (same secret as in the Drive script). Steps are in <code>README_BACKUP.md</code>.</div>
+        <div id="gd-msg" class="mb-2" style="display:none;font-size:12px;"></div>
+        <p id="gd-last" class="mb-1" style="display:none;font-size:12px;"></p>
+        <p class="text-danger mb-0" style="font-size:12px;"><i class="fas fa-exclamation-triangle me-1"></i>The backup contains all app data including user password hashes, so keep the Drive folder private.</p>
+      </div></div>
       <div class="col-md-4"><div class="card pad"><h6 class="mb-3"><i class="fas fa-palette me-2" style="color:var(--p);"></i>App Theme</h6>
         <div class="d-flex gap-2 flex-wrap mb-2">
           <div class="tpd" data-t="blue" style="background:#1565C0;width:30px;height:30px;" onclick="setTh('blue')"></div>
@@ -1827,7 +1846,7 @@ async function delUsrPermanent(id,name){
 }
 let cR={};let cRK=[];
 const PS=['shift1','shift2','shift3','normal','site'];
-async function loadSet(){const s=await API('/lookup/settings').catch(()=>null);if(s)document.getElementById('lk-tog').checked=s.lookup_enabled==='1';cR=await API('/meal-rules').catch(()=>({}))||{};window.__countIftar=cR.count_iftar!==false;cRK=[];rendRules(cR);setTh(localStorage.getItem('th')||'blue');loadBackupHistory();}
+async function loadSet(){const s=await API('/lookup/settings').catch(()=>null);if(s)document.getElementById('lk-tog').checked=s.lookup_enabled==='1';cR=await API('/meal-rules').catch(()=>({}))||{};window.__countIftar=cR.count_iftar!==false;cRK=[];rendRules(cR);setTh(localStorage.getItem('th')||'blue');loadBackupHistory();loadDriveSettings();}
 function rendRules(rules){const all=[...PS,...Object.keys(rules).filter(k=>!PS.includes(k)&&typeof rules[k]==='object'&&rules[k]!==null),...cRK];const un=[...new Set(all)];const lL={shift1:'1st Shift (7-3)',shift2:'2nd Shift (3-11)',shift3:'3rd Shift (11-7)',normal:'Normal (9-6)',site:'Site Worker'};document.getElementById('rules-tb').innerHTML=un.map(k=>{const sr=rules[k]||{bk:true,ln:'accommodation',dn:'accommodation'};const iC=!PS.includes(k);return`<tr><td><strong>${lL[k]||k}</strong>${iC?`<span class="abt text-danger border-danger ms-2" style="width:20px;height:20px;font-size:10px;" onclick="rmRule('${k}')"><i class="fas fa-times"></i></span>`:''}</td><td><input type="checkbox" id="r-bk-${k}" ${sr.bk!==false?'checked':''}> Yes</td><td><select id="r-ln-${k}" class="rules-sel"><option value="accommodation" ${sr.ln==='accommodation'?'selected':''}>accommodation</option><option value="factory" ${sr.ln==='factory'?'selected':''}>factory</option><option value="site" ${sr.ln==='site'?'selected':''}>site</option></select></td><td><select id="r-dn-${k}" class="rules-sel"><option value="accommodation" ${sr.dn==='accommodation'?'selected':''}>accommodation</option><option value="factory" ${sr.dn==='factory'?'selected':''}>factory</option></select></td><td></td></tr>`;}).join('');const sp=[['arabic_bk','Arabic gets Breakfast','cb'],['arabic_dn','Arabic gets Dinner','cb'],['fasting_bk','Fasting gets Breakfast','cb'],['fasting_dn','Fasting gets Dinner','cb'],['absent_ln','Absent Lunch',['accommodation','factory']],['absent_dn','Absent Dinner',['accommodation','factory']]];document.getElementById('sp-rules').innerHTML=sp.map(([k,lbl,type])=>{if(type==='cb')return`<div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="sr-${k}" ${rules[k]?'checked':''}><label class="form-check-label">${lbl}</label></div></div>`;return`<div class="col-md-3"><label class="form-label">${lbl}</label><select id="sr-${k}" class="form-select form-select-sm">${type.map(o=>`<option value="${o}" ${rules[k]===o?'selected':''}>${o}</option>`).join('')}</select></div>`;}).join('');const cr=[['count_bk','Count Breakfast'],['count_ln_acc','Count Lunch (Accom)'],['count_ln_factory','Count Lunch (Factory)'],['count_ln_site','Count Lunch (Site)'],['count_dn_acc','Count Dinner (Accom)'],['count_dn_factory','Count Dinner (Factory)'],['count_iftar','Count Iftar Kit']];document.getElementById('cnt-rules').innerHTML=cr.map(([k,lbl])=>`<div class="col-md-3"><div class="form-check"><input class="form-check-input" type="checkbox" id="cr-${k}" ${rules[k]!==false?'checked':''}><label class="form-check-label">${lbl}</label></div></div>`).join('');}
 function addRule(){const name=prompt('Enter shift name (e.g. Weekend Shift):');if(!name||!name.trim())return;const key=name.trim().toLowerCase().replace(/\s+/g,'_');if(document.getElementById('r-bk-'+key)){alert('Already exists');return;}cR[key]={bk:true,ln:'accommodation',dn:'accommodation'};cRK.push(key);rendRules(cR);}
 function rmRule(k){if(!confirm('Remove?'))return;delete cR[k];cRK=cRK.filter(x=>x!==k);rendRules(cR);}
@@ -2072,6 +2091,41 @@ function initTblSort(tbodyId,data,renderFn){
 }
 
 
+// ── Daily backup to Google Drive ──────────────────────────────────────────────
+function gdMsg(text,ok){const m=document.getElementById('gd-msg');m.style.display='block';m.className='mb-2 '+(ok?'text-success':'text-danger');m.textContent=text;}
+async function loadDriveSettings(){
+  try{
+    const r=await API('/backup/drive-settings');if(!r)return;
+    document.getElementById('gd-enabled').checked=!!r.enabled;
+    document.getElementById('gd-url').value=r.url||'';
+    document.getElementById('gd-keep').value=r.keep;
+    document.getElementById('gd-token-warn').style.display=r.token_set?'none':'block';
+    const l=document.getElementById('gd-last');
+    if(r.last_status){l.style.display='block';l.innerHTML='';const b=document.createElement('strong');b.textContent='Last run: ';l.appendChild(b);l.appendChild(document.createTextNode(r.last_status));}
+    else l.style.display='none';
+  }catch(e){gdMsg('Could not load Drive backup settings: '+e.message,false);}
+}
+async function saveDriveSettings(){
+  const btn=document.getElementById('gd-save-btn');btn.disabled=true;
+  try{
+    await API('/backup/drive-settings','POST',{
+      url:document.getElementById('gd-url').value.trim(),
+      enabled:document.getElementById('gd-enabled').checked,
+      keep:parseInt(document.getElementById('gd-keep').value||'30',10)
+    });
+    gdMsg('Saved.',true);loadDriveSettings();
+  }catch(e){gdMsg(e.message,false);}
+  finally{btn.disabled=false;}
+}
+async function testDriveBackup(){
+  const btn=document.getElementById('gd-test-btn');const old=btn.innerHTML;
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+  try{
+    const r=await API('/backup/drive-test','POST',{url:document.getElementById('gd-url').value.trim()});
+    gdMsg(r.message,r.ok);
+  }catch(e){gdMsg('Test failed: '+e.message,false);}
+  finally{btn.disabled=false;btn.innerHTML=old;}
+}
 // ── Backup / Restore ──────────────────────────────────────────────────────────
 async function loadBackupHistory(){
   const list=document.getElementById('bk-history-list');

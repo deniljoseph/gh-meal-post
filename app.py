@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """GeometryHome Workforce & Meal Management System v5.2 - Production Ready"""
 import sqlite3,json,os,hashlib,io,base64,hmac as hmac_mod,random,difflib,asyncio,smtplib
+import urllib.request,urllib.error
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
@@ -205,6 +206,9 @@ def init_db():
     upsert_setting(conn,'lookup_enabled','1')
     if not q1(conn,'SELECT value FROM settings WHERE key=?',('meal_rules',)):
         upsert_setting(conn,'meal_rules','{}')
+    for _k,_v in (('backup_drive_url',''),('backup_drive_enabled','0'),('backup_keep','30'),('backup_last_run',''),('backup_last_status','')):
+        if not q1(conn,'SELECT value FROM settings WHERE key=?',(_k,)):
+            upsert_setting(conn,_k,_v)
     # ── Reset all serial sequences to avoid duplicate key errors after migration ──
     if USE_PG:
         serial_tables=['users','locations','food_preferences','employees',
@@ -400,6 +404,7 @@ app.add_middleware(CORSMiddleware,allow_origins=['*'],allow_methods=['*'],allow_
 async def _start_background_tasks():
     init_db()
     asyncio.create_task(backup_scheduler_loop())
+    asyncio.create_task(drive_backup_loop())
     asyncio.create_task(suspension_sync_loop())
 
 @app.get('/api/setup/status')
@@ -1617,6 +1622,159 @@ def backup_run_now(user=Depends(require('admin'))):
         return{'id':bid,'filename':fname,'size_bytes':len(data),'emailed':emailed}
     finally:
         conn.close()
+
+# ── DAILY BACKUP TO GOOGLE DRIVE (11:00 PM Dubai time) ─────────────────────────
+# Same approach as GH Invoicing: the app sends the backup to a small Google Apps Script
+# web app (apps_script/Code.gs) which saves it into YOUR private Drive folder.
+# Free, no Google Cloud project, no card. Setup steps: README_BACKUP.md
+DRIVE_BACKUP_HOUR=23                              # 11 PM, Dubai time
+DRIVE_WEBAPP_PREFIX='https://script.google.com/'
+DRIVE_MAX_UPLOAD_MB=35                            # Apps Script request limit (~50 MB) after base64 growth
+
+def now_dubai():
+    return datetime.utcnow()+timedelta(hours=4)   # UAE is UTC+4, no daylight saving
+
+def drive_configured():
+    return bool((os.environ.get('GDRIVE_WEBAPP_TOKEN') or '').strip())
+
+def _all_settings(conn):
+    return {r['key']:r['value'] for r in q(conn,'SELECT key,value FROM settings')}
+
+def _keep_count(s):
+    try: return max(0,int(s.get('backup_keep','30') or 30))
+    except (TypeError,ValueError): return 30
+
+def _webapp_call(url,payload):
+    """POST JSON (as text/plain, which Apps Script accepts without CORS issues) and parse the JSON reply."""
+    req=urllib.request.Request(url,data=json.dumps(payload).encode('utf-8'),
+                               headers={'Content-Type':'text/plain;charset=utf-8'},method='POST')
+    try:
+        with urllib.request.urlopen(req,timeout=600) as r:
+            body=r.read().decode('utf-8','replace'); status=r.status
+    except urllib.error.HTTPError as e:
+        body=e.read().decode('utf-8','replace'); status=e.code
+    try:
+        return json.loads(body)
+    except ValueError:
+        raise RuntimeError(f'Unexpected reply from Google (HTTP {status}). Check the Web app URL and that access is set to "Anyone".')
+
+def _upload_backup_drive(url,keep=30):
+    """Builds the full Excel backup and hands it to the Apps Script web app. Returns (ok, message)."""
+    url=(url or '').strip()
+    token=(os.environ.get('GDRIVE_WEBAPP_TOKEN') or '').strip()
+    if not token:
+        return False,'Backup token is not set on the server (GDRIVE_WEBAPP_TOKEN).'
+    if not url.startswith(DRIVE_WEBAPP_PREFIX):
+        return False,'Paste the Apps Script Web app URL (starts with https://script.google.com/).'
+    try:
+        ping=_webapp_call(url,{'token':token,'action':'ping'})
+        if not ping.get('ok'):
+            return False,f"Drive script refused: {ping.get('error','unknown error')}"
+        conn=db_conn()
+        try: data=build_backup_xlsx(conn)
+        finally: conn.close()
+        size=len(data)
+        if size>DRIVE_MAX_UPLOAD_MB*1024*1024:
+            return False,f'Backup is {size/1024/1024:.1f} MB, above the {DRIVE_MAX_UPLOAD_MB} MB limit of the Drive script.'
+        name=f"GH_MealBackup_{now_dubai().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        res=_webapp_call(url,{'token':token,'action':'upload','name':name,'keep':keep,
+                              'data':base64.b64encode(data).decode('ascii')})
+        if not res.get('ok'):
+            return False,f"Upload failed: {res.get('error','unknown error')}"
+    except Exception as ex:
+        print(f'[drive backup] failed: {ex}')
+        return False,f'Drive backup failed: {ex}'
+    rem=res.get('removed') or 0
+    return True,f"Uploaded {name} ({size/1024/1024:.2f} MB) to Drive"+(f"; removed {rem} old backup(s)" if rem else '')
+
+def _claim_today(today):
+    """Atomically claim today's run so only one worker/process uploads it."""
+    conn=db_conn()
+    try:
+        exe(conn,"INSERT INTO settings(key,value) VALUES('backup_last_run','') ON CONFLICT DO NOTHING",silent=True)
+        if USE_PG:
+            cur=conn.cursor()
+            cur.execute("UPDATE settings SET value=%s WHERE key='backup_last_run' AND value<>%s",(today,today))
+            n=cur.rowcount; conn.commit(); cur.close()
+        else:
+            cur=conn.execute("UPDATE settings SET value=? WHERE key='backup_last_run' AND value<>?",(today,today))
+            n=cur.rowcount; conn.commit()
+        return n==1
+    except Exception:
+        try: conn.rollback()
+        except Exception: pass
+        raise
+    finally:
+        conn.close()
+
+def run_drive_backup_if_due():
+    """Called every minute. After 11 PM Dubai time, uploads one backup per day (retries each minute until it succeeds)."""
+    try:
+        conn=db_conn()
+        try: s=_all_settings(conn)
+        finally: conn.close()
+        url=(s.get('backup_drive_url') or '').strip()
+        if s.get('backup_drive_enabled')!='1' or not url: return
+        now=now_dubai()
+        if now.hour<DRIVE_BACKUP_HOUR: return
+        today=now.strftime('%Y-%m-%d')
+        if not _claim_today(today): return
+        ok,msg=_upload_backup_drive(url,keep=_keep_count(s))
+        conn=db_conn()
+        try:
+            upsert_setting(conn,'backup_last_status',f"{now_dubai().strftime('%Y-%m-%d %H:%M')} - {'OK' if ok else 'FAILED'}: {msg}")
+            if not ok: upsert_setting(conn,'backup_last_run','')   # allow a retry on the next check tonight
+            log_audit(conn,'system','drive_backup',None,None,msg[:300])
+        finally: conn.close()
+        print(f"[drive backup] {'OK' if ok else 'FAILED'}: {msg}")
+    except Exception as ex:
+        print(f'[drive backup] scheduler error: {ex}')
+
+async def drive_backup_loop():
+    await asyncio.sleep(45)
+    while True:
+        try: await asyncio.to_thread(run_drive_backup_if_due)
+        except Exception as ex: print(f'[drive backup] loop error: {ex}')
+        await asyncio.sleep(60)
+
+@app.get('/api/backup/drive-settings')
+def drive_settings_get(_=Depends(require('admin'))):
+    conn=db_conn()
+    try: s=_all_settings(conn)
+    finally: conn.close()
+    return{'url':s.get('backup_drive_url') or '','enabled':s.get('backup_drive_enabled')=='1',
+           'keep':_keep_count(s),'last_status':s.get('backup_last_status') or '','token_set':drive_configured()}
+
+@app.post('/api/backup/drive-settings')
+def drive_settings_save(data:dict,user=Depends(require('admin'))):
+    url=(data.get('url') or '').strip()
+    enabled=bool(data.get('enabled'))
+    try: keep=max(0,int(data.get('keep',30)))
+    except (TypeError,ValueError): raise HTTPException(400,'"Keep last N backups" must be a number')
+    if url and not url.startswith(DRIVE_WEBAPP_PREFIX):
+        raise HTTPException(400,'Paste the Apps Script Web app URL (starts with https://script.google.com/)')
+    if enabled and not url:
+        raise HTTPException(400,'Paste the Web app URL before turning the daily backup on')
+    conn=db_conn()
+    try:
+        upsert_setting(conn,'backup_drive_url',url)
+        upsert_setting(conn,'backup_drive_enabled','1' if enabled else '0')
+        upsert_setting(conn,'backup_keep',str(keep))
+        log_audit(conn,user['sub'],'drive_backup_settings',None,None,f"enabled={'yes' if enabled else 'no'}, keep={keep}")
+    finally: conn.close()
+    return{'ok':True}
+
+@app.post('/api/backup/drive-test')
+def drive_test(data:dict,user=Depends(require('admin'))):
+    conn=db_conn()
+    try: s=_all_settings(conn)
+    finally: conn.close()
+    url=(data.get('url') or s.get('backup_drive_url') or '').strip()
+    ok,msg=_upload_backup_drive(url,keep=_keep_count(s))
+    conn=db_conn()
+    try: log_audit(conn,user['sub'],'drive_backup_test',None,None,msg[:300])
+    finally: conn.close()
+    return{'ok':ok,'message':msg}
 
 @app.post('/api/backup/restore')
 async def backup_restore(file:UploadFile=File(...),user=Depends(require('admin'))):
