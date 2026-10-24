@@ -280,7 +280,7 @@ def build_report(conn,d,sunday_mode=False):
     accs_raw=q(conn,'SELECT name FROM locations WHERE loc_type=? AND is_active=1 ORDER BY name',('accommodation',))
     accs=[a['name'] for a in accs_raw]; fps=['Arabic','North Indian','North Indian Veg','South Indian','South Indian Veg']
     def mk(): return{a:{f:0 for f in fps} for a in accs}
-    l2a=mk();d2f=mk();l2s=mk();i2a=mk()
+    l2a=mk();d2f=mk();l2s=mk();i2a=mk();l2f=mk()
     gt_bk={f:0 for f in fps};gt_ln={f:0 for f in fps};gt_dn={f:0 for f in fps};gt_if={f:0 for f in fps}
     acc_sum={a:{fp:{'bk':0,'ln':0,'dn':0,'iftar':0} for fp in fps} for a in accs}
     fa_sum={a:{fp:{'bk':0,'iftar':0,'dn':0} for fp in fps} for a in accs}
@@ -327,6 +327,7 @@ def build_report(conn,d,sunday_mode=False):
             else:
                 if m['ln_to_acc']:add(l2a,eff_acc,fp)
                 elif m['ln_to_site']:add(l2s,eff_acc,fp)
+                elif m['ln_to_factory'] and sunday_mode:add(l2f,eff_acc,fp)  # holiday/Sunday override: lunch goes to factory
                 if (m['ln_to_acc'] and rules.get('count_ln_acc',True)) or (m['ln_to_factory'] and rules.get('count_ln_factory',True)) or (m['ln_to_site'] and rules.get('count_ln_site',True)):
                     gt_ln[fp]=gt_ln.get(fp,0)+1
                     if in_ac: acc_sum[eff_acc][fp]['ln']+=1
@@ -342,7 +343,7 @@ def build_report(conn,d,sunday_mode=False):
                     gt_dn[fp]=gt_dn.get(fp,0)+1
                     if is_fa: fa_sum[eff_acc][fp]['dn']+=1
                     elif in_ac: acc_sum[eff_acc][fp]['dn']+=1
-    return{'lunch_to_accommodation':l2a,'dinner_to_factory':d2f,'lunch_to_site':l2s,'iftar_to_accommodation':i2a,'accommodations':accs,'food_prefs':fps,'acc_summary':acc_sum,'fasting_summary':fa_sum,'grand_total':{'breakfast':gt_bk,'lunch':gt_ln,'dinner':gt_dn,'iftar_kit':gt_if},'is_sunday_mode':sunday_mode}
+    return{'lunch_to_accommodation':l2a,'lunch_to_factory':l2f,'dinner_to_factory':d2f,'lunch_to_site':l2s,'iftar_to_accommodation':i2a,'accommodations':accs,'food_prefs':fps,'acc_summary':acc_sum,'fasting_summary':fa_sum,'grand_total':{'breakfast':gt_bk,'lunch':gt_ln,'dinner':gt_dn,'iftar_kit':gt_if},'is_sunday_mode':sunday_mode}
 
 # ── AUTH ───────────────────────────────────────────────────────────────────────
 def make_token(u,r):
