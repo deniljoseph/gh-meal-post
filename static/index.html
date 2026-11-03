@@ -1370,7 +1370,7 @@ function bFastingSec(faSummary,accs,fps2){
   return`<div id="rpt-s-fasting" class="rpt-sec"><div class="rpt-ttl" style="background:#E65100;">Fasting Employees \u2014 Suhoor &amp; Iftar</div><table class="rt"><thead>${h1}${h2}</thead><tbody>${body}</tbody></table></div>`;
 }
 
-function togSec(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'':'none';}
+function togSec(id,show){const el=document.getElementById(id);if(el)el.style.display=show?'':'none';if(document.getElementById('rpt-wa')&&!document.getElementById('rpt-wa').disabled){clearTimeout(window.__waT);window.__waT=setTimeout(prepWA,400);}}
 function togAllSecs(show){['gt','l2a','l2f','d2f','l2s','fasting','sunday'].forEach(k=>{const c=document.getElementById('chk-'+k);if(c){c.checked=show;togSec('rpt-s-'+k,show);}});}
 function bSec(title,tbl,accs,fps2,bg,secId){
   const aw=accs.filter(a=>fps2.some(f=>(tbl[a]?.[f]||0)>0));if(!aw.length)return'';
@@ -1414,7 +1414,7 @@ function rendRpt(data,tid){
   ${sunSec}
   <div class="rpt-wm">Created by Denil Joseph | GH - Meal Management System</div>`;
 }
-async function genRpt(){const d=v('rpt-dt')||tod();const data=await API('/supplier-report?target_date='+d+'&show_sunday=true&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;document.getElementById('rpt-wa').disabled=false;}
+async function genRpt(){const d=v('rpt-dt')||tod();const data=await API('/supplier-report?target_date='+d+'&show_sunday=true&save=true');if(!data)return;rendRpt(data,'rpt-preview');document.getElementById('rpt-dl').disabled=false;document.getElementById('rpt-wa').disabled=false;setTimeout(prepWA,300);}
 async function captureRptCanvas(scale){
   scale=scale||2;
   const el=document.getElementById('rpt-preview');
@@ -1451,29 +1451,34 @@ async function dlImg(){
   }catch(e){alert('Failed: '+e.message);}
   finally{btn.disabled=false;btn.innerHTML='<i class="fas fa-image me-1"></i>Download PNG';}
 }
-async function sendWhatsApp(){
-  const btn=document.getElementById('rpt-wa');
-  btn.disabled=true;const origHTML=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';
-  try{
-    // Higher resolution (4x, natural content width) so WhatsApp's own compression
-    // still leaves the report sharp and legible after it processes the image.
+let __waPre=null;
+// Build the share image ahead of time. navigator.share() must be called while the click's
+// "user activation" is still valid (a few seconds), and a 4x canvas capture takes longer than that.
+function prepWA(){
+  const p=(async()=>{
     const c=await captureRptCanvas(4);
     const blob=await new Promise(res=>c.toBlob(res,'image/png',1.0));
     const fname='GH_MealReport_'+v('rpt-dt')+'.png';
-    const file=new File([blob],fname,{type:'image/png'});
+    return{c,fname,file:new File([blob],fname,{type:'image/png'})};
+  })();
+  __waPre=p;p.catch(()=>{if(__waPre===p)__waPre=null;});
+}
+async function sendWhatsApp(){
+  const btn=document.getElementById('rpt-wa');
+  if(!__waPre)prepWA();
+  btn.disabled=true;const origHTML=btn.innerHTML;btn.innerHTML='<i class="fas fa-spinner fa-spin me-1"></i>Preparing...';
+  try{
+    const{c,fname,file}=await __waPre; // already resolved in the normal case, so the click gesture is still valid
     if(navigator.canShare&&navigator.canShare({files:[file]})){
-      // Native share sheet — files only, no title/text, so WhatsApp attaches
-      // just the image with no extra caption message underneath it.
       await navigator.share({files:[file]});
     }else{
-      // Fallback for desktop browsers without Web Share API file support:
-      // download the image and open WhatsApp Web so it can be attached manually
       const a=document.createElement('a');a.download=fname;a.href=c.toDataURL('image/png');a.click();
       alert("Your browser can't attach images directly to WhatsApp.\nThe report image has been downloaded — open WhatsApp and attach it manually.\n\nTip: choose \"Document\" instead of \"Photo\" when attaching, so WhatsApp doesn't recompress it.\n\n(This works automatically on mobile devices.)");
       window.open('https://wa.me/','_blank');
     }
   }catch(e){
-    if(e.name!=='AbortError'){alert('Failed: '+e.message);} // AbortError = user cancelled share sheet, not an error
+    if(e.name==='NotAllowedError'){alert('The image was still being prepared. It is ready now — tap "Send to WhatsApp" again.');}
+    else if(e.name!=='AbortError'){alert('Failed: '+e.message);}
   }finally{
     btn.disabled=false;btn.innerHTML=origHTML;
   }
