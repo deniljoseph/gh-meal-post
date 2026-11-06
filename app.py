@@ -1100,21 +1100,16 @@ async def import_emp(file:UploadFile=File(...),user=Depends(require('admin','hr'
     conn.close(); return{'imported':imported,'skipped':skipped,'errors':errors[:10]}
 
 @app.get('/api/export/employees')
-def export_emp(_=Depends(get_user)):
+def export_emp(preview:bool=False,_=Depends(get_user)):
     conn=db_conn()
     emps=q(conn,'SELECT e.emp_id,e.full_name,e.department,e.shift_type,l.name accommodation,fp.name food_preference,e.no_food_sunday,e.remarks FROM employees e LEFT JOIN locations l ON e.accommodation_id=l.id LEFT JOIN food_preferences fp ON e.food_pref_id=fp.id')
     conn.close()
-    wb=openpyxl.Workbook();ws=wb.active;ws.title='Employees'
-    hf=PatternFill('solid',fgColor='003c8f');hfont=Font(bold=True,color='FFFFFF')
-    hdrs=['Emp ID','Full Name','Department','Shift','Accommodation','Food Preference','No Food Sunday','Remarks']
     keys=['emp_id','full_name','department','shift_type','accommodation','food_preference','no_food_sunday','remarks']
-    for i,h in enumerate(hdrs,1):
-        c=ws.cell(1,i,h);c.fill=hf;c.font=hfont;c.alignment=Alignment(horizontal='center')
-    for ri,e in enumerate(emps,2):
-        for ci,k in enumerate(keys,1): ws.cell(ri,ci,e.get(k,''))
-    for col in ws.columns: ws.column_dimensions[col[0].column_letter].width=18
-    buf=io.BytesIO();wb.save(buf);buf.seek(0)
-    return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':'attachment; filename=employees.xlsx'})
+    sheets=[{'name':'Employees','title':None,
+             'headers':['Emp ID','Full Name','Department','Shift','Accommodation','Food Preference','No Food Sunday','Remarks'],
+             'rows':[[('' if e.get(k) is None else e.get(k)) for k in keys] for e in emps]}]
+    if preview: return {'sheets':sheets}
+    return _xlsx_response(sheets,'employees.xlsx')
 
 SHIFT_LABELS={'shift1':'1st Shift','shift2':'2nd Shift','shift3':'3rd Shift','normal':'Normal','site':'Site'}
 STATUS_FILL={'active':'C8E6C9','suspended':'FFCDD2','on_leave':'FFE0B2','inactive':'E0E0E0'}
@@ -1136,6 +1131,37 @@ def _sheet_title(name,used):
         suffix=f' ({n})'; title=(base[:28-len(suffix)]+suffix); n+=1
     used.add(title); return title
 
+def _write_sheets(wb,sheets):
+    """Render sheet dicts ({name,title,headers,rows,status_col?,bold_last?}) into a workbook.
+    The same dicts are returned as JSON by the ?preview=true option, so the on-screen
+    preview always matches what the Excel download contains."""
+    from openpyxl.utils import get_column_letter
+    hf=PatternFill('solid',fgColor='003c8f'); hfont=Font(bold=True,color='FFFFFF')
+    for sh in sheets:
+        ws=wb.create_sheet(sh['name']); ncol=len(sh['headers']); r0=1
+        if sh.get('title'):
+            ws['A1']=sh['title']; ws['A1'].font=Font(bold=True,size=14)
+            if ncol>1: ws.merge_cells(start_row=1,start_column=1,end_row=1,end_column=ncol)
+            r0=3
+        for ci,h in enumerate(sh['headers'],1):
+            c=ws.cell(r0,ci,h); c.fill=hf; c.font=hfont; c.alignment=Alignment(horizontal='center')
+        rows=sh['rows']
+        for ri,row in enumerate(rows,r0+1):
+            for ci,val in enumerate(row,1):
+                c=ws.cell(ri,ci,val)
+                if sh.get('status_col')==ci-1:
+                    fill=STATUS_FILL.get(str(val).lower().replace(' ','_'))
+                    if fill: c.fill=PatternFill('solid',fgColor=fill)
+                if sh.get('bold_last') and ri==r0+len(rows): c.font=Font(bold=True)
+        for ci in range(1,ncol+1): ws.column_dimensions[get_column_letter(ci)].width=20
+
+def _xlsx_response(sheets,fname):
+    wb=openpyxl.Workbook(); wb.remove(wb.active)
+    _write_sheets(wb,sheets)
+    buf=io.BytesIO(); wb.save(buf); buf.seek(0)
+    return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition':f'attachment; filename={fname}'})
+
 @app.get('/api/export/workforce-report')
 def export_workforce_report(
     group_by:str='shift',           # shift | food | accommodation | department | status
@@ -1144,6 +1170,7 @@ def export_workforce_report(
     food_pref_id:Optional[int]=None,
     department:Optional[str]=None,
     status:Optional[str]=None,      # active | suspended | on_leave | inactive
+    preview:bool=False,             # true -> return the sheets as JSON instead of an .xlsx file
     _=Depends(get_user)):
     """Multi-sheet workforce report. group_by picks how employees are split across
     sheets (by shift, food preference, accommodation, department, or status); the
@@ -1187,38 +1214,16 @@ def export_workforce_report(
 
         if status: emps=[e for e in emps if e['effective_status']==status]
 
-        wb=openpyxl.Workbook(); wb.remove(wb.active)
-        hf=PatternFill('solid',fgColor='003c8f'); hfont=Font(bold=True,color='FFFFFF')
-        titlef=Font(bold=True,size=14)
-
-        def style_header(ws,row,hdrs):
-            for i,h in enumerate(hdrs,1):
-                c=ws.cell(row,i,h); c.fill=hf; c.font=hfont; c.alignment=Alignment(horizontal='center')
-
-        def autosize(ws):
-            # Iterate by column index rather than ws.columns: merged title cells
-            # (e.g. A1:H1) turn the other cells in that row into MergedCell objects,
-            # which have no .column_letter and would crash a ws.columns loop.
-            from openpyxl.utils import get_column_letter
-            for i in range(1,ws.max_column+1):
-                ws.column_dimensions[get_column_letter(i)].width=20
-
-        def status_cell(ws,r,c,status_val):
-            cell=ws.cell(r,c,status_val.replace('_',' ').title())
-            fill=STATUS_FILL.get(status_val)
-            if fill: cell.fill=PatternFill('solid',fgColor=fill)
-            return cell
-
         gdim=GROUP_DIMENSIONS[group_by]
         def gval(e): return e.get(gdim['key']) or 'Unassigned'
         group_order=[]
         for e in emps:
-            v=gval(e)
-            if v not in group_order: group_order.append(v)
+            gv=gval(e)
+            if gv not in group_order: group_order.append(gv)
         group_order.sort()
 
-        # ── Sheet 1: Summary (group dimension x status matrix) ─────────────────
-        ws=wb.create_sheet('Summary')
+        sheets=[]; used_titles=set()
+        # Sheet 1: Summary (group dimension x status matrix)
         filt_bits=[]
         if shift_type: filt_bits.append(f'Shift={SHIFT_LABELS.get(shift_type,shift_type)}')
         if accommodation_id: filt_bits.append('Accommodation filter applied')
@@ -1226,96 +1231,66 @@ def export_workforce_report(
         if department: filt_bits.append(f'Dept={department}')
         if status: filt_bits.append(f'Status={status}')
         subtitle=f' ({", ".join(filt_bits)})' if filt_bits else ''
-        ws['A1']=f'Workforce Report by {gdim["label"]} - Generated {today}{subtitle}'; ws['A1'].font=titlef
-        ws.merge_cells('A1:F1')
         statuses=['active','suspended','on_leave','inactive']
-        hdrs=[gdim['label']]+[s.replace('_',' ').title() for s in statuses]+['Total']
-        style_header(ws,3,hdrs)
-        row=4; grand=[0]*len(statuses)
+        rows=[]; grand=[0]*len(statuses)
         for gv in group_order:
             counts=[sum(1 for e in emps if gval(e)==gv and e['effective_status']==st) for st in statuses]
-            ws.cell(row,1,gv)
-            for i,cnt in enumerate(counts):
-                ws.cell(row,2+i,cnt); grand[i]+=cnt
-            ws.cell(row,2+len(statuses),sum(counts))
-            row+=1
-        ws.cell(row,1,'TOTAL').font=Font(bold=True)
-        for i,g in enumerate(grand): ws.cell(row,2+i,g).font=Font(bold=True)
-        ws.cell(row,2+len(statuses),sum(grand)).font=Font(bold=True)
-        autosize(ws)
+            for i,cnt in enumerate(counts): grand[i]+=cnt
+            rows.append([gv]+counts+[sum(counts)])
+        rows.append(['TOTAL']+grand+[sum(grand)])
+        sheets.append({'name':_sheet_title('Summary',used_titles),
+            'title':f'Workforce Report by {gdim["label"]} - Generated {today}{subtitle}',
+            'headers':[gdim['label']]+[st.replace('_',' ').title() for st in statuses]+['Total'],
+            'rows':rows,'bold_last':True})
 
-        # ── One sheet per group value, each employee with status ───────────────
+        # One sheet per group value, each employee with status
         hdrs2=['Emp ID','Full Name','Department','Shift','Status','Accommodation','Food Preference','Notes']
-        used_titles={'Summary'}
         for gv in group_order:
-            ws=wb.create_sheet(_sheet_title(str(gv),used_titles))
-            ws['A1']=f'{gdim["label"]}: {gv} — {today}'; ws['A1'].font=titlef
-            ws.merge_cells('A1:H1')
-            style_header(ws,3,hdrs2)
-            r=4
+            rows=[]
             for e in [x for x in emps if gval(x)==gv]:
                 note=''
                 if e['effective_status']=='suspended':
-                    s=susp_by_emp.get(e['id'])
-                    if s: note=f"Since {s['start_date']}"+(f" to {s['end_date']}" if s['end_date'] else '')+(f" - {s['reason']}" if s['reason'] else '')
+                    sp=susp_by_emp.get(e['id'])
+                    if sp: note=f"Since {sp['start_date']}"+(f" to {sp['end_date']}" if sp['end_date'] else '')+(f" - {sp['reason']}" if sp['reason'] else '')
                 elif e['effective_status']=='on_leave':
-                    v=vac_by_emp.get(e['id'])
-                    if v: note=f"{v['start_date']} to {v['end_date']}"+(f" - {v['reason']}" if v['reason'] else '')
-                ws.cell(r,1,e['emp_id']); ws.cell(r,2,e['full_name']); ws.cell(r,3,e['department'] or '')
-                ws.cell(r,4,e['shift_label']); status_cell(ws,r,5,e['effective_status'])
-                ws.cell(r,6,e['accommodation'] or ''); ws.cell(r,7,e['food_preference'] or ''); ws.cell(r,8,note)
-                r+=1
-            autosize(ws)
+                    vc=vac_by_emp.get(e['id'])
+                    if vc: note=f"{vc['start_date']} to {vc['end_date']}"+(f" - {vc['reason']}" if vc['reason'] else '')
+                rows.append([e['emp_id'],e['full_name'],e['department'] or '',e['shift_label'],
+                             e['effective_status'].replace('_',' ').title(),e['accommodation'] or '',e['food_preference'] or '',note])
+            sheets.append({'name':_sheet_title(str(gv),used_titles),'title':f'{gdim["label"]}: {gv} — {today}',
+                           'headers':hdrs2,'rows':rows,'status_col':4})
 
-        # ── Suspended employees detail sheet ───────────────────────────────────
-        ws=wb.create_sheet(_sheet_title('Suspended',used_titles))
-        ws['A1']=f'Currently Suspended — {today}'; ws['A1'].font=titlef; ws.merge_cells('A1:F1')
-        hdrs3=['Emp ID','Full Name','Shift','Suspended Since','Until','Reason']
-        style_header(ws,3,hdrs3)
-        r=4
+        # Suspended employees detail sheet
+        rows=[]
         for e in [x for x in emps if x['effective_status']=='suspended']:
-            s=susp_by_emp.get(e['id'],{})
-            ws.cell(r,1,e['emp_id']); ws.cell(r,2,e['full_name']); ws.cell(r,3,e['shift_label'])
-            ws.cell(r,4,s.get('start_date','')); ws.cell(r,5,s.get('end_date') or 'Indefinite'); ws.cell(r,6,s.get('reason') or '')
-            r+=1
-        autosize(ws)
+            sp=susp_by_emp.get(e['id'],{})
+            rows.append([e['emp_id'],e['full_name'],e['shift_label'],sp.get('start_date',''),sp.get('end_date') or 'Indefinite',sp.get('reason') or ''])
+        sheets.append({'name':_sheet_title('Suspended',used_titles),'title':f'Currently Suspended — {today}',
+                       'headers':['Emp ID','Full Name','Shift','Suspended Since','Until','Reason'],'rows':rows})
 
-        # ── All-employees master sheet (status + shift + food + accommodation) ─
-        ws=wb.create_sheet(_sheet_title('All Employees',used_titles))
-        hdrs4=['Emp ID','Full Name','Department','Shift','Status','Accommodation','Food Preference']
-        style_header(ws,1,hdrs4)
-        for ri,e in enumerate(emps,2):
-            ws.cell(ri,1,e['emp_id']); ws.cell(ri,2,e['full_name']); ws.cell(ri,3,e['department'] or '')
-            ws.cell(ri,4,e['shift_label']); status_cell(ws,ri,5,e['effective_status'])
-            ws.cell(ri,6,e['accommodation'] or ''); ws.cell(ri,7,e['food_preference'] or '')
-        autosize(ws)
+        # All-employees master sheet
+        sheets.append({'name':_sheet_title('All Employees',used_titles),'title':None,
+            'headers':['Emp ID','Full Name','Department','Shift','Status','Accommodation','Food Preference'],
+            'rows':[[e['emp_id'],e['full_name'],e['department'] or '',e['shift_label'],e['effective_status'].replace('_',' ').title(),
+                     e['accommodation'] or '',e['food_preference'] or ''] for e in emps],'status_col':4})
 
-        wb.move_sheet('Summary',offset=-len(wb.sheetnames))
-        buf=io.BytesIO(); wb.save(buf); buf.seek(0)
-        fname=f'workforce_report_{group_by}_{today}.xlsx'
-        return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            headers={'Content-Disposition':f'attachment; filename={fname}'})
+        if preview: return {'sheets':sheets}
+        return _xlsx_response(sheets,f'workforce_report_{group_by}_{today}.xlsx')
     finally:
         conn.close()
 
 @app.get('/api/export/food-report')
-def export_food(target_date:Optional[str]=None,_=Depends(get_user)):
+def export_food(target_date:Optional[str]=None,preview:bool=False,_=Depends(get_user)):
     d=target_date or date.today().isoformat()
     data=compute_food_count(d)
-    wb=openpyxl.Workbook();ws=wb.active;ws.title=f'Food {d}'
-    hf=PatternFill('solid',fgColor='003c8f');hfont=Font(bold=True,color='FFFFFF')
-    ws['A1']=f'Daily Food Report - {d}';ws['A1'].font=Font(bold=True,size=14);ws.merge_cells('A1:E1')
-    for i,h in enumerate(['Meal','Food Category','Count','Date'],1):
-        c=ws.cell(3,i,h);c.fill=hf;c.font=hfont
-    row=4
+    rows=[]
     for meal in['breakfast','lunch','dinner','iftar_kit']:
         for cat,cnt in data[meal].items():
             if cat=='TOTAL':continue
-            ws.cell(row,1,meal.capitalize());ws.cell(row,2,cat);ws.cell(row,3,cnt);ws.cell(row,4,d);row+=1
-    from openpyxl.utils import get_column_letter
-    for i in range(1,ws.max_column+1): ws.column_dimensions[get_column_letter(i)].width=20
-    buf=io.BytesIO();wb.save(buf);buf.seek(0)
-    return StreamingResponse(buf,media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',headers={'Content-Disposition':f'attachment; filename=food_report_{d}.xlsx'})
+            rows.append([meal.capitalize(),cat,cnt,d])
+    sheets=[{'name':f'Food {d}','title':f'Daily Food Report - {d}','headers':['Meal','Food Category','Count','Date'],'rows':rows}]
+    if preview: return {'sheets':sheets}
+    return _xlsx_response(sheets,f'food_report_{d}.xlsx')
 
 # ── FULL DATABASE BACKUP / RESTORE ─────────────────────────────────────────────
 # Tables in dependency order (parents before children) — used for both
